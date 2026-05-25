@@ -1,0 +1,38 @@
+# Proprietary/local agent files
+.agents/
+.codex/
+
+# Railway local project linkage
+.railway/
+
+# .NET build output
+bin/
+obj/
+TestResults/
+artifacts/
+*.nupkg
+
+# IDE and editor files
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.DotSettings.user
+
+# OS, logs, and temp files
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
