@@ -319,14 +319,14 @@ Use explicit EF Core migrations. Do not apply migrations automatically on applic
 
 #### Automated
 
-- [x] 1.1 Project builds
-- [x] 1.2 EF migration can be applied against local Postgres
-- [x] 1.3 App startup does not auto-apply migrations
+- [x] 1.1 Project builds — 22f4e04
+- [x] 1.2 EF migration can be applied against local Postgres — 22f4e04
+- [x] 1.3 App startup does not auto-apply migrations — 22f4e04
 
 #### Manual
 
-- [x] 1.4 Developer can start local Postgres and apply migrations manually
-- [x] 1.5 Railway secrets remain external and uncommitted
+- [x] 1.4 Developer can start local Postgres and apply migrations manually — 22f4e04
+- [x] 1.5 Railway secrets remain external and uncommitted — 22f4e04
 
 ### Phase 2: Evidence Domain, Summaries, And Seed Data
 
