@@ -1,5 +1,8 @@
 namespace LinuxGameCompat.Data;
 
+/// <summary>
+/// Describes an external evidence provider such as ProtonDB or Are We Anti-Cheat Yet.
+/// </summary>
 public sealed class SourceSystem
 {
 	public int Id { get; set; }
