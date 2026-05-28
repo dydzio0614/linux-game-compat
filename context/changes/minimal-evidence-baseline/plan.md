@@ -332,14 +332,14 @@ Use explicit EF Core migrations. Do not apply migrations automatically on applic
 
 #### Automated
 
-- [x] 2.1 Migration includes evidence, source, game, hidden, and summary-ready fields
-- [x] 2.2 Seed loads representative records without external network calls
-- [x] 2.3 No-source games validate with Unknown status
+- [x] 2.1 Migration includes evidence, source, game, hidden, and summary-ready fields — 6c188df
+- [x] 2.2 Seed loads representative records without external network calls — 6c188df
+- [x] 2.3 No-source games validate with Unknown status — 6c188df
 
 #### Manual
 
-- [x] 2.4 Local database contains visible, hidden, claim-level evidence, and optional summary records
-- [x] 2.5 Hidden records are present but identifiable as hidden
+- [x] 2.4 Local database contains visible, hidden, claim-level evidence, and optional summary records — 6c188df
+- [x] 2.5 Hidden records are present but identifiable as hidden — 6c188df
 
 ### Phase 3: Read Services And Validation
 
