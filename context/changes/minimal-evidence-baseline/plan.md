@@ -358,12 +358,12 @@ Use explicit EF Core migrations. Do not apply migrations automatically on applic
 
 #### Automated
 
-- [x] 4.1 Full solution builds
-- [x] 4.2 Unit tests pass
-- [x] 4.3 PostgreSQL integration tests pass
-- [x] 4.4 Migration applies cleanly to local PostgreSQL
+- [x] 4.1 Full solution builds — dc4588e
+- [x] 4.2 Unit tests pass — dc4588e
+- [x] 4.3 PostgreSQL integration tests pass — dc4588e
+- [x] 4.4 Migration applies cleanly to local PostgreSQL — dc4588e
 
 #### Manual
 
-- [x] 4.5 Documentation supports clean local setup, migration, seeding, and record inspection
-- [x] 4.6 Future GPT summary boundary is documented without implementing GPT dependency
+- [x] 4.5 Documentation supports clean local setup, migration, seeding, and record inspection — dc4588e
+- [x] 4.6 Future GPT summary boundary is documented without implementing GPT dependency — dc4588e
