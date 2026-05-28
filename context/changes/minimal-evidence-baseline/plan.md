@@ -345,14 +345,14 @@ Use explicit EF Core migrations. Do not apply migrations automatically on applic
 
 #### Automated
 
-- [x] 3.1 Read services return visible games and exclude hidden games by default
-- [x] 3.2 Read services return evidence claims and optional summaries for visible games
-- [x] 3.3 Validation rejects claims without source metadata
-- [x] 3.4 Validation accepts games without evidence claims
+- [x] 3.1 Read services return visible games and exclude hidden games by default — e473c67
+- [x] 3.2 Read services return evidence claims and optional summaries for visible games — e473c67
+- [x] 3.3 Validation rejects claims without source metadata — e473c67
+- [x] 3.4 Validation accepts games without evidence claims — e473c67
 
 #### Manual
 
-- [x] 3.5 Developer can inspect service output for visible, hidden, no-source, source-backed, and summary-shaped records
+- [x] 3.5 Developer can inspect service output for visible, hidden, no-source, source-backed, and summary-shaped records — e473c67
 
 ### Phase 4: Verification And Handoff
 
