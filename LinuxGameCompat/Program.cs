@@ -1,5 +1,6 @@
 using LinuxGameCompat.Components;
 using LinuxGameCompat.Data;
+using LinuxGameCompat.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddDbContext<CompatibilityDbContext>(options =>
 	options.UseNpgsql(CompatibilityDbContextOptions.GetConnectionString(builder.Configuration)));
+builder.Services.AddScoped<IGameCompatibilityReadService, GameCompatibilityReadService>();
 
 var app = builder.Build();
 
