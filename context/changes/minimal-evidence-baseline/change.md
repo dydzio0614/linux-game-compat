@@ -1,9 +1,9 @@
 ---
 change_id: minimal-evidence-baseline
 title: Minimal evidence baseline
-status: planned
+status: implementing
 created: 2026-05-27
-updated: 2026-05-27
+updated: 2026-05-28
 archived_at: null
 ---
 
