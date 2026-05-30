@@ -94,6 +94,21 @@ public sealed class PostgreSqlCompatibilityTests : IAsyncLifetime
 	}
 
 	[Fact]
+	public async Task ReadService_ReturnsVisibleGameDetailWithoutSourceReferences()
+	{
+		await using var dbContext = CreateDbContext();
+		var service = new GameCompatibilityReadService(dbContext);
+
+		var detail = await service.GetVisibleGameBySlugAsync("unnamed-prototype");
+
+		Assert.NotNull(detail);
+		Assert.Equal(CompatibilityStatus.Unknown, detail.CompatibilityStatus);
+		Assert.Empty(detail.SourceReferences);
+		Assert.Empty(detail.EvidenceClaims);
+		Assert.Null(detail.Summary);
+	}
+
+	[Fact]
 	public async Task ReadService_DoesNotReturnHiddenGameDetail()
 	{
 		await using var dbContext = CreateDbContext();
