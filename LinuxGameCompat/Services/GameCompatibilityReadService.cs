@@ -5,12 +5,27 @@ namespace LinuxGameCompat.Services;
 
 public sealed class GameCompatibilityReadService(CompatibilityDbContext dbContext) : IGameCompatibilityReadService
 {
-	public async Task<IReadOnlyList<GameListItem>> GetVisibleGamesAsync(CancellationToken cancellationToken = default)
+	private const int MaxVisibleGamesLimit = 100;
+
+	public async Task<IReadOnlyList<GameListItem>> GetVisibleGamesAsync(
+		int limit = 20,
+		int offset = 0,
+		CancellationToken cancellationToken = default)
 	{
+		if (limit <= 0)
+		{
+			return [];
+		}
+
+		var boundedLimit = Math.Min(limit, MaxVisibleGamesLimit);
+		var boundedOffset = Math.Max(offset, 0);
+
 		return await dbContext.Games
 			.AsNoTracking()
 			.Where(game => !game.IsHidden)
 			.OrderBy(game => game.Title)
+			.Skip(boundedOffset)
+			.Take(boundedLimit)
 			.Select(game => MapGameListItem(game))
 			.ToListAsync(cancellationToken);
 	}
@@ -47,10 +62,10 @@ public sealed class GameCompatibilityReadService(CompatibilityDbContext dbContex
 			.AsNoTracking()
 			.Include(game => game.SourceReferences)
 				.ThenInclude(reference => reference.SourceSystem)
-			.Include(game => game.EvidenceClaims)
-				.ThenInclude(claim => claim.SourceReference)
-					.ThenInclude(reference => reference.SourceSystem)
+			.Include(game => game.SourceReferences)
+				.ThenInclude(reference => reference.EvidenceClaims)
 			.Include(game => game.CompatibilitySummary)
+			.AsSplitQuery()
 			.SingleOrDefaultAsync(game => game.Slug == normalizedSlug && !game.IsHidden, cancellationToken);
 
 		return game is null ? null : MapGameDetail(game);
@@ -64,16 +79,17 @@ public sealed class GameCompatibilityReadService(CompatibilityDbContext dbContex
 			.Select(MapSourceReference)
 			.ToArray();
 
-		var claims = game.EvidenceClaims
-			.OrderBy(claim => claim.ClaimType)
-			.ThenBy(claim => claim.Id)
-			.Select(claim => new EvidenceClaimDetail(
-				claim.Id,
-				claim.ClaimType,
-				claim.ClaimValue,
-				claim.ClaimText,
-				claim.ObservedAt,
-				MapSourceReference(claim.SourceReference)))
+		var claims = game.SourceReferences
+			.SelectMany(reference => reference.EvidenceClaims.Select(claim => (Claim: claim, SourceReference: reference)))
+			.OrderBy(item => item.Claim.ClaimType)
+			.ThenBy(item => item.Claim.Id)
+			.Select(item => new EvidenceClaimDetail(
+				item.Claim.Id,
+				item.Claim.ClaimType,
+				item.Claim.ClaimValue,
+				item.Claim.ClaimText,
+				item.Claim.ObservedAt,
+				MapSourceReference(item.SourceReference)))
 			.ToArray();
 
 		return new GameDetail(

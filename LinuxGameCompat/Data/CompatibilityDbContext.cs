@@ -40,7 +40,7 @@ public sealed class CompatibilityDbContext(DbContextOptions<CompatibilityDbConte
 			entity.Property(reference => reference.SourceGameId).HasMaxLength(120).IsRequired();
 			entity.Property(reference => reference.Url).HasMaxLength(1000).IsRequired();
 			entity.Property(reference => reference.MetadataJson).HasColumnType("jsonb");
-			entity.HasIndex(reference => new { reference.GameId, reference.SourceSystemId, reference.SourceGameId }).IsUnique();
+			entity.HasIndex(reference => new { reference.SourceSystemId, reference.SourceGameId }).IsUnique();
 			entity.HasIndex(reference => reference.Url);
 		});
 
@@ -49,7 +49,6 @@ public sealed class CompatibilityDbContext(DbContextOptions<CompatibilityDbConte
 			entity.Property(claim => claim.ClaimType).HasConversion<string>().HasMaxLength(40).IsRequired();
 			entity.Property(claim => claim.ClaimValue).HasMaxLength(120).IsRequired();
 			entity.Property(claim => claim.ClaimText).HasMaxLength(2000).IsRequired();
-			entity.HasIndex(claim => new { claim.GameId, claim.ClaimType });
 			entity.HasIndex(claim => claim.SourceReferenceId);
 		});
 

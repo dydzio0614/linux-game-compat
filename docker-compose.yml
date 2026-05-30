@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: linux_game_compat
       POSTGRES_PASSWORD: linux_game_compat_dev
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - postgres18-data:/var/lib/postgresql
     healthcheck:

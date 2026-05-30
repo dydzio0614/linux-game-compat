@@ -8,17 +8,9 @@ public sealed class EvidenceClaim
 {
 	public int Id { get; set; }
 
-	public int GameId { get; set; }
-
-	public Game Game { get; set; } = null!;
-
-	public int SourceSystemId { get; set; }
-
-	public SourceSystem SourceSystem { get; set; } = null!;
-
 	/// <summary>
 	/// Required citation target. The linked source reference carries the canonical
-	/// URL and source-native game identifier.
+	/// game, source system, URL, and source-native game identifier.
 	/// </summary>
 	public int SourceReferenceId { get; set; }
 

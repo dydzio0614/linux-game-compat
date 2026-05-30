@@ -127,8 +127,6 @@ public static class CompatibilitySeedData
 			new EvidenceClaim
 			{
 				Id = 1,
-				GameId = 1,
-				SourceSystemId = 1,
 				SourceReferenceId = 1,
 				ClaimType = EvidenceClaimType.Status,
 				ClaimValue = "playable",
@@ -138,8 +136,6 @@ public static class CompatibilitySeedData
 			new EvidenceClaim
 			{
 				Id = 2,
-				GameId = 2,
-				SourceSystemId = 2,
 				SourceReferenceId = 3,
 				ClaimType = EvidenceClaimType.Caveat,
 				ClaimValue = "anti-cheat",
@@ -149,8 +145,6 @@ public static class CompatibilitySeedData
 			new EvidenceClaim
 			{
 				Id = 3,
-				GameId = 3,
-				SourceSystemId = 2,
 				SourceReferenceId = 4,
 				ClaimType = EvidenceClaimType.Status,
 				ClaimValue = "unsupported",

@@ -14,6 +14,4 @@ public sealed class SourceSystem
 	public required string BaseUrl { get; set; }
 
 	public ICollection<SourceReference> SourceReferences { get; } = [];
-
-	public ICollection<EvidenceClaim> EvidenceClaims { get; } = [];
 }

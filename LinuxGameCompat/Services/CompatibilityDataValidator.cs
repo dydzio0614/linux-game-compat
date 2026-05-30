@@ -18,9 +18,9 @@ public static class CompatibilityDataValidator
 			errors.Add("Game slug is required.");
 		}
 
-		foreach (var claim in game.EvidenceClaims)
+		foreach (var sourceReference in game.SourceReferences)
 		{
-			errors.AddRange(ValidateEvidenceClaim(claim));
+			errors.AddRange(ValidateSourceReference(sourceReference));
 		}
 
 		return errors;
@@ -38,11 +38,6 @@ public static class CompatibilityDataValidator
 		if (string.IsNullOrWhiteSpace(claim.ClaimText))
 		{
 			errors.Add("Evidence claim text is required.");
-		}
-
-		if (claim.SourceSystemId <= 0 && claim.SourceSystem is null)
-		{
-			errors.Add("Evidence claim source system metadata is required.");
 		}
 
 		if (claim.SourceReferenceId <= 0 && claim.SourceReference is null)

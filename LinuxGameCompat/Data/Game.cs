@@ -45,11 +45,6 @@ public sealed class Game
 	public ICollection<SourceReference> SourceReferences { get; } = [];
 
 	/// <summary>
-	/// Claim-level evidence that explains status, caveats, workarounds, or notes.
-	/// </summary>
-	public ICollection<EvidenceClaim> EvidenceClaims { get; } = [];
-
-	/// <summary>
 	/// Optional cached summary slot reserved for later GPT-generated output.
 	/// </summary>
 	public GameCompatibilitySummary? CompatibilitySummary { get; set; }

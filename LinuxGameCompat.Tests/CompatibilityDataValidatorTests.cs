@@ -48,7 +48,6 @@ public sealed class CompatibilityDataValidatorTests
 
 		var errors = CompatibilityDataValidator.ValidateEvidenceClaim(claim);
 
-		Assert.Contains("Evidence claim source system metadata is required.", errors);
 		Assert.Contains("Evidence claim source reference metadata is required.", errors);
 	}
 
@@ -72,8 +71,6 @@ public sealed class CompatibilityDataValidatorTests
 		};
 		var claim = new EvidenceClaim
 		{
-			SourceSystemId = sourceSystem.Id,
-			SourceSystem = sourceSystem,
 			SourceReferenceId = sourceReference.Id,
 			SourceReference = sourceReference,
 			ClaimType = EvidenceClaimType.Status,

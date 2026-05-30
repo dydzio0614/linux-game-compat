@@ -58,6 +58,23 @@ public sealed class PostgreSqlCompatibilityTests : IAsyncLifetime
 	}
 
 	[Fact]
+	public async Task ReadService_ReturnsBoundedVisibleGames()
+	{
+		await using var dbContext = CreateDbContext();
+		var service = new GameCompatibilityReadService(dbContext);
+
+		var games = await service.GetVisibleGamesAsync(limit: 2, offset: 1);
+		var noGames = await service.GetVisibleGamesAsync(limit: 0);
+		var negativeOffsetGames = await service.GetVisibleGamesAsync(limit: 1, offset: -10);
+
+		Assert.Equal(2, games.Count);
+		Assert.Equal("destiny-2", games[0].Slug);
+		Assert.Empty(noGames);
+		Assert.Single(negativeOffsetGames);
+		Assert.Equal("baldurs-gate-3", negativeOffsetGames[0].Slug);
+	}
+
+	[Fact]
 	public async Task ReadService_ReturnsSourceClaimsAndSummaryForVisibleGame()
 	{
 		await using var dbContext = CreateDbContext();
@@ -108,6 +125,22 @@ public sealed class PostgreSqlCompatibilityTests : IAsyncLifetime
 			CompatibilityStatus = CompatibilityStatus.Unknown,
 			CreatedAt = DateTimeOffset.UtcNow,
 			UpdatedAt = DateTimeOffset.UtcNow
+		});
+
+		await Assert.ThrowsAnyAsync<DbUpdateException>(() => dbContext.SaveChangesAsync());
+	}
+
+	[Fact]
+	public async Task Model_EnforcesUniqueSourceIdentityAcrossGames()
+	{
+		await using var dbContext = CreateDbContext();
+		dbContext.SourceReferences.Add(new SourceReference
+		{
+			GameId = 2,
+			SourceSystemId = 1,
+			SourceGameId = "1086940",
+			Url = "https://www.protondb.com/app/1086940-duplicate",
+			CreatedAt = DateTimeOffset.UtcNow
 		});
 
 		await Assert.ThrowsAnyAsync<DbUpdateException>(() => dbContext.SaveChangesAsync());
