@@ -5,7 +5,7 @@ using Testcontainers.PostgreSql;
 
 namespace LinuxGameCompat.Tests;
 
-public sealed class PostgreSqlCompatibilityTests : IAsyncLifetime
+public sealed class PostgreSqlFixture : IAsyncLifetime
 {
 	private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18-alpine")
 		.WithDatabase("linux_game_compat_tests")
@@ -13,12 +13,12 @@ public sealed class PostgreSqlCompatibilityTests : IAsyncLifetime
 		.WithPassword("linux_game_compat_dev")
 		.Build();
 
-	private DbContextOptions<CompatibilityDbContext> _options = null!;
+	public DbContextOptions<CompatibilityDbContext> Options { get; private set; } = null!;
 
 	public async Task InitializeAsync()
 	{
 		await _postgres.StartAsync();
-		_options = new DbContextOptionsBuilder<CompatibilityDbContext>()
+		Options = new DbContextOptionsBuilder<CompatibilityDbContext>()
 			.UseNpgsql(_postgres.GetConnectionString())
 			.Options;
 
@@ -31,6 +31,14 @@ public sealed class PostgreSqlCompatibilityTests : IAsyncLifetime
 		await _postgres.DisposeAsync();
 	}
 
+	public CompatibilityDbContext CreateDbContext()
+	{
+		return new CompatibilityDbContext(Options);
+	}
+}
+
+public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IClassFixture<PostgreSqlFixture>
+{
 	[Fact]
 	public async Task Migration_AppliesAndLoadsSeedData()
 	{
@@ -177,6 +185,6 @@ public sealed class PostgreSqlCompatibilityTests : IAsyncLifetime
 
 	private CompatibilityDbContext CreateDbContext()
 	{
-		return new CompatibilityDbContext(_options);
+		return fixture.CreateDbContext();
 	}
 }
