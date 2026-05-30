@@ -25,7 +25,7 @@ public sealed class Game
 
 	/// <summary>
 	/// Source-neutral, normalized status chosen by the application. Supporting
-	/// status evidence is stored separately in <see cref="EvidenceClaims"/>.
+	/// status evidence is stored through <see cref="SourceReference.EvidenceClaims"/>.
 	/// </summary>
 	public CompatibilityStatus CompatibilityStatus { get; set; } = CompatibilityStatus.Unknown;
 

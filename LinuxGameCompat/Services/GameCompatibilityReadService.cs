@@ -7,6 +7,11 @@ public sealed class GameCompatibilityReadService(CompatibilityDbContext dbContex
 {
 	private const int MaxVisibleGamesLimit = 100;
 
+	public Task<IReadOnlyList<GameListItem>> GetVisibleGamesAsync(CancellationToken cancellationToken)
+	{
+		return GetVisibleGamesAsync(limit: 20, offset: 0, cancellationToken);
+	}
+
 	public async Task<IReadOnlyList<GameListItem>> GetVisibleGamesAsync(
 		int limit = 20,
 		int offset = 0,
@@ -41,11 +46,13 @@ public sealed class GameCompatibilityReadService(CompatibilityDbContext dbContex
 			return [];
 		}
 
+		var boundedLimit = Math.Min(limit, MaxVisibleGamesLimit);
+
 		return await dbContext.Games
 			.AsNoTracking()
 			.Where(game => !game.IsHidden && EF.Functions.ILike(game.Title, $"%{normalizedQuery}%"))
 			.OrderBy(game => game.Title)
-			.Take(limit)
+			.Take(boundedLimit)
 			.Select(game => MapGameListItem(game))
 			.ToListAsync(cancellationToken);
 	}

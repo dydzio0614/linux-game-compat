@@ -66,12 +66,14 @@ public sealed class PostgreSqlCompatibilityTests : IAsyncLifetime
 		var games = await service.GetVisibleGamesAsync(limit: 2, offset: 1);
 		var noGames = await service.GetVisibleGamesAsync(limit: 0);
 		var negativeOffsetGames = await service.GetVisibleGamesAsync(limit: 1, offset: -10);
+		var cancellationTokenOnlyGames = await service.GetVisibleGamesAsync(CancellationToken.None);
 
 		Assert.Equal(2, games.Count);
 		Assert.Equal("destiny-2", games[0].Slug);
 		Assert.Empty(noGames);
 		Assert.Single(negativeOffsetGames);
 		Assert.Equal("baldurs-gate-3", negativeOffsetGames[0].Slug);
+		Assert.Equal(4, cancellationTokenOnlyGames.Count);
 	}
 
 	[Fact]
@@ -112,6 +114,18 @@ public sealed class PostgreSqlCompatibilityTests : IAsyncLifetime
 
 		Assert.Single(games);
 		Assert.Equal("baldurs-gate-3", games[0].Slug);
+	}
+
+	[Fact]
+	public async Task SearchVisibleGamesByTitle_CapsLargeLimit()
+	{
+		await using var dbContext = CreateDbContext();
+		var service = new GameCompatibilityReadService(dbContext);
+
+		var games = await service.SearchVisibleGamesByTitleAsync("e", limit: 10_000);
+
+		Assert.Equal(4, games.Count);
+		Assert.DoesNotContain(games, game => game.Slug == "suppressed-test-record");
 	}
 
 	[Fact]

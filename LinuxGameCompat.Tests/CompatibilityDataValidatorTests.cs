@@ -37,6 +37,35 @@ public sealed class CompatibilityDataValidatorTests
 	}
 
 	[Fact]
+	public void ValidateGame_ValidatesClaimsThroughSourceReferences()
+	{
+		var sourceReference = new SourceReference
+		{
+			SourceSystemId = 1,
+			SourceGameId = "1086940",
+			Url = "https://www.protondb.com/app/1086940"
+		};
+		sourceReference.EvidenceClaims.Add(new EvidenceClaim
+		{
+			SourceReference = sourceReference,
+			ClaimType = EvidenceClaimType.Status,
+			ClaimValue = "",
+			ClaimText = "Playable through Proton."
+		});
+		var game = new Game
+		{
+			Title = "Baldur's Gate 3",
+			Slug = "baldurs-gate-3",
+			CompatibilityStatus = CompatibilityStatus.Playable
+		};
+		game.SourceReferences.Add(sourceReference);
+
+		var errors = CompatibilityDataValidator.ValidateGame(game);
+
+		Assert.Contains("Evidence claim value is required.", errors);
+	}
+
+	[Fact]
 	public void ValidateEvidenceClaim_RejectsMissingSourceMetadata()
 	{
 		var claim = new EvidenceClaim

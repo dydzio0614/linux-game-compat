@@ -21,6 +21,10 @@ public static class CompatibilityDataValidator
 		foreach (var sourceReference in game.SourceReferences)
 		{
 			errors.AddRange(ValidateSourceReference(sourceReference));
+			foreach (var claim in sourceReference.EvidenceClaims)
+			{
+				errors.AddRange(ValidateEvidenceClaim(claim));
+			}
 		}
 
 		return errors;

@@ -2,6 +2,8 @@ namespace LinuxGameCompat.Services;
 
 public interface IGameCompatibilityReadService
 {
+	Task<IReadOnlyList<GameListItem>> GetVisibleGamesAsync(CancellationToken cancellationToken);
+
 	Task<IReadOnlyList<GameListItem>> GetVisibleGamesAsync(
 		int limit = 20,
 		int offset = 0,
