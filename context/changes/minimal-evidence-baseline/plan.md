@@ -319,51 +319,51 @@ Use explicit EF Core migrations. Do not apply migrations automatically on applic
 
 #### Automated
 
-- [ ] 1.1 Project builds
-- [ ] 1.2 EF migration can be applied against local Postgres
-- [ ] 1.3 App startup does not auto-apply migrations
+- [x] 1.1 Project builds — 22f4e04
+- [x] 1.2 EF migration can be applied against local Postgres — 22f4e04
+- [x] 1.3 App startup does not auto-apply migrations — 22f4e04
 
 #### Manual
 
-- [ ] 1.4 Developer can start local Postgres and apply migrations manually
-- [ ] 1.5 Railway secrets remain external and uncommitted
+- [x] 1.4 Developer can start local Postgres and apply migrations manually — 22f4e04
+- [x] 1.5 Railway secrets remain external and uncommitted — 22f4e04
 
 ### Phase 2: Evidence Domain, Summaries, And Seed Data
 
 #### Automated
 
-- [ ] 2.1 Migration includes evidence, source, game, hidden, and summary-ready fields
-- [ ] 2.2 Seed loads representative records without external network calls
-- [ ] 2.3 No-source games validate with Unknown status
+- [x] 2.1 Migration includes evidence, source, game, hidden, and summary-ready fields — 6c188df
+- [x] 2.2 Seed loads representative records without external network calls — 6c188df
+- [x] 2.3 No-source games validate with Unknown status — 6c188df
 
 #### Manual
 
-- [ ] 2.4 Local database contains visible, hidden, claim-level evidence, and optional summary records
-- [ ] 2.5 Hidden records are present but identifiable as hidden
+- [x] 2.4 Local database contains visible, hidden, claim-level evidence, and optional summary records — 6c188df
+- [x] 2.5 Hidden records are present but identifiable as hidden — 6c188df
 
 ### Phase 3: Read Services And Validation
 
 #### Automated
 
-- [ ] 3.1 Read services return visible games and exclude hidden games by default
-- [ ] 3.2 Read services return evidence claims and optional summaries for visible games
-- [ ] 3.3 Validation rejects claims without source metadata
-- [ ] 3.4 Validation accepts games without evidence claims
+- [x] 3.1 Read services return visible games and exclude hidden games by default — e473c67
+- [x] 3.2 Read services return evidence claims and optional summaries for visible games — e473c67
+- [x] 3.3 Validation rejects claims without source metadata — e473c67
+- [x] 3.4 Validation accepts games without evidence claims — e473c67
 
 #### Manual
 
-- [ ] 3.5 Developer can inspect service output for visible, hidden, no-source, source-backed, and summary-shaped records
+- [x] 3.5 Developer can inspect service output for visible, hidden, no-source, source-backed, and summary-shaped records — e473c67
 
 ### Phase 4: Verification And Handoff
 
 #### Automated
 
-- [ ] 4.1 Full solution builds
-- [ ] 4.2 Unit tests pass
-- [ ] 4.3 PostgreSQL integration tests pass
-- [ ] 4.4 Migration applies cleanly to local PostgreSQL
+- [x] 4.1 Full solution builds — dc4588e
+- [x] 4.2 Unit tests pass — dc4588e
+- [x] 4.3 PostgreSQL integration tests pass — dc4588e
+- [x] 4.4 Migration applies cleanly to local PostgreSQL — dc4588e
 
 #### Manual
 
-- [ ] 4.5 Documentation supports clean local setup, migration, seeding, and record inspection
-- [ ] 4.6 Future GPT summary boundary is documented without implementing GPT dependency
+- [x] 4.5 Documentation supports clean local setup, migration, seeding, and record inspection — dc4588e
+- [x] 4.6 Future GPT summary boundary is documented without implementing GPT dependency — dc4588e
