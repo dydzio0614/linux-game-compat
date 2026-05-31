@@ -330,15 +330,15 @@ No database migration is expected. If implementation discovers a required schema
 
 #### Automated
 
-- [ ] 3.1 Project builds
-- [ ] 3.2 Full test suite passes
+- [x] 3.1 Project builds
+- [x] 3.2 Full test suite passes
 
 #### Manual
 
-- [ ] 3.3 `/games/baldurs-gate-3` shows status, source-linked evidence, and source references
-- [ ] 3.4 `/games/unnamed-prototype` shows `Unknown` and explicit no-evidence messaging
-- [ ] 3.5 `/games/suppressed-test-record` shows the generic not-found state
-- [ ] 3.6 A made-up slug shows the same generic not-found state
+- [x] 3.3 `/games/baldurs-gate-3` shows status, source-linked evidence, and source references
+- [x] 3.4 `/games/unnamed-prototype` shows `Unknown` and explicit no-evidence messaging
+- [x] 3.5 `/games/suppressed-test-record` shows the generic not-found state
+- [x] 3.6 A made-up slug shows the same generic not-found state
 
 ### Phase 4: Starter UI Cleanup And Handoff
 
