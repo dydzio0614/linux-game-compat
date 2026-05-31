@@ -75,9 +75,13 @@ public static class CompatibilityDataValidator
 		{
 			errors.Add("Source reference URL is required.");
 		}
-		else if (!Uri.TryCreate(reference.Url, UriKind.Absolute, out _))
+		else if (!Uri.TryCreate(reference.Url, UriKind.Absolute, out var uri))
 		{
 			errors.Add("Source reference URL must be absolute.");
+		}
+		else if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+		{
+			errors.Add("Source reference URL must use HTTP or HTTPS.");
 		}
 
 		return errors;
