@@ -1,10 +1,10 @@
 ---
 change_id: minimal-evidence-baseline
 title: Minimal evidence baseline
-status: impl_reviewed
+status: archived
 created: 2026-05-27
-updated: 2026-05-30
-archived_at: null
+updated: 2026-05-31
+archived_at: 2026-05-31T19:07:21Z
 ---
 
 ## Notes

@@ -3,7 +3,7 @@ project: "Linux Compatibility Aggregator"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-05-26
+updated: 2026-05-31
 prd_version: 1
 main_goal: speed
 top_blocker: capacity
@@ -27,7 +27,7 @@ New people switching to Linux face decision paralysis because compatibility evid
 
 | ID | Change ID | Outcome (user can ...) | Prerequisites | PRD refs | Status |
 |---|---|---|---|---|---|
-| F-01 | minimal-evidence-baseline | (foundation) initial source-backed game catalog and compatibility evidence path exists | - | NFR source links, Business Logic | ready |
+| F-01 | minimal-evidence-baseline | (foundation) initial source-backed game catalog and compatibility evidence path exists | - | NFR source links, Business Logic | done |
 | S-01 | anonymous-compatibility-lookup | user can search for a game, open details, and see source-linked compatibility reasoning | F-01 | US-01, FR-001, FR-002, FR-003, FR-004 | proposed |
 | F-02 | passwordless-member-access | (foundation) passwordless member identity is available for favorites | S-01 | Access Control, FR-006 | proposed |
 | S-02 | member-favorites-tracking | logged-in member can save games and view favorites with current status | S-01, F-02 | US-02, FR-007, FR-008 | proposed |
@@ -67,7 +67,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** -
 - **Unknowns:** -
 - **Risk:** If this foundation tries to solve broad crawling or a complete game database, it will consume the capacity needed for the first usable lookup path.
-- **Status:** ready
+- **Status:** done
 
 ### F-02: Passwordless member access
 
@@ -148,3 +148,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 ## Done
 
 <!-- Empty on first generation. `/10x-archive` appends entries here and flips matching roadmap items to `done`. -->
+- **F-01: (foundation) initial source-backed game catalog and compatibility evidence path exists for the first lookup flow.** — Archived 2026-05-31 → `context/archive/2026-05-27-minimal-evidence-baseline/`. Lesson: —.
