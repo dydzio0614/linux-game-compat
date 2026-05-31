@@ -344,13 +344,13 @@ No database migration is expected. If implementation discovers a required schema
 
 #### Automated
 
-- [ ] 4.1 Project builds
-- [ ] 4.2 Full test suite passes
+- [x] 4.1 Project builds
+- [x] 4.2 Full test suite passes
 
 #### Manual
 
-- [ ] 4.3 Counter and Weather starter pages are no longer exposed through navigation
-- [ ] 4.4 Direct `/counter` and `/weather` requests show the generic not-found state
-- [ ] 4.5 The app shell no longer presents starter template copy
-- [ ] 4.6 Lookup and detail pages remain usable on desktop and mobile widths
-- [ ] 4.7 Source links are visible and clickable from detail evidence
+- [x] 4.3 Counter and Weather starter pages are no longer exposed through navigation
+- [x] 4.4 Direct `/counter` and `/weather` requests show the generic not-found state
+- [x] 4.5 The app shell no longer presents starter template copy
+- [x] 4.6 Lookup and detail pages remain usable on desktop and mobile widths
+- [x] 4.7 Source links are visible and clickable from detail evidence
