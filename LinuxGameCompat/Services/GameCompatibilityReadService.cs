@@ -6,6 +6,7 @@ namespace LinuxGameCompat.Services;
 public sealed class GameCompatibilityReadService(CompatibilityDbContext dbContext) : IGameCompatibilityReadService
 {
 	private const int MaxVisibleGamesLimit = 100;
+	private const string LikeEscapeCharacter = @"\";
 
 	public Task<IReadOnlyList<GameListItem>> GetVisibleGamesAsync(CancellationToken cancellationToken)
 	{
@@ -47,14 +48,23 @@ public sealed class GameCompatibilityReadService(CompatibilityDbContext dbContex
 		}
 
 		var boundedLimit = Math.Min(limit, MaxVisibleGamesLimit);
+		var escapedQuery = EscapeLikePattern(normalizedQuery);
 
 		return await dbContext.Games
 			.AsNoTracking()
-			.Where(game => !game.IsHidden && EF.Functions.ILike(game.Title, $"%{normalizedQuery}%"))
+			.Where(game => !game.IsHidden && EF.Functions.ILike(game.Title, $"%{escapedQuery}%", LikeEscapeCharacter))
 			.OrderBy(game => game.Title)
 			.Take(boundedLimit)
 			.Select(game => MapGameListItem(game))
 			.ToListAsync(cancellationToken);
+	}
+
+	private static string EscapeLikePattern(string value)
+	{
+		return value
+			.Replace(@"\", @"\\", StringComparison.Ordinal)
+			.Replace("%", @"\%", StringComparison.Ordinal)
+			.Replace("_", @"\_", StringComparison.Ordinal);
 	}
 
 	public async Task<GameDetail?> GetVisibleGameBySlugAsync(string slug, CancellationToken cancellationToken = default)

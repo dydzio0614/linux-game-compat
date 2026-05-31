@@ -113,6 +113,56 @@ public sealed class CompatibilityDataValidatorTests
 	}
 
 	[Theory]
+	[InlineData("http://www.protondb.com/app/1086940")]
+	[InlineData("https://www.protondb.com/app/1086940")]
+	public void ValidateSourceReference_AcceptsHttpAndHttpsUrls(string url)
+	{
+		var reference = new SourceReference
+		{
+			SourceSystemId = 1,
+			SourceGameId = "1086940",
+			Url = url
+		};
+
+		var errors = CompatibilityDataValidator.ValidateSourceReference(reference);
+
+		Assert.Empty(errors);
+	}
+
+	[Theory]
+	[InlineData("javascript:alert(1)")]
+	[InlineData("ftp://example.com/file")]
+	[InlineData("mailto:test@example.com")]
+	public void ValidateSourceReference_RejectsNonWebAbsoluteUrls(string url)
+	{
+		var reference = new SourceReference
+		{
+			SourceSystemId = 1,
+			SourceGameId = "1086940",
+			Url = url
+		};
+
+		var errors = CompatibilityDataValidator.ValidateSourceReference(reference);
+
+		Assert.Contains("Source reference URL must use HTTP or HTTPS.", errors);
+	}
+
+	[Fact]
+	public void ValidateSourceReference_RejectsRelativeUrls()
+	{
+		var reference = new SourceReference
+		{
+			SourceSystemId = 1,
+			SourceGameId = "1086940",
+			Url = "app/1086940"
+		};
+
+		var errors = CompatibilityDataValidator.ValidateSourceReference(reference);
+
+		Assert.Contains("Source reference URL must be absolute.", errors);
+	}
+
+	[Theory]
 	[InlineData(CompatibilityStatus.Unknown)]
 	[InlineData(CompatibilityStatus.Unsupported)]
 	[InlineData(CompatibilityStatus.PlayableWithCaveats)]

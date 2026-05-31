@@ -300,57 +300,57 @@ No database migration is expected. If implementation discovers a required schema
 
 #### Automated
 
-- [ ] 1.1 A title containing `%` can be found by searching the literal `%` character and does not return unrelated visible games
-- [ ] 1.2 A title containing `_` can be found by searching the literal `_` character and does not return unrelated visible games
-- [ ] 1.3 A title containing `\` can be found by searching the literal `\` character and does not return unrelated visible games
-- [ ] 1.4 Existing `gate` title search still finds `baldurs-gate-3`
-- [ ] 1.5 Hidden games remain excluded from title search
-- [ ] 1.6 Full test suite passes
+- [x] 1.1 A title containing `%` can be found by searching the literal `%` character and does not return unrelated visible games — e0b492e
+- [x] 1.2 A title containing `_` can be found by searching the literal `_` character and does not return unrelated visible games — e0b492e
+- [x] 1.3 A title containing `\` can be found by searching the literal `\` character and does not return unrelated visible games — e0b492e
+- [x] 1.4 Existing `gate` title search still finds `baldurs-gate-3` — e0b492e
+- [x] 1.5 Hidden games remain excluded from title search — e0b492e
+- [x] 1.6 Full test suite passes — e0b492e
 
 #### Manual
 
-- [ ] 1.7 No manual verification is required for this backend-only phase
+- [x] 1.7 No manual verification is required for this backend-only phase — e0b492e
 
 ### Phase 2: Lookup Home Page
 
 #### Automated
 
-- [ ] 2.1 Project builds
-- [ ] 2.2 Full test suite passes
+- [x] 2.1 Project builds — 3002f33
+- [x] 2.2 Full test suite passes — 3002f33
 
 #### Manual
 
-- [ ] 2.3 `/` loads a search-first lookup page, not starter content
-- [ ] 2.4 Empty search does not show stale or default results
-- [ ] 2.5 Searching `gate` shows Baldur's Gate 3 with a status label and detail link
-- [ ] 2.6 Search result links point to `/games/{slug}`
-- [ ] 2.7 Searching for `%` or `_` in the UI does not produce surprising broad results
+- [x] 2.3 `/` loads a search-first lookup page, not starter content — 3002f33
+- [x] 2.4 Empty search does not show stale or default results — 3002f33
+- [x] 2.5 Searching `gate` shows Baldur's Gate 3 with a status label and detail link — 3002f33
+- [x] 2.6 Search result links point to `/games/{slug}` — 3002f33
+- [x] 2.7 Searching for `%` or `_` in the UI does not produce surprising broad results — 3002f33
 
 ### Phase 3: Game Detail Evidence Page
 
 #### Automated
 
-- [ ] 3.1 Project builds
-- [ ] 3.2 Full test suite passes
+- [x] 3.1 Project builds — 12b4a3a
+- [x] 3.2 Full test suite passes — 12b4a3a
 
 #### Manual
 
-- [ ] 3.3 `/games/baldurs-gate-3` shows status, source-linked evidence, and source references
-- [ ] 3.4 `/games/unnamed-prototype` shows `Unknown` and explicit no-evidence messaging
-- [ ] 3.5 `/games/suppressed-test-record` shows the generic not-found state
-- [ ] 3.6 A made-up slug shows the same generic not-found state
+- [x] 3.3 `/games/baldurs-gate-3` shows status, source-linked evidence, and source references — 12b4a3a
+- [x] 3.4 `/games/unnamed-prototype` shows `Unknown` and explicit no-evidence messaging — 12b4a3a
+- [x] 3.5 `/games/suppressed-test-record` shows the generic not-found state — 12b4a3a
+- [x] 3.6 A made-up slug shows the same generic not-found state — 12b4a3a
 
 ### Phase 4: Starter UI Cleanup And Handoff
 
 #### Automated
 
-- [ ] 4.1 Project builds
-- [ ] 4.2 Full test suite passes
+- [x] 4.1 Project builds — 9c7c7d5
+- [x] 4.2 Full test suite passes — 9c7c7d5
 
 #### Manual
 
-- [ ] 4.3 Counter and Weather starter pages are no longer exposed through navigation
-- [ ] 4.4 Direct `/counter` and `/weather` requests show the generic not-found state
-- [ ] 4.5 The app shell no longer presents starter template copy
-- [ ] 4.6 Lookup and detail pages remain usable on desktop and mobile widths
-- [ ] 4.7 Source links are visible and clickable from detail evidence
+- [x] 4.3 Counter and Weather starter pages are no longer exposed through navigation — 9c7c7d5
+- [x] 4.4 Direct `/counter` and `/weather` requests show the generic not-found state — 9c7c7d5
+- [x] 4.5 The app shell no longer presents starter template copy — 9c7c7d5
+- [x] 4.6 Lookup and detail pages remain usable on desktop and mobile widths — 9c7c7d5
+- [x] 4.7 Source links are visible and clickable from detail evidence — 9c7c7d5

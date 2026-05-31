@@ -20,6 +20,154 @@ a, .btn-link {
     padding-top: 1.1rem;
 }
 
+.lookup-page,
+.game-detail-page {
+    max-width: 960px;
+    padding-bottom: 3rem;
+}
+
+.lookup-header,
+.game-detail-header {
+    margin-bottom: 1.75rem;
+}
+
+.eyebrow {
+    margin-bottom: 0.25rem;
+    color: #475467;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.lead {
+    max-width: 48rem;
+}
+
+.lookup-form {
+    max-width: 760px;
+    margin-bottom: 2rem;
+}
+
+.lookup-results,
+.evidence-section,
+.source-section,
+.summary-note {
+    margin-top: 2rem;
+}
+
+.result-list,
+.evidence-list,
+.source-list {
+    display: grid;
+    gap: 1rem;
+    padding-left: 0;
+    list-style: none;
+}
+
+.result-item,
+.evidence-list > li,
+.source-list > li,
+.empty-state,
+.summary-note {
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.result-item {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+}
+
+.result-item h3 {
+    margin-bottom: 0.4rem;
+    font-size: 1.15rem;
+}
+
+.result-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+    color: #475467;
+    font-size: 0.92rem;
+}
+
+.status-label {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.75rem;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    background: #e7f0ff;
+    color: #1849a9;
+    font-weight: 700;
+}
+
+.empty-state,
+.summary-note {
+    padding: 1rem;
+}
+
+.empty-state h1,
+.empty-state h2,
+.empty-state h3 {
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p,
+.summary-note p,
+.evidence-list p {
+    margin-bottom: 0;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+.evidence-group {
+    margin-top: 1.5rem;
+}
+
+.evidence-list > li,
+.source-list > li {
+    padding: 1rem;
+}
+
+.source-list > li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    justify-content: space-between;
+}
+
+@media (max-width: 640.98px) {
+    .content {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    .lookup-form .input-group,
+    .result-item {
+        display: grid;
+    }
+
+    .lookup-form .form-control {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .lookup-form .btn,
+    .result-item .btn {
+        width: 100%;
+    }
+}
+
 h1:focus {
     outline: none;
 }

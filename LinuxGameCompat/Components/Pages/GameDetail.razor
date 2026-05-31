@@ -1,0 +1,167 @@
+@page "/games/{Slug}"
+@using LinuxGameCompat.Data
+@using LinuxGameCompat.Services
+@using GameDetailReadModel = LinuxGameCompat.Services.GameDetail
+@inject IGameCompatibilityReadService GameCompatibilityReadService
+
+<PageTitle>@(game is null ? "Game not found" : $"{game.Title} compatibility")</PageTitle>
+
+@if (isLoading)
+{
+	<section class="game-detail-page">
+		<p>Loading compatibility evidence...</p>
+	</section>
+}
+else if (game is null)
+{
+	<section class="game-detail-page">
+		<a class="back-link" href="/">Back to lookup</a>
+		<div class="empty-state">
+			<h1>Game not found</h1>
+			<p>We could not find a public compatibility record for that game.</p>
+		</div>
+	</section>
+}
+else
+{
+	<section class="game-detail-page">
+		<a class="back-link" href="/">Back to lookup</a>
+
+		<header class="game-detail-header">
+			<p class="eyebrow">Compatibility evidence</p>
+			<h1>@game.Title</h1>
+			<div class="result-meta">
+				<span class="status-label">@CompatibilityStatusLabels.ToPublicLabel(game.CompatibilityStatus)</span>
+				@if (game.SteamAppId is not null)
+				{
+					<span>Steam App ID @game.SteamAppId</span>
+				}
+			</div>
+		</header>
+
+		@if (!string.IsNullOrWhiteSpace(game.Summary?.SummaryText))
+		{
+			<section class="summary-note" aria-labelledby="summary-heading">
+				<h2 id="summary-heading">Stored summary</h2>
+				<p>@game.Summary.SummaryText</p>
+			</section>
+		}
+
+		<section class="evidence-section" aria-labelledby="evidence-heading">
+			<h2 id="evidence-heading">Source-backed evidence</h2>
+
+			@if (game.CompatibilityStatus == CompatibilityStatus.Unknown && game.EvidenceClaims.Count == 0)
+			{
+				<div class="empty-state">
+					<h3>No source-backed evidence has been curated yet</h3>
+					<p>This record is marked Unknown because there are no stored claims to support a compatibility decision.</p>
+				</div>
+			}
+			else if (game.EvidenceClaims.Count == 0)
+			{
+				<div class="empty-state">
+					<h3>No evidence claims are available</h3>
+					<p>No source-linked compatibility claims have been stored for this game yet.</p>
+				</div>
+			}
+			else
+			{
+				@foreach (var group in EvidenceGroups)
+				{
+					var claims = game.EvidenceClaims
+						.Where(claim => claim.ClaimType == group.ClaimType)
+						.OrderByDescending(claim => claim.ObservedAt)
+						.ThenBy(claim => claim.Id)
+						.ToArray();
+
+					if (claims.Length == 0)
+					{
+						continue;
+					}
+
+					<section class="evidence-group" aria-labelledby="@($"{group.Anchor}-heading")">
+						<h3 id="@($"{group.Anchor}-heading")">@group.Title</h3>
+						<ul class="evidence-list">
+							@foreach (var claim in claims)
+							{
+								<li>
+									<p>@claim.ClaimText</p>
+									<div class="result-meta">
+										<span>@claim.ClaimValue</span>
+										<span>Observed @claim.ObservedAt.ToString("yyyy-MM-dd")</span>
+										@if (IsPublicWebUrl(claim.SourceReference.Url))
+										{
+											<a href="@claim.SourceReference.Url" target="_blank" rel="noopener noreferrer">
+												@claim.SourceReference.SourceName
+											</a>
+										}
+										else
+										{
+											<span>@claim.SourceReference.SourceName</span>
+										}
+									</div>
+								</li>
+							}
+						</ul>
+					</section>
+				}
+			}
+		</section>
+
+		@if (game.SourceReferences.Count > 0)
+		{
+			<section class="source-section" aria-labelledby="sources-heading">
+				<h2 id="sources-heading">Source references</h2>
+				<ul class="source-list">
+					@foreach (var source in game.SourceReferences.OrderBy(source => source.SourceName).ThenBy(source => source.SourceGameId))
+					{
+						<li>
+							@if (IsPublicWebUrl(source.Url))
+							{
+								<a href="@source.Url" target="_blank" rel="noopener noreferrer">@source.SourceName</a>
+							}
+							else
+							{
+								<span>@source.SourceName</span>
+							}
+							<span>@source.SourceGameId</span>
+						</li>
+					}
+				</ul>
+			</section>
+		}
+	</section>
+}
+
+@code {
+	[Parameter]
+	public string? Slug { get; set; }
+
+	private static readonly EvidenceGroup[] EvidenceGroups =
+	[
+		new(EvidenceClaimType.Status, "Status", "status"),
+		new(EvidenceClaimType.Caveat, "Caveats", "caveats"),
+		new(EvidenceClaimType.Workaround, "Workarounds", "workarounds"),
+		new(EvidenceClaimType.Note, "Notes", "notes")
+	];
+
+	private GameDetailReadModel? game;
+	private bool isLoading = true;
+
+	protected override async Task OnParametersSetAsync()
+	{
+		isLoading = true;
+		game = string.IsNullOrWhiteSpace(Slug)
+			? null
+			: await GameCompatibilityReadService.GetVisibleGameBySlugAsync(Slug);
+		isLoading = false;
+	}
+
+	private static bool IsPublicWebUrl(string url)
+	{
+		return Uri.TryCreate(url, UriKind.Absolute, out var uri)
+			&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+	}
+
+	private sealed record EvidenceGroup(EvidenceClaimType ClaimType, string Title, string Anchor);
+}
