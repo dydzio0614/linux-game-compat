@@ -140,6 +140,72 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 	}
 
 	[Fact]
+	public async Task SearchVisibleGamesByTitle_TreatsLikeWildcardsAsLiteralCharacters()
+	{
+		await using var dbContext = CreateDbContext();
+		await using var transaction = await dbContext.Database.BeginTransactionAsync();
+		var now = DateTimeOffset.UtcNow;
+		dbContext.Games.AddRange(
+			new Game
+			{
+				Title = "Literal 100% Save",
+				Slug = "literal-percent-save",
+				CompatibilityStatus = CompatibilityStatus.Unknown,
+				CreatedAt = now,
+				UpdatedAt = now
+			},
+			new Game
+			{
+				Title = "Literal Co_op Quest",
+				Slug = "literal-underscore-quest",
+				CompatibilityStatus = CompatibilityStatus.Unknown,
+				CreatedAt = now,
+				UpdatedAt = now
+			},
+			new Game
+			{
+				Title = @"Literal C:\Games Path",
+				Slug = "literal-backslash-path",
+				CompatibilityStatus = CompatibilityStatus.Unknown,
+				CreatedAt = now,
+				UpdatedAt = now
+			},
+			new Game
+			{
+				Title = "Visible Control Game",
+				Slug = "literal-control-game",
+				CompatibilityStatus = CompatibilityStatus.Unknown,
+				CreatedAt = now,
+				UpdatedAt = now
+			},
+			new Game
+			{
+				Title = "Hidden 100% Save",
+				Slug = "hidden-literal-percent-save",
+				CompatibilityStatus = CompatibilityStatus.Unknown,
+				IsHidden = true,
+				CreatedAt = now,
+				UpdatedAt = now
+			});
+		await dbContext.SaveChangesAsync();
+
+		var service = new GameCompatibilityReadService(dbContext);
+
+		var percentGames = await service.SearchVisibleGamesByTitleAsync("%", limit: 100);
+		var underscoreGames = await service.SearchVisibleGamesByTitleAsync("_", limit: 100);
+		var backslashGames = await service.SearchVisibleGamesByTitleAsync(@"\", limit: 100);
+		var normalGames = await service.SearchVisibleGamesByTitleAsync("GATE", limit: 100);
+
+		Assert.Collection(percentGames, game => Assert.Equal("literal-percent-save", game.Slug));
+		Assert.Collection(underscoreGames, game => Assert.Equal("literal-underscore-quest", game.Slug));
+		Assert.Collection(backslashGames, game => Assert.Equal("literal-backslash-path", game.Slug));
+		Assert.Collection(normalGames, game => Assert.Equal("baldurs-gate-3", game.Slug));
+		Assert.DoesNotContain(percentGames, game => game.Slug == "hidden-literal-percent-save");
+
+		await transaction.RollbackAsync();
+	}
+
+	[Fact]
 	public async Task SearchVisibleGamesByTitle_CapsLargeLimit()
 	{
 		await using var dbContext = CreateDbContext();

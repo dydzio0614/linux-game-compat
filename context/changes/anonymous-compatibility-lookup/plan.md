@@ -300,16 +300,16 @@ No database migration is expected. If implementation discovers a required schema
 
 #### Automated
 
-- [ ] 1.1 A title containing `%` can be found by searching the literal `%` character and does not return unrelated visible games
-- [ ] 1.2 A title containing `_` can be found by searching the literal `_` character and does not return unrelated visible games
-- [ ] 1.3 A title containing `\` can be found by searching the literal `\` character and does not return unrelated visible games
-- [ ] 1.4 Existing `gate` title search still finds `baldurs-gate-3`
-- [ ] 1.5 Hidden games remain excluded from title search
-- [ ] 1.6 Full test suite passes
+- [x] 1.1 A title containing `%` can be found by searching the literal `%` character and does not return unrelated visible games
+- [x] 1.2 A title containing `_` can be found by searching the literal `_` character and does not return unrelated visible games
+- [x] 1.3 A title containing `\` can be found by searching the literal `\` character and does not return unrelated visible games
+- [x] 1.4 Existing `gate` title search still finds `baldurs-gate-3`
+- [x] 1.5 Hidden games remain excluded from title search
+- [x] 1.6 Full test suite passes
 
 #### Manual
 
-- [ ] 1.7 No manual verification is required for this backend-only phase
+- [x] 1.7 No manual verification is required for this backend-only phase
 
 ### Phase 2: Lookup Home Page
 
