@@ -1,7 +1,95 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+@using LinuxGameCompat.Services
+@inject IGameCompatibilityReadService GameCompatibilityReadService
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Linux game compatibility lookup</PageTitle>
 
-<h1>Hello, world!</h1>
+<section class="lookup-page">
+	<div class="lookup-header">
+		<p class="eyebrow">Linux compatibility lookup</p>
+		<h1>Check a game's Linux compatibility</h1>
+		<p class="lead">Search for a game title to inspect curated compatibility status and source-backed evidence.</p>
+	</div>
 
-Welcome to your new app.
+	<form class="lookup-form" @onsubmit="SearchAsync">
+		<label class="form-label" for="game-search">Game title</label>
+		<div class="input-group">
+			<input id="game-search"
+				   class="form-control form-control-lg"
+				   type="search"
+				   placeholder="Search by title, for example gate"
+				   @bind="searchQuery"
+				   @bind:event="oninput"
+				   autocomplete="off" />
+			<button class="btn btn-primary btn-lg" type="submit" disabled="@isSearching">
+				@if (isSearching)
+				{
+					<span>Searching...</span>
+				}
+				else
+				{
+					<span>Search</span>
+				}
+			</button>
+		</div>
+	</form>
+
+	@if (hasSearched)
+	{
+		<section class="lookup-results" aria-live="polite">
+			@if (results.Count == 0)
+			{
+				<div class="empty-state">
+					<h2>No matching games found</h2>
+					<p>Try a different title. Compatibility evidence may not have been curated for this game yet.</p>
+				</div>
+			}
+			else
+			{
+				<h2>Search results</h2>
+				<ul class="result-list">
+					@foreach (var game in results)
+					{
+						<li class="result-item">
+							<div>
+								<h3>@game.Title</h3>
+								<div class="result-meta">
+									<span class="status-label">@CompatibilityStatusLabels.ToPublicLabel(game.CompatibilityStatus)</span>
+									@if (game.SteamAppId is not null)
+									{
+										<span>Steam App ID @game.SteamAppId</span>
+									}
+								</div>
+							</div>
+							<a class="btn btn-outline-primary" href="@($"/games/{game.Slug}")">View details</a>
+						</li>
+					}
+				</ul>
+			}
+		</section>
+	}
+</section>
+
+@code {
+	private string searchQuery = string.Empty;
+	private bool hasSearched;
+	private bool isSearching;
+	private IReadOnlyList<GameListItem> results = [];
+
+	private async Task SearchAsync()
+	{
+		isSearching = true;
+		hasSearched = true;
+		results = [];
+
+		try
+		{
+			results = await GameCompatibilityReadService.SearchVisibleGamesByTitleAsync(searchQuery);
+		}
+		finally
+		{
+			isSearching = false;
+		}
+	}
+}

@@ -315,16 +315,16 @@ No database migration is expected. If implementation discovers a required schema
 
 #### Automated
 
-- [ ] 2.1 Project builds
-- [ ] 2.2 Full test suite passes
+- [x] 2.1 Project builds
+- [x] 2.2 Full test suite passes
 
 #### Manual
 
-- [ ] 2.3 `/` loads a search-first lookup page, not starter content
-- [ ] 2.4 Empty search does not show stale or default results
-- [ ] 2.5 Searching `gate` shows Baldur's Gate 3 with a status label and detail link
-- [ ] 2.6 Search result links point to `/games/{slug}`
-- [ ] 2.7 Searching for `%` or `_` in the UI does not produce surprising broad results
+- [x] 2.3 `/` loads a search-first lookup page, not starter content
+- [x] 2.4 Empty search does not show stale or default results
+- [x] 2.5 Searching `gate` shows Baldur's Gate 3 with a status label and detail link
+- [x] 2.6 Search result links point to `/games/{slug}`
+- [x] 2.7 Searching for `%` or `_` in the UI does not produce surprising broad results
 
 ### Phase 3: Game Detail Evidence Page
 
