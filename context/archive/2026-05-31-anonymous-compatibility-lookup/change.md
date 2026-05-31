@@ -1,10 +1,10 @@
 ---
 change_id: anonymous-compatibility-lookup
 title: Anonymous compatibility lookup
-status: impl_reviewed
+status: archived
 created: 2026-05-31
 updated: 2026-05-31
-archived_at: null
+archived_at: 2026-05-31T19:13:04Z
 ---
 
 ## Notes
