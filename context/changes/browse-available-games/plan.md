@@ -248,13 +248,13 @@ No database migration is expected. If an implementation generates a migration, s
 
 #### Automated
 
-- [x] 3.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [x] 3.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 3.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore` — 8048b9d
+- [x] 3.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore` — 8048b9d
 
 #### Manual
 
-- [x] 3.3 `/games` loads as an anonymous visitor.
-- [x] 3.4 `/` remains the search-first lookup page.
-- [x] 3.5 Browse, lookup, and detail pages can be reached through normal links.
-- [x] 3.6 Hidden records do not appear in browse results.
-- [x] 3.7 No new database migration is generated for this change.
+- [x] 3.3 `/games` loads as an anonymous visitor. — 8048b9d
+- [x] 3.4 `/` remains the search-first lookup page. — 8048b9d
+- [x] 3.5 Browse, lookup, and detail pages can be reached through normal links. — 8048b9d
+- [x] 3.6 Hidden records do not appear in browse results. — 8048b9d
+- [x] 3.7 No new database migration is generated for this change. — 8048b9d
