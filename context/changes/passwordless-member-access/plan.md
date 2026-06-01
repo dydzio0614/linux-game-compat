@@ -358,30 +358,30 @@ This change adds auth-related tables to the existing PostgreSQL database. No exi
 
 #### Automated
 
-- [x] 1.1 Build passes
-- [x] 1.2 Migration applies cleanly in PostgreSQL-backed tests
-- [x] 1.3 Existing compatibility read-service tests still pass
+- [x] 1.1 Build passes — f06c8ac
+- [x] 1.2 Migration applies cleanly in PostgreSQL-backed tests — f06c8ac
+- [x] 1.3 Existing compatibility read-service tests still pass — f06c8ac
 
 #### Manual
 
-- [x] 1.4 Anonymous `/` lookup remains reachable without signing in
-- [x] 1.5 Anonymous `/games/{slug}` detail remains reachable without signing in
+- [x] 1.4 Anonymous `/` lookup remains reachable without signing in — f06c8ac
+- [x] 1.5 Anonymous `/games/{slug}` detail remains reachable without signing in — f06c8ac
 
 ### Phase 2: Magic-Link Request And Consumption Flow
 
 #### Automated
 
-- [ ] 2.1 Magic-link request stores a hashed token and does not create a member immediately
-- [ ] 2.2 Valid magic-link consumption creates a member for a new email and marks the request consumed
-- [ ] 2.3 Reusing a consumed token fails
-- [ ] 2.4 Expired and invalid tokens fail without signing in
-- [ ] 2.5 Non-local return URLs are rejected or normalized to `/`
+- [x] 2.1 Magic-link request stores a hashed token and does not create a member immediately
+- [x] 2.2 Valid magic-link consumption creates a member for a new email and marks the request consumed
+- [x] 2.3 Reusing a consumed token fails
+- [x] 2.4 Expired and invalid tokens fail without signing in
+- [x] 2.5 Non-local return URLs are rejected or normalized to `/`
 
 #### Manual
 
-- [ ] 2.6 Development login request writes a usable magic link to logs
-- [ ] 2.7 Consuming the logged link signs in and redirects to a local return URL or `/`
-- [ ] 2.8 Reusing the same link no longer signs in
+- [x] 2.6 Development login request writes a usable magic link to logs
+- [x] 2.7 Consuming the logged link signs in and redirects to a local return URL or `/`
+- [x] 2.8 Reusing the same link no longer signs in
 
 ### Phase 3: Login/Logout UI And Navigation
 

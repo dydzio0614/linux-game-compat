@@ -1,7 +1,9 @@
 using LinuxGameCompat.Components;
 using LinuxGameCompat.Data;
 using LinuxGameCompat.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,6 +36,16 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IGameCompatibilityReadService, GameCompatibilityReadService>();
+builder.Services.AddScoped<IMagicLinkService, MagicLinkService>();
+builder.Services.AddSingleton(TimeProvider.System);
+if (builder.Environment.IsDevelopment())
+{
+	builder.Services.AddScoped<IAuthEmailSender, LoggingAuthEmailSender>();
+}
+else
+{
+	builder.Services.AddScoped<IAuthEmailSender, SmtpAuthEmailSender>();
+}
 
 var app = builder.Build();
 
@@ -53,7 +65,51 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
+app.MapPost("/auth/magic-link/request", async (
+	[FromForm] string email,
+	[FromForm] string? returnUrl,
+	HttpContext httpContext,
+	IMagicLinkService magicLinkService,
+	IConfiguration configuration,
+	CancellationToken cancellationToken) =>
+{
+	var publicBaseUri = GetPublicBaseUri(configuration, httpContext.Request);
+	await magicLinkService.RequestLoginLinkAsync(
+		new MagicLinkRequestInput(
+			email,
+			returnUrl,
+			publicBaseUri,
+			httpContext.Connection.RemoteIpAddress?.ToString(),
+			httpContext.Request.Headers.UserAgent.ToString()),
+		cancellationToken);
+
+	return Results.Redirect("/login?sent=1");
+}).DisableAntiforgery();
+app.MapGet("/auth/magic-link/consume", async (
+	string? token,
+	IMagicLinkService magicLinkService,
+	CancellationToken cancellationToken) =>
+{
+	var result = await magicLinkService.ConsumeLoginLinkAsync(token ?? string.Empty, cancellationToken);
+	return Results.Redirect(result.RedirectUrl);
+});
+app.MapPost("/logout", async (HttpContext httpContext) =>
+{
+	await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+	return Results.Redirect("/");
+}).RequireAuthorization();
 app.MapRazorComponents<App>()
 	.AddInteractiveServerRenderMode();
 
 app.Run();
+
+static Uri GetPublicBaseUri(IConfiguration configuration, HttpRequest request)
+{
+	var configuredBaseUrl = configuration["Auth:PublicBaseUrl"];
+	if (Uri.TryCreate(configuredBaseUrl, UriKind.Absolute, out var configuredUri))
+	{
+		return configuredUri;
+	}
+
+	return new Uri($"{request.Scheme}://{request.Host}");
+}
