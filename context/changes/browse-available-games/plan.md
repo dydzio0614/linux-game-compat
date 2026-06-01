@@ -219,15 +219,15 @@ No database migration is expected. If an implementation generates a migration, s
 
 #### Automated
 
-- [ ] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [ ] 1.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
+- [x] 1.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
 
 #### Manual
 
-- [ ] 1.3 Opening `/games` shows the first page of visible games ordered by title.
-- [ ] 1.4 Game rows show title, compact status, optional Steam App ID, and a detail link.
-- [ ] 1.5 A visible game's detail link opens the existing `/games/{slug}` detail page.
-- [ ] 1.6 If no visible games exist, the browse page shows an understandable empty state.
+- [x] 1.3 Opening `/games` shows the first page of visible games ordered by title.
+- [x] 1.4 Game rows show title, compact status, optional Steam App ID, and a detail link.
+- [x] 1.5 A visible game's detail link opens the existing `/games/{slug}` detail page.
+- [x] 1.6 If no visible games exist, the browse page shows an understandable empty state.
 
 ### Phase 2: Paging, Navigation, And Shared Styling
 

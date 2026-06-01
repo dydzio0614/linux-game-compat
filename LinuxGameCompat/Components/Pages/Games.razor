@@ -1,0 +1,69 @@
+@page "/games"
+@rendermode InteractiveServer
+@using LinuxGameCompat.Services
+@inject IGameCompatibilityReadService GameCompatibilityReadService
+
+<PageTitle>Browse Linux game compatibility</PageTitle>
+
+<section class="lookup-page">
+	<div class="lookup-header">
+		<p class="eyebrow">Game catalog</p>
+		<h1>Browse available games</h1>
+		<p class="lead">View public compatibility records and open source-backed details for each game.</p>
+	</div>
+
+	<section class="lookup-results" aria-live="polite">
+		@if (isLoading)
+		{
+			<p>Loading games...</p>
+		}
+		else if (games.Count == 0)
+		{
+			<div class="empty-state">
+				<h2>No public games available yet</h2>
+				<p>Compatibility evidence has not been published for the catalog yet.</p>
+			</div>
+		}
+		else
+		{
+			<h2>Available games</h2>
+			<ul class="result-list">
+				@foreach (var game in games)
+				{
+					<li class="result-item">
+						<div>
+							<h3>@game.Title</h3>
+							<div class="result-meta">
+								<span class="status-label">@CompatibilityStatusLabels.ToPublicLabel(game.CompatibilityStatus)</span>
+								@if (game.SteamAppId is not null)
+								{
+									<span>Steam App ID @game.SteamAppId</span>
+								}
+							</div>
+						</div>
+						<a class="btn btn-outline-primary" href="@($"/games/{game.Slug}")">View details</a>
+					</li>
+				}
+			</ul>
+		}
+	</section>
+</section>
+
+@code {
+	private const int PageSize = 20;
+
+	private bool isLoading = true;
+	private IReadOnlyList<GameListItem> games = [];
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			games = await GameCompatibilityReadService.GetVisibleGamesAsync(PageSize, offset: 0);
+		}
+		finally
+		{
+			isLoading = false;
+		}
+	}
+}
