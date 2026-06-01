@@ -326,7 +326,13 @@ Complete focused test coverage and document the operational configuration needed
 
 ## Performance Considerations
 
-Magic-link tables should be indexed by token hash and normalized email. Request lookups and consumption should be single-row operations. Basic request throttling by normalized email is enough for MVP-scale low-QPS traffic; broader abuse controls can wait until real usage exists.
+Magic-link tables should be indexed by token hash and normalized email. Request lookups and consumption should be single-row operations. MVP does not implement request throttling; per-normalized-email throttling is a known follow-up before public or higher-volume launch. Broader abuse controls can wait until real usage exists.
+
+## Known MVP Tradeoffs / Deferred Hardening
+
+- Email scanners and security tools can prefetch `GET /auth/magic-link/consume` links, which may consume the one-time token before the user intentionally opens it. MVP accepts this risk for a simpler flow. Future hardening should make `GET` render a confirmation page and consume/sign in only on `POST` with antiforgery protection.
+- Magic-link request throttling is deferred. The schema keeps request metadata suitable for future per-normalized-email throttling, but MVP implementation should not claim to enforce send limits.
+- Full web-host auth endpoint tests are deferred. MVP automated coverage should focus on migrations and service/persistence behavior, with manual smoke testing covering routing, redirects, cookies, and real sign-in/logout behavior.
 
 ## Migration Notes
 

@@ -35,7 +35,7 @@ Grounding: 10/10 existing paths ✓, 10/10 symbols ✓, brief↔plan ✓. Curren
   - Tradeoff: Adds one confirmation click/page to the login flow.
   - Confidence: HIGH — the plan already has POST endpoints and antiforgery middleware.
   - Blind spot: Exact UI copy and failure page shape still need specifying.
-- **Decision**: PENDING
+- **Decision**: ACCEPTED FOR MVP — deferred scanner-prefetch hardening recorded in plan.
 
 ### F2 — Request throttling is promised but not planned
 
@@ -49,7 +49,7 @@ Grounding: 10/10 existing paths ✓, 10/10 symbols ✓, brief↔plan ✓. Curren
   - Tradeoff: Requires choosing a simple limit/window in the plan.
   - Confidence: HIGH — the planned `MagicLinkRequest` table already stores the needed data.
   - Blind spot: IP-based throttling is still intentionally out of scope unless required.
-- **Decision**: PENDING
+- **Decision**: DEFERRED — throttling recorded as follow-up.
 
 ### F3 — Auth endpoint tests need a web-host strategy
 
@@ -63,4 +63,4 @@ Grounding: 10/10 existing paths ✓, 10/10 symbols ✓, brief↔plan ✓. Curren
   - Tradeoff: Adds test infrastructure beyond the existing DB-only fixture.
   - Confidence: HIGH — current tests show only DbContext/Testcontainers wiring.
   - Blind spot: Some pure token/return-url tests can still stay as service tests.
-- **Decision**: PENDING
+- **Decision**: DEFERRED — web-host endpoint tests recorded as follow-up.
