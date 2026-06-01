@@ -35,8 +35,10 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IGameCompatibilityReadService, GameCompatibilityReadService>();
 builder.Services.AddScoped<IMagicLinkService, MagicLinkService>();
+builder.Services.AddScoped<ICurrentMemberAccessor, CurrentMemberAccessor>();
 builder.Services.AddSingleton(TimeProvider.System);
 if (builder.Environment.IsDevelopment())
 {

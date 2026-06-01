@@ -1,0 +1,77 @@
+﻿@page "/login"
+@rendermode InteractiveServer
+
+<PageTitle>Login</PageTitle>
+
+<section class="login-page">
+	<div class="lookup-header">
+		<p class="eyebrow">Member access</p>
+		<h1>Login with your email</h1>
+		<p class="lead">Enter your email address and we will send a one-time sign-in link.</p>
+	</div>
+
+	@if (Sent)
+	{
+		<div class="empty-state" role="status">
+			<h2>Check your inbox</h2>
+			<p>If the address can receive member access links, a sign-in email is on its way.</p>
+		</div>
+	}
+	else
+	{
+		@if (Failed)
+		{
+			<div class="empty-state" role="alert">
+				<h2>That link did not work</h2>
+				<p>Request a new sign-in link and use it within 15 minutes.</p>
+			</div>
+		}
+
+		<form class="lookup-form" method="post" action="/auth/magic-link/request">
+			<input type="hidden" name="returnUrl" value="@SafeReturnUrl" />
+			<label class="form-label" for="login-email">Email address</label>
+			<div class="input-group">
+				<input id="login-email"
+					   class="form-control form-control-lg"
+					   type="email"
+					   name="email"
+					   autocomplete="email"
+					   required />
+				<button class="btn btn-primary btn-lg" type="submit">Send link</button>
+			</div>
+		</form>
+	}
+</section>
+
+@code {
+	[SupplyParameterFromQuery(Name = "returnUrl")]
+	private string? ReturnUrl { get; set; }
+
+	[SupplyParameterFromQuery(Name = "sent")]
+	private string? SentValue { get; set; }
+
+	[SupplyParameterFromQuery(Name = "failed")]
+	private string? FailedValue { get; set; }
+
+	private bool Sent => SentValue == "1";
+
+	private bool Failed => FailedValue == "1";
+
+	private string SafeReturnUrl => NormalizeLocalReturnUrl(ReturnUrl);
+
+	private static string NormalizeLocalReturnUrl(string? returnUrl)
+	{
+		if (string.IsNullOrWhiteSpace(returnUrl) || !Uri.TryCreate(returnUrl, UriKind.Relative, out var uri))
+		{
+			return "/";
+		}
+
+		var value = uri.ToString();
+		if (!value.StartsWith("/", StringComparison.Ordinal) || value.StartsWith("//", StringComparison.Ordinal))
+		{
+			return "/";
+		}
+
+		return value;
+	}
+}
