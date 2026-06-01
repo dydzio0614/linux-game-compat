@@ -59,6 +59,29 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 	}
 
 	[Fact]
+	public async Task Migration_CreatesMemberAuthSchema()
+	{
+		await using var dbContext = CreateDbContext();
+
+		Assert.True(await TableExistsAsync(dbContext, "AspNetUsers"));
+		Assert.True(await TableExistsAsync(dbContext, "AspNetUserClaims"));
+		Assert.True(await TableExistsAsync(dbContext, "AspNetUserLogins"));
+		Assert.True(await TableExistsAsync(dbContext, "AspNetUserTokens"));
+		Assert.True(await TableExistsAsync(dbContext, "MagicLinkRequests"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MagicLinkRequests", "NormalizedEmail"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MagicLinkRequests", "TokenHash"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MagicLinkRequests", "ExpiresAt"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MagicLinkRequests", "ConsumedAt"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MagicLinkRequests", "ReturnUrl"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MagicLinkRequests", "RequestIpAddress"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MagicLinkRequests", "UserAgent"));
+		Assert.True(await IndexExistsAsync(dbContext, "EmailIndex"));
+		Assert.True(await IndexExistsAsync(dbContext, "IX_MagicLinkRequests_TokenHash"));
+		Assert.True(await IndexExistsAsync(dbContext, "IX_MagicLinkRequests_NormalizedEmail"));
+		Assert.True(await IndexExistsAsync(dbContext, "IX_MagicLinkRequests_ExpiresAt"));
+	}
+
+	[Fact]
 	public async Task ReadService_ReturnsVisibleGamesAndExcludesHiddenGames()
 	{
 		await using var dbContext = CreateDbContext();
@@ -277,6 +300,8 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 		Assert.Equal(64, request.TokenHash.Length);
 		Assert.Null(request.ConsumedAt);
 		Assert.Equal("/games/baldurs-gate-3", request.ReturnUrl);
+		Assert.Equal("127.0.0.1", request.RequestIpAddress);
+		Assert.Equal("test-agent", request.UserAgent);
 		Assert.Null(await userManager.FindByEmailAsync("new-member@example.test"));
 	}
 
@@ -348,7 +373,9 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 
 		var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 		Assert.False(expiredResult.Succeeded);
+		Assert.Equal("/login?failed=1", expiredResult.RedirectUrl);
 		Assert.False(invalidResult.Succeeded);
+		Assert.Equal("/login?failed=1", invalidResult.RedirectUrl);
 		Assert.Null(await userManager.FindByEmailAsync("expired-member@example.test"));
 	}
 
@@ -374,6 +401,55 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 	private CompatibilityDbContext CreateDbContext()
 	{
 		return fixture.CreateDbContext();
+	}
+
+	private static async Task<bool> TableExistsAsync(CompatibilityDbContext dbContext, string tableName)
+	{
+		var count = await dbContext.Database
+			.SqlQueryRaw<int>(
+				"""
+				SELECT COUNT(*)::int AS "Value"
+				FROM information_schema.tables
+				WHERE table_schema = 'public' AND table_name = {0}
+				""",
+				tableName)
+			.SingleAsync();
+
+		return count == 1;
+	}
+
+	private static async Task<bool> ColumnExistsAsync(
+		CompatibilityDbContext dbContext,
+		string tableName,
+		string columnName)
+	{
+		var count = await dbContext.Database
+			.SqlQueryRaw<int>(
+				"""
+				SELECT COUNT(*)::int AS "Value"
+				FROM information_schema.columns
+				WHERE table_schema = 'public' AND table_name = {0} AND column_name = {1}
+				""",
+				tableName,
+				columnName)
+			.SingleAsync();
+
+		return count == 1;
+	}
+
+	private static async Task<bool> IndexExistsAsync(CompatibilityDbContext dbContext, string indexName)
+	{
+		var count = await dbContext.Database
+			.SqlQueryRaw<int>(
+				"""
+				SELECT COUNT(*)::int AS "Value"
+				FROM pg_indexes
+				WHERE schemaname = 'public' AND indexname = {0}
+				""",
+				indexName)
+			.SingleAsync();
+
+		return count == 1;
 	}
 
 	private AsyncServiceScope CreateAuthScope(

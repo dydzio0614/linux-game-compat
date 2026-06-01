@@ -387,26 +387,26 @@ This change adds auth-related tables to the existing PostgreSQL database. No exi
 
 #### Automated
 
-- [x] 3.1 Build passes
-- [x] 3.2 Auth UI changes compile with nullable warnings clean
-- [x] 3.3 Existing lookup tests still pass
+- [x] 3.1 Build passes — 939487c
+- [x] 3.2 Auth UI changes compile with nullable warnings clean — 939487c
+- [x] 3.3 Existing lookup tests still pass — 939487c
 
 #### Manual
 
-- [x] 3.4 Anonymous nav shows `Lookup` and `Login`
-- [x] 3.5 Signed-in nav shows a member label and logout control
-- [x] 3.6 Logout clears the session and returns to `/`
-- [x] 3.7 Anonymous lookup and detail pages still work after login UI changes
+- [x] 3.4 Anonymous nav shows `Lookup` and `Login` — 939487c
+- [x] 3.5 Signed-in nav shows a member label and logout control — 939487c
+- [x] 3.6 Logout clears the session and returns to `/` — 939487c
+- [x] 3.7 Anonymous lookup and detail pages still work after login UI changes — 939487c
 
 ### Phase 4: Verification And Handoff
 
 #### Automated
 
-- [ ] 4.1 `dotnet build LinuxGameCompat.sln --no-restore` passes
-- [ ] 4.2 `dotnet test LinuxGameCompat.sln --no-restore` passes
-- [ ] 4.3 New auth integration tests pass under Testcontainers PostgreSQL
+- [x] 4.1 `dotnet build LinuxGameCompat.sln --no-restore` passes
+- [x] 4.2 `dotnet test LinuxGameCompat.sln --no-restore` passes
+- [x] 4.3 New auth integration tests pass under Testcontainers PostgreSQL
 
 #### Manual
 
-- [ ] 4.4 Login request, logged dev link consumption, signed-in nav, logout, reused link, expired link, and invalid link are smoke-tested
-- [ ] 4.5 Production SMTP/base URL configuration requirements are documented
+- [x] 4.4 Login request, logged dev link consumption, signed-in nav, logout, reused link, expired link, and invalid link are smoke-tested
+- [x] 4.5 Production SMTP/base URL configuration requirements are documented
