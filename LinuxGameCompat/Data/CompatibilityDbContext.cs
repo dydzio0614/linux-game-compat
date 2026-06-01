@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using LinuxGameCompat.Data.Seed;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace LinuxGameCompat.Data;
 
-public sealed class CompatibilityDbContext(DbContextOptions<CompatibilityDbContext> options) : DbContext(options)
+public sealed class CompatibilityDbContext(DbContextOptions<CompatibilityDbContext> options)
+	: IdentityUserContext<ApplicationUser>(options)
 {
 	public DbSet<Game> Games => Set<Game>();
 
@@ -15,8 +17,20 @@ public sealed class CompatibilityDbContext(DbContextOptions<CompatibilityDbConte
 
 	public DbSet<GameCompatibilitySummary> GameCompatibilitySummaries => Set<GameCompatibilitySummary>();
 
+	public DbSet<MagicLinkRequest> MagicLinkRequests => Set<MagicLinkRequest>();
+
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
+		base.OnModelCreating(modelBuilder);
+
+		modelBuilder.Entity<ApplicationUser>(entity =>
+		{
+			entity.HasIndex(user => user.NormalizedEmail)
+				.HasDatabaseName("EmailIndex")
+				.IsUnique()
+				.HasFilter("\"NormalizedEmail\" IS NOT NULL");
+		});
+
 		modelBuilder.Entity<Game>(entity =>
 		{
 			entity.Property(game => game.Title).HasMaxLength(200).IsRequired();
@@ -64,6 +78,18 @@ public sealed class CompatibilityDbContext(DbContextOptions<CompatibilityDbConte
 			entity.Property(summary => summary.ErrorCode).HasMaxLength(80);
 			entity.Property(summary => summary.ErrorMessage).HasMaxLength(2000);
 			entity.HasIndex(summary => summary.GameId).IsUnique();
+		});
+
+		modelBuilder.Entity<MagicLinkRequest>(entity =>
+		{
+			entity.Property(request => request.NormalizedEmail).HasMaxLength(256).IsRequired();
+			entity.Property(request => request.TokenHash).HasMaxLength(128).IsRequired();
+			entity.Property(request => request.ReturnUrl).HasMaxLength(2048);
+			entity.Property(request => request.RequestIpAddress).HasMaxLength(64);
+			entity.Property(request => request.UserAgent).HasMaxLength(512);
+			entity.HasIndex(request => request.TokenHash).IsUnique();
+			entity.HasIndex(request => request.NormalizedEmail);
+			entity.HasIndex(request => request.ExpiresAt);
 		});
 
 		CompatibilitySeedData.Apply(modelBuilder);
