@@ -358,14 +358,14 @@ This change adds auth-related tables to the existing PostgreSQL database. No exi
 
 #### Automated
 
-- [ ] 1.1 Build passes
-- [ ] 1.2 Migration applies cleanly in PostgreSQL-backed tests
-- [ ] 1.3 Existing compatibility read-service tests still pass
+- [x] 1.1 Build passes
+- [x] 1.2 Migration applies cleanly in PostgreSQL-backed tests
+- [x] 1.3 Existing compatibility read-service tests still pass
 
 #### Manual
 
-- [ ] 1.4 Anonymous `/` lookup remains reachable without signing in
-- [ ] 1.5 Anonymous `/games/{slug}` detail remains reachable without signing in
+- [x] 1.4 Anonymous `/` lookup remains reachable without signing in
+- [x] 1.5 Anonymous `/games/{slug}` detail remains reachable without signing in
 
 ### Phase 2: Magic-Link Request And Consumption Flow
 

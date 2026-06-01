@@ -1,6 +1,7 @@
 using LinuxGameCompat.Components;
 using LinuxGameCompat.Data;
 using LinuxGameCompat.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,27 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddDbContext<CompatibilityDbContext>(options =>
 	options.UseNpgsql(CompatibilityDbContextOptions.GetConnectionString(builder.Configuration)));
+builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
+	.AddIdentityCookies();
+builder.Services.AddIdentityCore<ApplicationUser>(options =>
+	{
+		options.User.RequireUniqueEmail = true;
+		options.SignIn.RequireConfirmedAccount = false;
+		options.SignIn.RequireConfirmedEmail = false;
+	})
+	.AddEntityFrameworkStores<CompatibilityDbContext>()
+	.AddSignInManager()
+	.AddDefaultTokenProviders();
+builder.Services.ConfigureApplicationCookie(options =>
+{
+	options.ExpireTimeSpan = TimeSpan.FromDays(30);
+	options.SlidingExpiration = true;
+	options.LoginPath = "/login";
+	options.LogoutPath = "/logout";
+	options.AccessDeniedPath = "/";
+});
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IGameCompatibilityReadService, GameCompatibilityReadService>();
 
 var app = builder.Build();
@@ -26,6 +48,8 @@ if (!app.Environment.IsDevelopment())
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
