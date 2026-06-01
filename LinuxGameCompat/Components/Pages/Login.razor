@@ -26,6 +26,13 @@
 				<p>Request a new sign-in link and use it within 15 minutes.</p>
 			</div>
 		}
+		else if (RequestFailed)
+		{
+			<div class="empty-state" role="alert">
+				<h2>We could not send that link</h2>
+				<p>Please check the email address and try again in a moment.</p>
+			</div>
+		}
 
 		<form class="lookup-form" method="post" action="/auth/magic-link/request">
 			<input type="hidden" name="returnUrl" value="@SafeReturnUrl" />
@@ -53,9 +60,14 @@
 	[SupplyParameterFromQuery(Name = "failed")]
 	private string? FailedValue { get; set; }
 
+	[SupplyParameterFromQuery(Name = "requestFailed")]
+	private string? RequestFailedValue { get; set; }
+
 	private bool Sent => SentValue == "1";
 
 	private bool Failed => FailedValue == "1";
+
+	private bool RequestFailed => RequestFailedValue == "1";
 
 	private string SafeReturnUrl => NormalizeLocalReturnUrl(ReturnUrl);
 

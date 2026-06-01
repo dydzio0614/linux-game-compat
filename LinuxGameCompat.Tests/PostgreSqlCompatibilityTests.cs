@@ -3,6 +3,7 @@ using LinuxGameCompat.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Testcontainers.PostgreSql;
@@ -279,6 +280,60 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 	}
 
 	[Fact]
+	public void AuthPublicBaseUriResolver_RequiresHttpsConfigurationOutsideDevelopment()
+	{
+		var request = new DefaultHttpContext().Request;
+		request.Scheme = "https";
+		request.Host = new HostString("spoofed.example.test");
+		var missingConfiguration = new ConfigurationBuilder().Build();
+		var httpConfiguration = new ConfigurationBuilder()
+			.AddInMemoryCollection(new Dictionary<string, string?>
+			{
+				["Auth:PublicBaseUrl"] = "http://example.test"
+			})
+			.Build();
+
+		var missingException = Assert.Throws<InvalidOperationException>(() =>
+			AuthPublicBaseUriResolver.Resolve(missingConfiguration, request, isDevelopment: false));
+		var httpException = Assert.Throws<InvalidOperationException>(() =>
+			AuthPublicBaseUriResolver.Resolve(httpConfiguration, request, isDevelopment: false));
+
+		Assert.Contains("Auth:PublicBaseUrl", missingException.Message);
+		Assert.Contains("HTTPS", httpException.Message);
+	}
+
+	[Fact]
+	public void AuthPublicBaseUriResolver_UsesConfiguredHttpsUrlOutsideDevelopment()
+	{
+		var request = new DefaultHttpContext().Request;
+		request.Scheme = "https";
+		request.Host = new HostString("spoofed.example.test");
+		var configuration = new ConfigurationBuilder()
+			.AddInMemoryCollection(new Dictionary<string, string?>
+			{
+				["Auth:PublicBaseUrl"] = "https://public.example.test"
+			})
+			.Build();
+
+		var baseUri = AuthPublicBaseUriResolver.Resolve(configuration, request, isDevelopment: false);
+
+		Assert.Equal(new Uri("https://public.example.test"), baseUri);
+	}
+
+	[Fact]
+	public void AuthPublicBaseUriResolver_AllowsRequestFallbackInDevelopment()
+	{
+		var request = new DefaultHttpContext().Request;
+		request.Scheme = "http";
+		request.Host = new HostString("localhost:5000");
+		var configuration = new ConfigurationBuilder().Build();
+
+		var baseUri = AuthPublicBaseUriResolver.Resolve(configuration, request, isDevelopment: true);
+
+		Assert.Equal(new Uri("http://localhost:5000"), baseUri);
+	}
+
+	[Fact]
 	public async Task MagicLinkRequest_StoresHashedTokenAndDoesNotCreateMemberImmediately()
 	{
 		var emailSender = new CapturingAuthEmailSender();
@@ -303,6 +358,68 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 		Assert.Equal("127.0.0.1", request.RequestIpAddress);
 		Assert.Equal("test-agent", request.UserAgent);
 		Assert.Null(await userManager.FindByEmailAsync("new-member@example.test"));
+	}
+
+	[Fact]
+	public async Task MagicLinkRequest_InvalidEmailDoesNotPersistOrSend()
+	{
+		var emailSender = new CapturingAuthEmailSender();
+		await using var scope = CreateAuthScope(emailSender);
+		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
+		var dbContext = scope.ServiceProvider.GetRequiredService<CompatibilityDbContext>();
+		var initialCount = await dbContext.MagicLinkRequests.CountAsync();
+
+		var result = await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"not-an-email",
+			"/",
+			new Uri("https://example.test"),
+			null,
+			null));
+
+		Assert.False(result.Accepted);
+		Assert.Equal(initialCount, await dbContext.MagicLinkRequests.CountAsync());
+		Assert.Equal(0, emailSender.SendCount);
+	}
+
+	[Fact]
+	public async Task MagicLinkRequest_OverlongReturnUrlNormalizesToRoot()
+	{
+		var emailSender = new CapturingAuthEmailSender();
+		await using var scope = CreateAuthScope(emailSender);
+		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
+
+		await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"overlong-return@example.test",
+			$"/{new string('a', 2050)}",
+			new Uri("https://example.test"),
+			null,
+			null));
+
+		var dbContext = scope.ServiceProvider.GetRequiredService<CompatibilityDbContext>();
+		var request = await dbContext.MagicLinkRequests.SingleAsync(request => request.NormalizedEmail == "OVERLONG-RETURN@EXAMPLE.TEST");
+
+		Assert.Equal("/", request.ReturnUrl);
+	}
+
+	[Fact]
+	public async Task MagicLinkRequest_EmailSendFailureRemovesSavedRequest()
+	{
+		var emailSender = new ThrowingAuthEmailSender();
+		await using var scope = CreateAuthScope(emailSender);
+		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
+		var dbContext = scope.ServiceProvider.GetRequiredService<CompatibilityDbContext>();
+		var initialCount = await dbContext.MagicLinkRequests.CountAsync();
+
+		var result = await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"send-failure@example.test",
+			"/",
+			new Uri("https://example.test"),
+			null,
+			null));
+
+		Assert.False(result.Accepted);
+		Assert.Equal(initialCount, await dbContext.MagicLinkRequests.CountAsync());
+		Assert.False(await dbContext.MagicLinkRequests.AnyAsync(request => request.NormalizedEmail == "SEND-FAILURE@EXAMPLE.TEST"));
 	}
 
 	[Fact]
@@ -453,7 +570,7 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 	}
 
 	private AsyncServiceScope CreateAuthScope(
-		CapturingAuthEmailSender emailSender,
+		IAuthEmailSender emailSender,
 		TimeProvider? timeProvider = null)
 	{
 		var services = new ServiceCollection();
@@ -493,10 +610,21 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 	{
 		public Uri LastLoginLink { get; private set; } = null!;
 
+		public int SendCount { get; private set; }
+
 		public Task SendLoginLinkAsync(string email, Uri loginLink, CancellationToken cancellationToken = default)
 		{
+			SendCount++;
 			LastLoginLink = loginLink;
 			return Task.CompletedTask;
+		}
+	}
+
+	private sealed class ThrowingAuthEmailSender : IAuthEmailSender
+	{
+		public Task SendLoginLinkAsync(string email, Uri loginLink, CancellationToken cancellationToken = default)
+		{
+			throw new InvalidOperationException("SMTP unavailable");
 		}
 	}
 

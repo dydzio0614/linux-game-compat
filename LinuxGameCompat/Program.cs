@@ -1,6 +1,7 @@
 using LinuxGameCompat.Components;
 using LinuxGameCompat.Data;
 using LinuxGameCompat.Services;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -75,8 +76,11 @@ app.MapPost("/auth/magic-link/request", async (
 	IConfiguration configuration,
 	CancellationToken cancellationToken) =>
 {
-	var publicBaseUri = GetPublicBaseUri(configuration, httpContext.Request);
-	await magicLinkService.RequestLoginLinkAsync(
+	var publicBaseUri = AuthPublicBaseUriResolver.Resolve(
+		configuration,
+		httpContext.Request,
+		app.Environment.IsDevelopment());
+	var result = await magicLinkService.RequestLoginLinkAsync(
 		new MagicLinkRequestInput(
 			email,
 			returnUrl,
@@ -85,7 +89,7 @@ app.MapPost("/auth/magic-link/request", async (
 			httpContext.Request.Headers.UserAgent.ToString()),
 		cancellationToken);
 
-	return Results.Redirect("/login?sent=1");
+	return Results.Redirect(result.Accepted ? "/login?sent=1" : "/login?requestFailed=1");
 }).DisableAntiforgery();
 app.MapGet("/auth/magic-link/consume", async (
 	string? token,
@@ -99,19 +103,9 @@ app.MapPost("/logout", async (HttpContext httpContext) =>
 {
 	await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
 	return Results.Redirect("/");
-}).RequireAuthorization();
+}).RequireAuthorization()
+	.WithMetadata(new RequireAntiforgeryTokenAttribute(required: true));
 app.MapRazorComponents<App>()
 	.AddInteractiveServerRenderMode();
 
 app.Run();
-
-static Uri GetPublicBaseUri(IConfiguration configuration, HttpRequest request)
-{
-	var configuredBaseUrl = configuration["Auth:PublicBaseUrl"];
-	if (Uri.TryCreate(configuredBaseUrl, UriKind.Absolute, out var configuredUri))
-	{
-		return configuredUri;
-	}
-
-	return new Uri($"{request.Scheme}://{request.Host}");
-}

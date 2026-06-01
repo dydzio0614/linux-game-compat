@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using System.Text;
 using LinuxGameCompat.Data;
@@ -14,37 +15,64 @@ public sealed class MagicLinkService(
 	SignInManager<ApplicationUser> signInManager,
 	ILookupNormalizer normalizer,
 	IAuthEmailSender emailSender,
-	TimeProvider timeProvider) : IMagicLinkService
+	TimeProvider timeProvider,
+	ILogger<MagicLinkService> logger) : IMagicLinkService
 {
 	private static readonly TimeSpan LinkLifetime = TimeSpan.FromMinutes(15);
+	private static readonly EmailAddressAttribute EmailAddressValidator = new();
+	private const int MaxEmailLength = 256;
+	private const int MaxReturnUrlLength = 2048;
+	private const int MaxIpAddressLength = 64;
+	private const int MaxUserAgentLength = 512;
 
 	public async Task<MagicLinkRequestResult> RequestLoginLinkAsync(
 		MagicLinkRequestInput input,
 		CancellationToken cancellationToken = default)
 	{
-		var normalizedEmail = normalizer.NormalizeEmail(input.Email);
-		if (string.IsNullOrWhiteSpace(normalizedEmail))
+		var email = NormalizeEmailAddress(input.Email);
+		if (email is null)
 		{
-			return new MagicLinkRequestResult(Accepted: true);
+			return new MagicLinkRequestResult(Accepted: false);
+		}
+
+		var normalizedEmail = normalizer.NormalizeEmail(email);
+		if (string.IsNullOrWhiteSpace(normalizedEmail) || normalizedEmail.Length > MaxEmailLength)
+		{
+			return new MagicLinkRequestResult(Accepted: false);
 		}
 
 		var token = GenerateToken();
+		var now = timeProvider.GetUtcNow();
 		var request = new MagicLinkRequest
 		{
 			NormalizedEmail = normalizedEmail,
 			TokenHash = HashToken(token),
-			CreatedAt = timeProvider.GetUtcNow(),
-			ExpiresAt = timeProvider.GetUtcNow().Add(LinkLifetime),
+			CreatedAt = now,
+			ExpiresAt = now.Add(LinkLifetime),
 			ReturnUrl = NormalizeLocalReturnUrl(input.ReturnUrl),
-			RequestIpAddress = input.RequestIpAddress,
-			UserAgent = Truncate(input.UserAgent, 512)
+			RequestIpAddress = Truncate(input.RequestIpAddress, MaxIpAddressLength),
+			UserAgent = Truncate(input.UserAgent, MaxUserAgentLength)
 		};
 
 		dbContext.MagicLinkRequests.Add(request);
 		await dbContext.SaveChangesAsync(cancellationToken);
 
 		var link = BuildLoginLink(input.PublicBaseUri, token);
-		await emailSender.SendLoginLinkAsync(input.Email, link, cancellationToken);
+		try
+		{
+			await emailSender.SendLoginLinkAsync(email, link, cancellationToken);
+		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+		{
+			throw;
+		}
+		catch (Exception exception)
+		{
+			dbContext.MagicLinkRequests.Remove(request);
+			await dbContext.SaveChangesAsync(cancellationToken);
+			logger.LogWarning(exception, "Failed to send magic-link email to {NormalizedEmail}. The saved request was removed.", normalizedEmail);
+			return new MagicLinkRequestResult(Accepted: false);
+		}
 
 		return new MagicLinkRequestResult(Accepted: true);
 	}
@@ -131,6 +159,22 @@ public sealed class MagicLinkService(
 		return builder.Uri;
 	}
 
+	private static string? NormalizeEmailAddress(string? email)
+	{
+		if (string.IsNullOrWhiteSpace(email))
+		{
+			return null;
+		}
+
+		var trimmed = email.Trim();
+		if (trimmed.Length > MaxEmailLength || !EmailAddressValidator.IsValid(trimmed))
+		{
+			return null;
+		}
+
+		return trimmed;
+	}
+
 	private static string NormalizeLocalReturnUrl(string? returnUrl)
 	{
 		if (string.IsNullOrWhiteSpace(returnUrl) || !Uri.TryCreate(returnUrl, UriKind.Relative, out var uri))
@@ -139,7 +183,9 @@ public sealed class MagicLinkService(
 		}
 
 		var value = uri.ToString();
-		if (!value.StartsWith("/", StringComparison.Ordinal) || value.StartsWith("//", StringComparison.Ordinal))
+		if (value.Length > MaxReturnUrlLength ||
+			!value.StartsWith("/", StringComparison.Ordinal) ||
+			value.StartsWith("//", StringComparison.Ordinal))
 		{
 			return "/";
 		}

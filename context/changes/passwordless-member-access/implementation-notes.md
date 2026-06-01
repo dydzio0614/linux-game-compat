@@ -11,7 +11,7 @@ Production email delivery uses `SmtpAuthEmailSender` and reads these keys from c
 - `Auth:Smtp:Password` - optional SMTP password or provider token.
 - `Auth:Smtp:SenderAddress` - required sender address for login emails.
 
-Production must also set `Auth:PublicBaseUrl` to the public HTTPS origin for the app, for example `https://example.com`. Magic links are generated from this base URL. If it is omitted, the app falls back to the current request scheme and host.
+Production must also set `Auth:PublicBaseUrl` to the public HTTPS origin for the app, for example `https://example.com`. Magic links are generated from this base URL. Outside Development, the app fails clearly if this value is missing, malformed, or non-HTTPS.
 
 Do not commit SMTP credentials or provider tokens. Set secrets through the deployment platform's environment variable or secret store.
 

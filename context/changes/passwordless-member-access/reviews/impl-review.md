@@ -4,16 +4,16 @@
 - **Plan**: `context/changes/passwordless-member-access/plan.md`
 - **Scope**: Phases 1-4 of 4
 - **Date**: 2026-06-01
-- **Verdict**: REJECTED
-- **Findings**: 1 critical, 2 warnings, 1 observation
+- **Verdict**: APPROVED
+- **Findings**: 1 critical fixed, 2 warnings fixed, 1 observation tracked as follow-up
 
 ## Verdicts
 
 | Dimension | Verdict |
 |-----------|---------|
-| Plan Adherence | WARNING |
+| Plan Adherence | PASS |
 | Scope Discipline | PASS |
-| Safety & Quality | FAIL |
+| Safety & Quality | PASS |
 | Architecture | PASS |
 | Pattern Consistency | PASS |
 | Success Criteria | PASS |
@@ -32,7 +32,7 @@
   - Tradeoff: Production startup/request config becomes stricter.
   - Confidence: HIGH - single helper controls all magic-link origins.
   - Blind spot: Whether deployed reverse-proxy host filtering exists was not verified, but the app should not depend on it here.
-- **Decision**: PENDING
+- **Decision**: FIXED - Non-development magic-link origins now require an absolute HTTPS `Auth:PublicBaseUrl`; request-derived fallback remains Development-only.
 
 ### F2 - Logout form token is rendered but not enforced
 
@@ -42,7 +42,7 @@
 - **Location**: `LinuxGameCompat/Program.cs:98`
 - **Detail**: The plan requires `POST /logout` to have antiforgery protection. The nav form emits `<AntiforgeryToken />`, but the endpoint only has `.RequireAuthorization()` and no endpoint metadata that requires antiforgery validation.
 - **Fix**: Add explicit antiforgery validation metadata/handling to `/logout` while keeping the existing form token.
-- **Decision**: PENDING
+- **Decision**: FIXED - `/logout` now carries explicit antiforgery validation metadata while keeping the rendered form token.
 
 ### F3 - Login request failures can leave active tokens or return 500s
 
@@ -56,7 +56,7 @@
   - Tradeoff: Requires choosing whether failed sends should still look like accepted requests to the browser.
   - Confidence: MED - direct endpoint abuse and SMTP failure paths were inferred from code, not exercised in tests.
   - Blind spot: Current production SMTP behavior under provider failures was not tested.
-- **Decision**: PENDING
+- **Decision**: FIXED - Invalid request inputs are rejected before persistence, and email-send failures remove the saved request before returning a controlled generic failure.
 
 ### F4 - Magic-link request throttling remains a launch risk
 
@@ -66,12 +66,12 @@
 - **Location**: `LinuxGameCompat/Program.cs:89`
 - **Detail**: The unauthenticated request endpoint can generate/store/send links without throttling. The plan explicitly defers throttling, so this is not drift, but it remains a public-launch abuse and table-growth risk.
 - **Fix**: Before public or higher-volume exposure, add per-normalized-email and preferably per-IP throttling using `CreatedAt`, with generic responses.
-- **Decision**: PENDING
+- **Decision**: FOLLOW-UP - Tracked in `context/changes/passwordless-member-access/follow-ups/review-fixes.md` before public or higher-volume launch.
 
 ## Verification
 
-- **PASS**: `dotnet build LinuxGameCompat.sln --no-restore` - build succeeded with 0 warnings and 0 errors.
-- **PASS**: `dotnet test LinuxGameCompat.sln --no-restore` - 33 passed, 0 failed, 0 skipped.
+- **PASS**: `dotnet build LinuxGameCompat.sln --no-restore` - build succeeded with 0 warnings and 0 errors after fixes.
+- **PASS**: `dotnet test LinuxGameCompat.sln --no-restore` - 39 passed, 0 failed, 0 skipped after fixes.
 - **Manual**: The plan's manual checkboxes are marked complete. A live browser smoke test was not re-run during this review.
 
 ## Scope Notes
