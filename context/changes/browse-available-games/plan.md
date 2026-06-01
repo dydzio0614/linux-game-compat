@@ -233,28 +233,28 @@ No database migration is expected. If an implementation generates a migration, s
 
 #### Automated
 
-- [x] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [x] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore` — 4a6e3c8
+- [x] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore` — 4a6e3c8
 
 #### Manual
 
-- [x] 2.3 Sidebar navigation includes `Games` and marks it active on `/games`.
-- [x] 2.4 Previous is disabled on the first page.
-- [x] 2.5 Next is enabled only when another page exists.
-- [x] 2.6 Paging changes the visible rows without breaking detail links.
-- [x] 2.7 Browse page remains usable on narrow mobile widths with no clipped row content or overflowing buttons.
+- [x] 2.3 Sidebar navigation includes `Games` and marks it active on `/games`. — 4a6e3c8
+- [x] 2.4 Previous is disabled on the first page. — 4a6e3c8
+- [x] 2.5 Next is enabled only when another page exists. — 4a6e3c8
+- [x] 2.6 Paging changes the visible rows without breaking detail links. — 4a6e3c8
+- [x] 2.7 Browse page remains usable on narrow mobile widths with no clipped row content or overflowing buttons. — 4a6e3c8
 
 ### Phase 3: Verification And Handoff
 
 #### Automated
 
-- [ ] 3.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [ ] 3.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 3.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
+- [x] 3.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
 
 #### Manual
 
-- [ ] 3.3 `/games` loads as an anonymous visitor.
-- [ ] 3.4 `/` remains the search-first lookup page.
-- [ ] 3.5 Browse, lookup, and detail pages can be reached through normal links.
-- [ ] 3.6 Hidden records do not appear in browse results.
-- [ ] 3.7 No new database migration is generated for this change.
+- [x] 3.3 `/games` loads as an anonymous visitor.
+- [x] 3.4 `/` remains the search-first lookup page.
+- [x] 3.5 Browse, lookup, and detail pages can be reached through normal links.
+- [x] 3.6 Hidden records do not appear in browse results.
+- [x] 3.7 No new database migration is generated for this change.
