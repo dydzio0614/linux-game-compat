@@ -12,7 +12,7 @@
 		<p class="lead">View public compatibility records and open source-backed details for each game.</p>
 	</div>
 
-	<section class="lookup-results" aria-live="polite">
+	<section class="lookup-results browse-results" aria-live="polite">
 		@if (isLoading)
 		{
 			<p>Loading games...</p>
@@ -45,6 +45,22 @@
 					</li>
 				}
 			</ul>
+
+			<nav class="browse-pager" aria-label="Browse games pages">
+				<button class="btn btn-outline-secondary"
+						type="button"
+						disabled="@(isLoading || offset == 0)"
+						@onclick="PreviousPageAsync">
+					Previous
+				</button>
+				<span>Showing @(offset + 1)-@(offset + games.Count)</span>
+				<button class="btn btn-outline-primary"
+						type="button"
+						disabled="@(isLoading || !hasNextPage)"
+						@onclick="NextPageAsync">
+					Next
+				</button>
+			</nav>
 		}
 	</section>
 </section>
@@ -53,13 +69,41 @@
 	private const int PageSize = 20;
 
 	private bool isLoading = true;
+	private bool hasNextPage;
+	private int offset;
 	private IReadOnlyList<GameListItem> games = [];
 
 	protected override async Task OnInitializedAsync()
 	{
+		await LoadGamesAsync();
+	}
+
+	private async Task PreviousPageAsync()
+	{
+		offset = Math.Max(0, offset - PageSize);
+		await LoadGamesAsync();
+	}
+
+	private async Task NextPageAsync()
+	{
+		if (!hasNextPage)
+		{
+			return;
+		}
+
+		offset += PageSize;
+		await LoadGamesAsync();
+	}
+
+	private async Task LoadGamesAsync()
+	{
+		isLoading = true;
+
 		try
 		{
-			games = await GameCompatibilityReadService.GetVisibleGamesAsync(PageSize, offset: 0);
+			var page = await GameCompatibilityReadService.GetVisibleGamesAsync(PageSize + 1, offset);
+			hasNextPage = page.Count > PageSize;
+			games = page.Take(PageSize).ToArray();
 		}
 		finally
 		{

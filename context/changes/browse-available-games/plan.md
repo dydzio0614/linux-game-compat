@@ -219,30 +219,30 @@ No database migration is expected. If an implementation generates a migration, s
 
 #### Automated
 
-- [x] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [x] 1.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore` — 73d02dd
+- [x] 1.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore` — 73d02dd
 
 #### Manual
 
-- [x] 1.3 Opening `/games` shows the first page of visible games ordered by title.
-- [x] 1.4 Game rows show title, compact status, optional Steam App ID, and a detail link.
-- [x] 1.5 A visible game's detail link opens the existing `/games/{slug}` detail page.
-- [x] 1.6 If no visible games exist, the browse page shows an understandable empty state.
+- [x] 1.3 Opening `/games` shows the first page of visible games ordered by title. — 73d02dd
+- [x] 1.4 Game rows show title, compact status, optional Steam App ID, and a detail link. — 73d02dd
+- [x] 1.5 A visible game's detail link opens the existing `/games/{slug}` detail page. — 73d02dd
+- [x] 1.6 If no visible games exist, the browse page shows an understandable empty state. — 73d02dd
 
 ### Phase 2: Paging, Navigation, And Shared Styling
 
 #### Automated
 
-- [ ] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [ ] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
+- [x] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
 
 #### Manual
 
-- [ ] 2.3 Sidebar navigation includes `Games` and marks it active on `/games`.
-- [ ] 2.4 Previous is disabled on the first page.
-- [ ] 2.5 Next is enabled only when another page exists.
-- [ ] 2.6 Paging changes the visible rows without breaking detail links.
-- [ ] 2.7 Browse page remains usable on narrow mobile widths with no clipped row content or overflowing buttons.
+- [x] 2.3 Sidebar navigation includes `Games` and marks it active on `/games`.
+- [x] 2.4 Previous is disabled on the first page.
+- [x] 2.5 Next is enabled only when another page exists.
+- [x] 2.6 Paging changes the visible rows without breaking detail links.
+- [x] 2.7 Browse page remains usable on narrow mobile widths with no clipped row content or overflowing buttons.
 
 ### Phase 3: Verification And Handoff
 
