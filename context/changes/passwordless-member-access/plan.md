@@ -402,11 +402,11 @@ This change adds auth-related tables to the existing PostgreSQL database. No exi
 
 #### Automated
 
-- [x] 4.1 `dotnet build LinuxGameCompat.sln --no-restore` passes
-- [x] 4.2 `dotnet test LinuxGameCompat.sln --no-restore` passes
-- [x] 4.3 New auth integration tests pass under Testcontainers PostgreSQL
+- [x] 4.1 `dotnet build LinuxGameCompat.sln --no-restore` passes — 44f3a30
+- [x] 4.2 `dotnet test LinuxGameCompat.sln --no-restore` passes — 44f3a30
+- [x] 4.3 New auth integration tests pass under Testcontainers PostgreSQL — 44f3a30
 
 #### Manual
 
-- [x] 4.4 Login request, logged dev link consumption, signed-in nav, logout, reused link, expired link, and invalid link are smoke-tested
-- [x] 4.5 Production SMTP/base URL configuration requirements are documented
+- [x] 4.4 Login request, logged dev link consumption, signed-in nav, logout, reused link, expired link, and invalid link are smoke-tested — 44f3a30
+- [x] 4.5 Production SMTP/base URL configuration requirements are documented — 44f3a30
