@@ -3,7 +3,7 @@ project: "Linux Compatibility Aggregator"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-05-31
+updated: 2026-06-02
 prd_version: 1
 main_goal: speed
 top_blocker: capacity
@@ -29,7 +29,7 @@ New people switching to Linux face decision paralysis because compatibility evid
 |---|---|---|---|---|---|
 | F-01 | minimal-evidence-baseline | (foundation) initial source-backed game catalog and compatibility evidence path exists | - | NFR source links, Business Logic | done |
 | S-01 | anonymous-compatibility-lookup | user can search for a game, open details, and see source-linked compatibility reasoning | F-01 | US-01, FR-001, FR-002, FR-003, FR-004 | done |
-| F-02 | passwordless-member-access | (foundation) passwordless member identity is available for favorites | S-01 | Access Control, FR-006 | proposed |
+| F-02 | passwordless-member-access | (foundation) passwordless member identity is available for favorites | S-01 | Access Control, FR-006 | done |
 | S-02 | member-favorites-tracking | logged-in member can save games and view favorites with current status | S-01, F-02 | US-02, FR-007, FR-008 | proposed |
 | S-03 | browse-available-games | user can browse available games without a search phrase | F-01 | FR-005 | proposed |
 
@@ -150,3 +150,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 <!-- Empty on first generation. `/10x-archive` appends entries here and flips matching roadmap items to `done`. -->
 - **F-01: (foundation) initial source-backed game catalog and compatibility evidence path exists for the first lookup flow.** — Archived 2026-05-31 → `context/archive/2026-05-27-minimal-evidence-baseline/`. Lesson: —.
 - **S-01: user can search for a game, choose a result, open details, and see current compatibility status with source-linked reasoning, caveats, and common workarounds.** — Archived 2026-05-31 → `context/archive/2026-05-31-anonymous-compatibility-lookup/`. Lesson: —.
+- **F-02: (foundation) passwordless member identity is available so favorites can belong to a logged-in member.** — Archived 2026-06-02 → `context/archive/2026-05-31-passwordless-member-access/`. Lesson: —.
