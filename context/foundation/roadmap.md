@@ -31,7 +31,7 @@ New people switching to Linux face decision paralysis because compatibility evid
 | S-01 | anonymous-compatibility-lookup | user can search for a game, open details, and see source-linked compatibility reasoning | F-01 | US-01, FR-001, FR-002, FR-003, FR-004 | done |
 | F-02 | passwordless-member-access | (foundation) passwordless member identity is available for favorites | S-01 | Access Control, FR-006 | done |
 | S-02 | member-favorites-tracking | logged-in member can save games and view favorites with current status | S-01, F-02 | US-02, FR-007, FR-008 | proposed |
-| S-03 | browse-available-games | user can browse available games without a search phrase | F-01 | FR-005 | proposed |
+| S-03 | browse-available-games | user can browse available games without a search phrase | F-01 | FR-005 | done |
 
 ## Streams
 
@@ -95,7 +95,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - What exact compatibility status vocabulary should the UI expose? - Owner: user. Block: no.
 - **Risk:** This is the first user-visible proof of value; if the source links and caveats are weak, the app becomes only another compact status list.
-- **Status:** proposed
+- **Status:** done
 
 ### S-02: Member favorites tracking
 
@@ -121,7 +121,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - What exact compatibility status vocabulary should the UI expose? - Owner: user. Block: no.
 - **Risk:** Browsing is useful but not required for the MVP's primary lookup behavior, so speed favors delaying it behind the must-have search/detail path.
-- **Status:** proposed
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -151,3 +151,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **F-01: (foundation) initial source-backed game catalog and compatibility evidence path exists for the first lookup flow.** — Archived 2026-05-31 → `context/archive/2026-05-27-minimal-evidence-baseline/`. Lesson: —.
 - **S-01: user can search for a game, choose a result, open details, and see current compatibility status with source-linked reasoning, caveats, and common workarounds.** — Archived 2026-05-31 → `context/archive/2026-05-31-anonymous-compatibility-lookup/`. Lesson: —.
 - **F-02: (foundation) passwordless member identity is available so favorites can belong to a logged-in member.** — Archived 2026-06-02 → `context/archive/2026-05-31-passwordless-member-access/`. Lesson: —.
+- **S-03: user can browse the available game catalog without submitting a search phrase.** — Archived 2026-06-02 → `context/archive/2026-05-31-browse-available-games/`. Lesson: —.
