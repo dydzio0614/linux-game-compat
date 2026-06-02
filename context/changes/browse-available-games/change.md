@@ -1,9 +1,9 @@
 ---
 change_id: browse-available-games
 title: Browse available games
-status: plan_reviewed
+status: impl_reviewed
 created: 2026-05-31
-updated: 2026-05-31
+updated: 2026-06-01
 archived_at: null
 ---
 

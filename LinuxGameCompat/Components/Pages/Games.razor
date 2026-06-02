@@ -1,0 +1,113 @@
+@page "/games"
+@rendermode InteractiveServer
+@using LinuxGameCompat.Services
+@inject IGameCompatibilityReadService GameCompatibilityReadService
+
+<PageTitle>Browse Linux game compatibility</PageTitle>
+
+<section class="lookup-page">
+	<div class="lookup-header">
+		<p class="eyebrow">Game catalog</p>
+		<h1>Browse available games</h1>
+		<p class="lead">View public compatibility records and open source-backed details for each game.</p>
+	</div>
+
+	<section class="lookup-results browse-results" aria-live="polite">
+		@if (isLoading)
+		{
+			<p>Loading games...</p>
+		}
+		else if (games.Count == 0)
+		{
+			<div class="empty-state">
+				<h2>No public games available yet</h2>
+				<p>Compatibility evidence has not been published for the catalog yet.</p>
+			</div>
+		}
+		else
+		{
+			<h2>Available games</h2>
+			<ul class="result-list">
+				@foreach (var game in games)
+				{
+					<li class="result-item">
+						<div>
+							<h3>@game.Title</h3>
+							<div class="result-meta">
+								<span class="status-label">@CompatibilityStatusLabels.ToPublicLabel(game.CompatibilityStatus)</span>
+								@if (game.SteamAppId is not null)
+								{
+									<span>Steam App ID @game.SteamAppId</span>
+								}
+							</div>
+						</div>
+						<a class="btn btn-outline-primary" href="@($"/games/{game.Slug}")">View details</a>
+					</li>
+				}
+			</ul>
+
+			<nav class="browse-pager" aria-label="Browse games pages">
+				<button class="btn btn-outline-secondary"
+						type="button"
+						disabled="@(isLoading || offset == 0)"
+						@onclick="PreviousPageAsync">
+					Previous
+				</button>
+				<span>Showing @(offset + 1)-@(offset + games.Count)</span>
+				<button class="btn btn-outline-primary"
+						type="button"
+						disabled="@(isLoading || !hasNextPage)"
+						@onclick="NextPageAsync">
+					Next
+				</button>
+			</nav>
+		}
+	</section>
+</section>
+
+@code {
+	private const int PageSize = 20;
+
+	private bool isLoading = true;
+	private bool hasNextPage;
+	private int offset;
+	private IReadOnlyList<GameListItem> games = [];
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadGamesAsync();
+	}
+
+	private async Task PreviousPageAsync()
+	{
+		offset = Math.Max(0, offset - PageSize);
+		await LoadGamesAsync();
+	}
+
+	private async Task NextPageAsync()
+	{
+		if (!hasNextPage)
+		{
+			return;
+		}
+
+		offset += PageSize;
+		await LoadGamesAsync();
+	}
+
+	private async Task LoadGamesAsync()
+	{
+		isLoading = true;
+
+		try
+		{
+			var page = await GameCompatibilityReadService.GetVisibleGamesAsync(PageSize + 1, offset);
+			hasNextPage = page.Count > PageSize;
+			games = page.Take(PageSize).ToArray();
+		}
+		finally
+		{
+			isLoading = false;
+		}
+	}
+}

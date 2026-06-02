@@ -219,42 +219,42 @@ No database migration is expected. If an implementation generates a migration, s
 
 #### Automated
 
-- [ ] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [ ] 1.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore` — 73d02dd
+- [x] 1.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore` — 73d02dd
 
 #### Manual
 
-- [ ] 1.3 Opening `/games` shows the first page of visible games ordered by title.
-- [ ] 1.4 Game rows show title, compact status, optional Steam App ID, and a detail link.
-- [ ] 1.5 A visible game's detail link opens the existing `/games/{slug}` detail page.
-- [ ] 1.6 If no visible games exist, the browse page shows an understandable empty state.
+- [x] 1.3 Opening `/games` shows the first page of visible games ordered by title. — 73d02dd
+- [x] 1.4 Game rows show title, compact status, optional Steam App ID, and a detail link. — 73d02dd
+- [x] 1.5 A visible game's detail link opens the existing `/games/{slug}` detail page. — 73d02dd
+- [x] 1.6 If no visible games exist, the browse page shows an understandable empty state. — 73d02dd
 
 ### Phase 2: Paging, Navigation, And Shared Styling
 
 #### Automated
 
-- [ ] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [ ] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore` — 4a6e3c8
+- [x] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore` — 4a6e3c8
 
 #### Manual
 
-- [ ] 2.3 Sidebar navigation includes `Games` and marks it active on `/games`.
-- [ ] 2.4 Previous is disabled on the first page.
-- [ ] 2.5 Next is enabled only when another page exists.
-- [ ] 2.6 Paging changes the visible rows without breaking detail links.
-- [ ] 2.7 Browse page remains usable on narrow mobile widths with no clipped row content or overflowing buttons.
+- [x] 2.3 Sidebar navigation includes `Games` and marks it active on `/games`. — 4a6e3c8
+- [x] 2.4 Previous is disabled on the first page. — 4a6e3c8
+- [x] 2.5 Next is enabled only when another page exists. — 4a6e3c8
+- [x] 2.6 Paging changes the visible rows without breaking detail links. — 4a6e3c8
+- [x] 2.7 Browse page remains usable on narrow mobile widths with no clipped row content or overflowing buttons. — 4a6e3c8
 
 ### Phase 3: Verification And Handoff
 
 #### Automated
 
-- [ ] 3.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [ ] 3.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 3.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore` — 8048b9d
+- [x] 3.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore` — 8048b9d
 
 #### Manual
 
-- [ ] 3.3 `/games` loads as an anonymous visitor.
-- [ ] 3.4 `/` remains the search-first lookup page.
-- [ ] 3.5 Browse, lookup, and detail pages can be reached through normal links.
-- [ ] 3.6 Hidden records do not appear in browse results.
-- [ ] 3.7 No new database migration is generated for this change.
+- [x] 3.3 `/games` loads as an anonymous visitor. — 8048b9d
+- [x] 3.4 `/` remains the search-first lookup page. — 8048b9d
+- [x] 3.5 Browse, lookup, and detail pages can be reached through normal links. — 8048b9d
+- [x] 3.6 Hidden records do not appear in browse results. — 8048b9d
+- [x] 3.7 No new database migration is generated for this change. — 8048b9d
