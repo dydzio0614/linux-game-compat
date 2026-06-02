@@ -358,55 +358,55 @@ This change adds auth-related tables to the existing PostgreSQL database. No exi
 
 #### Automated
 
-- [ ] 1.1 Build passes
-- [ ] 1.2 Migration applies cleanly in PostgreSQL-backed tests
-- [ ] 1.3 Existing compatibility read-service tests still pass
+- [x] 1.1 Build passes — f06c8ac
+- [x] 1.2 Migration applies cleanly in PostgreSQL-backed tests — f06c8ac
+- [x] 1.3 Existing compatibility read-service tests still pass — f06c8ac
 
 #### Manual
 
-- [ ] 1.4 Anonymous `/` lookup remains reachable without signing in
-- [ ] 1.5 Anonymous `/games/{slug}` detail remains reachable without signing in
+- [x] 1.4 Anonymous `/` lookup remains reachable without signing in — f06c8ac
+- [x] 1.5 Anonymous `/games/{slug}` detail remains reachable without signing in — f06c8ac
 
 ### Phase 2: Magic-Link Request And Consumption Flow
 
 #### Automated
 
-- [ ] 2.1 Magic-link request stores a hashed token and does not create a member immediately
-- [ ] 2.2 Valid magic-link consumption creates a member for a new email and marks the request consumed
-- [ ] 2.3 Reusing a consumed token fails
-- [ ] 2.4 Expired and invalid tokens fail without signing in
-- [ ] 2.5 Non-local return URLs are rejected or normalized to `/`
+- [x] 2.1 Magic-link request stores a hashed token and does not create a member immediately — 017cfe1
+- [x] 2.2 Valid magic-link consumption creates a member for a new email and marks the request consumed — 017cfe1
+- [x] 2.3 Reusing a consumed token fails — 017cfe1
+- [x] 2.4 Expired and invalid tokens fail without signing in — 017cfe1
+- [x] 2.5 Non-local return URLs are rejected or normalized to `/` — 017cfe1
 
 #### Manual
 
-- [ ] 2.6 Development login request writes a usable magic link to logs
-- [ ] 2.7 Consuming the logged link signs in and redirects to a local return URL or `/`
-- [ ] 2.8 Reusing the same link no longer signs in
+- [x] 2.6 Development login request writes a usable magic link to logs — 017cfe1
+- [x] 2.7 Consuming the logged link signs in and redirects to a local return URL or `/` — 017cfe1
+- [x] 2.8 Reusing the same link no longer signs in — 017cfe1
 
 ### Phase 3: Login/Logout UI And Navigation
 
 #### Automated
 
-- [ ] 3.1 Build passes
-- [ ] 3.2 Auth UI changes compile with nullable warnings clean
-- [ ] 3.3 Existing lookup tests still pass
+- [x] 3.1 Build passes — 939487c
+- [x] 3.2 Auth UI changes compile with nullable warnings clean — 939487c
+- [x] 3.3 Existing lookup tests still pass — 939487c
 
 #### Manual
 
-- [ ] 3.4 Anonymous nav shows `Lookup` and `Login`
-- [ ] 3.5 Signed-in nav shows a member label and logout control
-- [ ] 3.6 Logout clears the session and returns to `/`
-- [ ] 3.7 Anonymous lookup and detail pages still work after login UI changes
+- [x] 3.4 Anonymous nav shows `Lookup` and `Login` — 939487c
+- [x] 3.5 Signed-in nav shows a member label and logout control — 939487c
+- [x] 3.6 Logout clears the session and returns to `/` — 939487c
+- [x] 3.7 Anonymous lookup and detail pages still work after login UI changes — 939487c
 
 ### Phase 4: Verification And Handoff
 
 #### Automated
 
-- [ ] 4.1 `dotnet build LinuxGameCompat.sln --no-restore` passes
-- [ ] 4.2 `dotnet test LinuxGameCompat.sln --no-restore` passes
-- [ ] 4.3 New auth integration tests pass under Testcontainers PostgreSQL
+- [x] 4.1 `dotnet build LinuxGameCompat.sln --no-restore` passes — 44f3a30
+- [x] 4.2 `dotnet test LinuxGameCompat.sln --no-restore` passes — 44f3a30
+- [x] 4.3 New auth integration tests pass under Testcontainers PostgreSQL — 44f3a30
 
 #### Manual
 
-- [ ] 4.4 Login request, logged dev link consumption, signed-in nav, logout, reused link, expired link, and invalid link are smoke-tested
-- [ ] 4.5 Production SMTP/base URL configuration requirements are documented
+- [x] 4.4 Login request, logged dev link consumption, signed-in nav, logout, reused link, expired link, and invalid link are smoke-tested — 44f3a30
+- [x] 4.5 Production SMTP/base URL configuration requirements are documented — 44f3a30

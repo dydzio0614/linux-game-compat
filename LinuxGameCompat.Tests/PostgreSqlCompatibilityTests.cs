@@ -1,6 +1,11 @@
 using LinuxGameCompat.Data;
 using LinuxGameCompat.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Testcontainers.PostgreSql;
 
 namespace LinuxGameCompat.Tests;
@@ -14,12 +19,14 @@ public sealed class PostgreSqlFixture : IAsyncLifetime
 		.Build();
 
 	public DbContextOptions<CompatibilityDbContext> Options { get; private set; } = null!;
+	public string ConnectionString { get; private set; } = string.Empty;
 
 	public async Task InitializeAsync()
 	{
 		await _postgres.StartAsync();
+		ConnectionString = _postgres.GetConnectionString();
 		Options = new DbContextOptionsBuilder<CompatibilityDbContext>()
-			.UseNpgsql(_postgres.GetConnectionString())
+			.UseNpgsql(ConnectionString)
 			.Options;
 
 		await using var dbContext = CreateDbContext();
@@ -50,6 +57,29 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 		Assert.Equal(3, await dbContext.EvidenceClaims.CountAsync());
 		Assert.Equal(2, await dbContext.GameCompatibilitySummaries.CountAsync());
 		Assert.True(await dbContext.Games.AnyAsync(game => game.IsHidden));
+	}
+
+	[Fact]
+	public async Task Migration_CreatesMemberAuthSchema()
+	{
+		await using var dbContext = CreateDbContext();
+
+		Assert.True(await TableExistsAsync(dbContext, "AspNetUsers"));
+		Assert.True(await TableExistsAsync(dbContext, "AspNetUserClaims"));
+		Assert.True(await TableExistsAsync(dbContext, "AspNetUserLogins"));
+		Assert.True(await TableExistsAsync(dbContext, "AspNetUserTokens"));
+		Assert.True(await TableExistsAsync(dbContext, "MagicLinkRequests"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MagicLinkRequests", "NormalizedEmail"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MagicLinkRequests", "TokenHash"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MagicLinkRequests", "ExpiresAt"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MagicLinkRequests", "ConsumedAt"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MagicLinkRequests", "ReturnUrl"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MagicLinkRequests", "RequestIpAddress"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MagicLinkRequests", "UserAgent"));
+		Assert.True(await IndexExistsAsync(dbContext, "EmailIndex"));
+		Assert.True(await IndexExistsAsync(dbContext, "IX_MagicLinkRequests_TokenHash"));
+		Assert.True(await IndexExistsAsync(dbContext, "IX_MagicLinkRequests_NormalizedEmail"));
+		Assert.True(await IndexExistsAsync(dbContext, "IX_MagicLinkRequests_ExpiresAt"));
 	}
 
 	[Fact]
@@ -249,8 +279,362 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 		await Assert.ThrowsAnyAsync<DbUpdateException>(() => dbContext.SaveChangesAsync());
 	}
 
+	[Fact]
+	public void AuthPublicBaseUriResolver_RequiresHttpsConfigurationOutsideDevelopment()
+	{
+		var request = new DefaultHttpContext().Request;
+		request.Scheme = "https";
+		request.Host = new HostString("spoofed.example.test");
+		var missingConfiguration = new ConfigurationBuilder().Build();
+		var httpConfiguration = new ConfigurationBuilder()
+			.AddInMemoryCollection(new Dictionary<string, string?>
+			{
+				["Auth:PublicBaseUrl"] = "http://example.test"
+			})
+			.Build();
+
+		var missingException = Assert.Throws<InvalidOperationException>(() =>
+			AuthPublicBaseUriResolver.Resolve(missingConfiguration, request, isDevelopment: false));
+		var httpException = Assert.Throws<InvalidOperationException>(() =>
+			AuthPublicBaseUriResolver.Resolve(httpConfiguration, request, isDevelopment: false));
+
+		Assert.Contains("Auth:PublicBaseUrl", missingException.Message);
+		Assert.Contains("HTTPS", httpException.Message);
+	}
+
+	[Fact]
+	public void AuthPublicBaseUriResolver_UsesConfiguredHttpsUrlOutsideDevelopment()
+	{
+		var request = new DefaultHttpContext().Request;
+		request.Scheme = "https";
+		request.Host = new HostString("spoofed.example.test");
+		var configuration = new ConfigurationBuilder()
+			.AddInMemoryCollection(new Dictionary<string, string?>
+			{
+				["Auth:PublicBaseUrl"] = "https://public.example.test"
+			})
+			.Build();
+
+		var baseUri = AuthPublicBaseUriResolver.Resolve(configuration, request, isDevelopment: false);
+
+		Assert.Equal(new Uri("https://public.example.test"), baseUri);
+	}
+
+	[Fact]
+	public void AuthPublicBaseUriResolver_AllowsRequestFallbackInDevelopment()
+	{
+		var request = new DefaultHttpContext().Request;
+		request.Scheme = "http";
+		request.Host = new HostString("localhost:5000");
+		var configuration = new ConfigurationBuilder().Build();
+
+		var baseUri = AuthPublicBaseUriResolver.Resolve(configuration, request, isDevelopment: true);
+
+		Assert.Equal(new Uri("http://localhost:5000"), baseUri);
+	}
+
+	[Fact]
+	public async Task MagicLinkRequest_StoresHashedTokenAndDoesNotCreateMemberImmediately()
+	{
+		var emailSender = new CapturingAuthEmailSender();
+		await using var scope = CreateAuthScope(emailSender);
+		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
+
+		await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"new-member@example.test",
+			"/games/baldurs-gate-3",
+			new Uri("https://example.test"),
+			"127.0.0.1",
+			"test-agent"));
+
+		var dbContext = scope.ServiceProvider.GetRequiredService<CompatibilityDbContext>();
+		var request = await dbContext.MagicLinkRequests.SingleAsync(request => request.NormalizedEmail == "NEW-MEMBER@EXAMPLE.TEST");
+		var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+		Assert.NotEqual(ExtractToken(emailSender.LastLoginLink), request.TokenHash);
+		Assert.Equal(64, request.TokenHash.Length);
+		Assert.Null(request.ConsumedAt);
+		Assert.Equal("/games/baldurs-gate-3", request.ReturnUrl);
+		Assert.Equal("127.0.0.1", request.RequestIpAddress);
+		Assert.Equal("test-agent", request.UserAgent);
+		Assert.Null(await userManager.FindByEmailAsync("new-member@example.test"));
+	}
+
+	[Fact]
+	public async Task MagicLinkRequest_InvalidEmailDoesNotPersistOrSend()
+	{
+		var emailSender = new CapturingAuthEmailSender();
+		await using var scope = CreateAuthScope(emailSender);
+		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
+		var dbContext = scope.ServiceProvider.GetRequiredService<CompatibilityDbContext>();
+		var initialCount = await dbContext.MagicLinkRequests.CountAsync();
+
+		var result = await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"not-an-email",
+			"/",
+			new Uri("https://example.test"),
+			null,
+			null));
+
+		Assert.False(result.Accepted);
+		Assert.Equal(initialCount, await dbContext.MagicLinkRequests.CountAsync());
+		Assert.Equal(0, emailSender.SendCount);
+	}
+
+	[Fact]
+	public async Task MagicLinkRequest_OverlongReturnUrlNormalizesToRoot()
+	{
+		var emailSender = new CapturingAuthEmailSender();
+		await using var scope = CreateAuthScope(emailSender);
+		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
+
+		await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"overlong-return@example.test",
+			$"/{new string('a', 2050)}",
+			new Uri("https://example.test"),
+			null,
+			null));
+
+		var dbContext = scope.ServiceProvider.GetRequiredService<CompatibilityDbContext>();
+		var request = await dbContext.MagicLinkRequests.SingleAsync(request => request.NormalizedEmail == "OVERLONG-RETURN@EXAMPLE.TEST");
+
+		Assert.Equal("/", request.ReturnUrl);
+	}
+
+	[Fact]
+	public async Task MagicLinkRequest_EmailSendFailureRemovesSavedRequest()
+	{
+		var emailSender = new ThrowingAuthEmailSender();
+		await using var scope = CreateAuthScope(emailSender);
+		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
+		var dbContext = scope.ServiceProvider.GetRequiredService<CompatibilityDbContext>();
+		var initialCount = await dbContext.MagicLinkRequests.CountAsync();
+
+		var result = await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"send-failure@example.test",
+			"/",
+			new Uri("https://example.test"),
+			null,
+			null));
+
+		Assert.False(result.Accepted);
+		Assert.Equal(initialCount, await dbContext.MagicLinkRequests.CountAsync());
+		Assert.False(await dbContext.MagicLinkRequests.AnyAsync(request => request.NormalizedEmail == "SEND-FAILURE@EXAMPLE.TEST"));
+	}
+
+	[Fact]
+	public async Task MagicLinkConsumption_CreatesMemberAndMarksRequestConsumed()
+	{
+		var emailSender = new CapturingAuthEmailSender();
+		await using var scope = CreateAuthScope(emailSender);
+		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
+		await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"consume-member@example.test",
+			"/games/baldurs-gate-3",
+			new Uri("https://example.test"),
+			null,
+			null));
+
+		var result = await service.ConsumeLoginLinkAsync(ExtractToken(emailSender.LastLoginLink));
+
+		var dbContext = scope.ServiceProvider.GetRequiredService<CompatibilityDbContext>();
+		var request = await dbContext.MagicLinkRequests.SingleAsync(request => request.NormalizedEmail == "CONSUME-MEMBER@EXAMPLE.TEST");
+		await dbContext.Entry(request).ReloadAsync();
+		var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+		Assert.True(result.Succeeded);
+		Assert.Equal("/games/baldurs-gate-3", result.RedirectUrl);
+		Assert.NotNull(request.ConsumedAt);
+		Assert.NotNull(await userManager.FindByEmailAsync("consume-member@example.test"));
+	}
+
+	[Fact]
+	public async Task MagicLinkConsumption_RejectsConsumedToken()
+	{
+		var emailSender = new CapturingAuthEmailSender();
+		await using var scope = CreateAuthScope(emailSender);
+		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
+		await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"replay-member@example.test",
+			"/",
+			new Uri("https://example.test"),
+			null,
+			null));
+		var token = ExtractToken(emailSender.LastLoginLink);
+
+		var firstResult = await service.ConsumeLoginLinkAsync(token);
+		var replayResult = await service.ConsumeLoginLinkAsync(token);
+
+		Assert.True(firstResult.Succeeded);
+		Assert.False(replayResult.Succeeded);
+	}
+
+	[Fact]
+	public async Task MagicLinkConsumption_RejectsExpiredAndInvalidTokens()
+	{
+		var emailSender = new CapturingAuthEmailSender();
+		var timeProvider = new MutableTimeProvider(DateTimeOffset.UtcNow);
+		await using var scope = CreateAuthScope(emailSender, timeProvider);
+		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
+		await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"expired-member@example.test",
+			"/",
+			new Uri("https://example.test"),
+			null,
+			null));
+		var token = ExtractToken(emailSender.LastLoginLink);
+
+		timeProvider.UtcNow = timeProvider.UtcNow.AddMinutes(16);
+		var expiredResult = await service.ConsumeLoginLinkAsync(token);
+		var invalidResult = await service.ConsumeLoginLinkAsync("not-a-real-token");
+
+		var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+		Assert.False(expiredResult.Succeeded);
+		Assert.Equal("/login?failed=1", expiredResult.RedirectUrl);
+		Assert.False(invalidResult.Succeeded);
+		Assert.Equal("/login?failed=1", invalidResult.RedirectUrl);
+		Assert.Null(await userManager.FindByEmailAsync("expired-member@example.test"));
+	}
+
+	[Fact]
+	public async Task MagicLinkConsumption_NormalizesNonLocalReturnUrlToRoot()
+	{
+		var emailSender = new CapturingAuthEmailSender();
+		await using var scope = CreateAuthScope(emailSender);
+		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
+		await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"unsafe-return@example.test",
+			"https://evil.example.test/capture",
+			new Uri("https://example.test"),
+			null,
+			null));
+
+		var result = await service.ConsumeLoginLinkAsync(ExtractToken(emailSender.LastLoginLink));
+
+		Assert.True(result.Succeeded);
+		Assert.Equal("/", result.RedirectUrl);
+	}
+
 	private CompatibilityDbContext CreateDbContext()
 	{
 		return fixture.CreateDbContext();
+	}
+
+	private static async Task<bool> TableExistsAsync(CompatibilityDbContext dbContext, string tableName)
+	{
+		var count = await dbContext.Database
+			.SqlQueryRaw<int>(
+				"""
+				SELECT COUNT(*)::int AS "Value"
+				FROM information_schema.tables
+				WHERE table_schema = 'public' AND table_name = {0}
+				""",
+				tableName)
+			.SingleAsync();
+
+		return count == 1;
+	}
+
+	private static async Task<bool> ColumnExistsAsync(
+		CompatibilityDbContext dbContext,
+		string tableName,
+		string columnName)
+	{
+		var count = await dbContext.Database
+			.SqlQueryRaw<int>(
+				"""
+				SELECT COUNT(*)::int AS "Value"
+				FROM information_schema.columns
+				WHERE table_schema = 'public' AND table_name = {0} AND column_name = {1}
+				""",
+				tableName,
+				columnName)
+			.SingleAsync();
+
+		return count == 1;
+	}
+
+	private static async Task<bool> IndexExistsAsync(CompatibilityDbContext dbContext, string indexName)
+	{
+		var count = await dbContext.Database
+			.SqlQueryRaw<int>(
+				"""
+				SELECT COUNT(*)::int AS "Value"
+				FROM pg_indexes
+				WHERE schemaname = 'public' AND indexname = {0}
+				""",
+				indexName)
+			.SingleAsync();
+
+		return count == 1;
+	}
+
+	private AsyncServiceScope CreateAuthScope(
+		IAuthEmailSender emailSender,
+		TimeProvider? timeProvider = null)
+	{
+		var services = new ServiceCollection();
+		services.AddLogging(builder => builder.AddConsole());
+		services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+		services.AddDbContext<CompatibilityDbContext>(options => options.UseNpgsql(fixture.ConnectionString));
+		services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
+		services.AddIdentityCore<ApplicationUser>(options =>
+			{
+				options.User.RequireUniqueEmail = true;
+			})
+			.AddEntityFrameworkStores<CompatibilityDbContext>()
+			.AddSignInManager()
+			.AddDefaultTokenProviders();
+		services.AddScoped<IMagicLinkService, MagicLinkService>();
+		services.AddSingleton<IAuthEmailSender>(emailSender);
+		services.AddSingleton(timeProvider ?? TimeProvider.System);
+
+		var serviceProvider = services.BuildServiceProvider();
+		var scope = serviceProvider.CreateAsyncScope();
+		var httpContextAccessor = scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
+		httpContextAccessor.HttpContext = new DefaultHttpContext
+		{
+			RequestServices = scope.ServiceProvider
+		};
+
+		return scope;
+	}
+
+	private static string ExtractToken(Uri loginLink)
+	{
+		var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(loginLink.Query);
+		return Assert.Single(query["token"]) ?? string.Empty;
+	}
+
+	private sealed class CapturingAuthEmailSender : IAuthEmailSender
+	{
+		public Uri LastLoginLink { get; private set; } = null!;
+
+		public int SendCount { get; private set; }
+
+		public Task SendLoginLinkAsync(string email, Uri loginLink, CancellationToken cancellationToken = default)
+		{
+			SendCount++;
+			LastLoginLink = loginLink;
+			return Task.CompletedTask;
+		}
+	}
+
+	private sealed class ThrowingAuthEmailSender : IAuthEmailSender
+	{
+		public Task SendLoginLinkAsync(string email, Uri loginLink, CancellationToken cancellationToken = default)
+		{
+			throw new InvalidOperationException("SMTP unavailable");
+		}
+	}
+
+	private sealed class MutableTimeProvider(DateTimeOffset utcNow) : TimeProvider
+	{
+		public DateTimeOffset UtcNow { get; set; } = utcNow;
+
+		public override DateTimeOffset GetUtcNow()
+		{
+			return UtcNow;
+		}
 	}
 }
