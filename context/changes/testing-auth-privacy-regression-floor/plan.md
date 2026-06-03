@@ -531,11 +531,11 @@ may refactor test files and small internal helper seams only.
 
 #### Automated
 
-- [x] 4.1 `dotnet test LinuxGameCompat.sln --no-restore` passes after cookbook updates
-- [x] 4.2 `context/foundation/test-plan.md` §6.1 documents auth/privacy regression test patterns
-- [x] 4.3 `context/foundation/test-plan.md` §6.6 records Phase 1 notes and 2026-06-03 AI-native guidance
+- [x] 4.1 `dotnet test LinuxGameCompat.sln --no-restore` passes after cookbook updates — 27fd4b7
+- [x] 4.2 `context/foundation/test-plan.md` §6.1 documents auth/privacy regression test patterns — 27fd4b7
+- [x] 4.3 `context/foundation/test-plan.md` §6.6 records Phase 1 notes and 2026-06-03 AI-native guidance — 27fd4b7
 
 #### Manual
 
-- [x] 4.4 Review confirms the cookbook matches the implemented tests and accepted scope boundaries
-- [x] 4.5 Review confirms `context/changes/testing-auth-privacy-regression-floor/change.md` remains `status: planned` until implementation begins
+- [x] 4.4 Review confirms the cookbook matches the implemented tests and accepted scope boundaries — 27fd4b7
+- [x] 4.5 Review confirms `context/changes/testing-auth-privacy-regression-floor/change.md` remains `status: planned` until implementation begins — 27fd4b7
