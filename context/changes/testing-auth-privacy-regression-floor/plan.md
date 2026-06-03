@@ -515,27 +515,27 @@ may refactor test files and small internal helper seams only.
 
 #### Automated
 
-- [x] 3.1 `dotnet build LinuxGameCompat.sln --no-restore` passes after sender composition seam changes
-- [x] 3.2 `dotnet test LinuxGameCompat.sln --no-restore` passes with new privacy boundary tests
-- [x] 3.3 Raw token is absent from saved `MagicLinkRequest` rows
-- [x] 3.4 Raw token, `token=`, and full login links are absent from send-failure warning logs
-- [x] 3.5 Failed sends leave no active magic-link request row
-- [x] 3.6 Production email composition includes the intended login link and no extra auth material
-- [x] 3.7 Development full-link logging is covered as an explicit local-only exception, not as a privacy failure
+- [x] 3.1 `dotnet build LinuxGameCompat.sln --no-restore` passes after sender composition seam changes — a2c69db
+- [x] 3.2 `dotnet test LinuxGameCompat.sln --no-restore` passes with new privacy boundary tests — a2c69db
+- [x] 3.3 Raw token is absent from saved `MagicLinkRequest` rows — a2c69db
+- [x] 3.4 Raw token, `token=`, and full login links are absent from send-failure warning logs — a2c69db
+- [x] 3.5 Failed sends leave no active magic-link request row — a2c69db
+- [x] 3.6 Production email composition includes the intended login link and no extra auth material — a2c69db
+- [x] 3.7 Development full-link logging is covered as an explicit local-only exception, not as a privacy failure — a2c69db
 
 #### Manual
 
-- [x] 3.8 Review confirms the privacy assertions match the accepted policy: normalized email is allowed in failed-send logs, Development full-link logging is an exception
+- [x] 3.8 Review confirms the privacy assertions match the accepted policy: normalized email is allowed in failed-send logs, Development full-link logging is an exception — a2c69db
 
 ### Phase 4: Cookbook And Handoff Gates
 
 #### Automated
 
-- [ ] 4.1 `dotnet test LinuxGameCompat.sln --no-restore` passes after cookbook updates
-- [ ] 4.2 `context/foundation/test-plan.md` §6.1 documents auth/privacy regression test patterns
-- [ ] 4.3 `context/foundation/test-plan.md` §6.6 records Phase 1 notes and 2026-06-03 AI-native guidance
+- [x] 4.1 `dotnet test LinuxGameCompat.sln --no-restore` passes after cookbook updates
+- [x] 4.2 `context/foundation/test-plan.md` §6.1 documents auth/privacy regression test patterns
+- [x] 4.3 `context/foundation/test-plan.md` §6.6 records Phase 1 notes and 2026-06-03 AI-native guidance
 
 #### Manual
 
-- [ ] 4.4 Review confirms the cookbook matches the implemented tests and accepted scope boundaries
-- [ ] 4.5 Review confirms `context/changes/testing-auth-privacy-regression-floor/change.md` remains `status: planned` until implementation begins
+- [x] 4.4 Review confirms the cookbook matches the implemented tests and accepted scope boundaries
+- [x] 4.5 Review confirms `context/changes/testing-auth-privacy-regression-floor/change.md` remains `status: planned` until implementation begins

@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-02
+> Last updated: 2026-06-03
 
 ## 1. Strategy
 
@@ -147,8 +147,35 @@ the relevant rollout phase ships; before that, the sub-section reads
 
 ### 6.1 Adding an auth/privacy regression test
 
-TBD - see §3 Phase 1 for passwordless magic-link replay, expiry, redirect,
-generic-response, email/token privacy, and logging-boundary patterns.
+Use service + PostgreSQL integration tests first for passwordless auth and
+privacy regressions. Wire real EF Core, ASP.NET Core Identity,
+`SignInManager<ApplicationUser>`, `IMagicLinkService`, `TimeProvider`, and
+HTTP context state through the shared auth test harness; keep fakes at the
+sender/logger boundary where the risk is the outbound artifact or failure log.
+Do not mock Identity sign-in internals when the test is meant to prove service
+sign-in behavior.
+
+Cover the risk at the behavior boundary:
+
+- valid syntactically correct requests for existing and new emails have the
+  same accepted service-visible outcome;
+- invalid, expired, consumed, and replayed tokens fail without creating or
+  signing in unintended members;
+- unsafe absolute, protocol-relative, slash/backslash, encoded slash, encoded
+  backslash, blank, and overlong return URLs normalize to `/`, while ordinary
+  local paths still round-trip;
+- raw tokens are absent from saved `MagicLinkRequest` rows without copying the
+  production hash calculation as the test oracle;
+- send-failure warning logs omit raw tokens, `token=`, and full login links,
+  while normalized email remains allowed operational context;
+- failed sends remove the saved magic-link request and leave no active token
+  row;
+- production email composition contains the intended login link and no extra
+  auth material.
+
+Development full-link logging is an explicit local-only manual-smoke exception.
+Do not add blanket "no logs contain raw tokens" assertions unless the
+Development sender policy changes or is deliberately redacted.
 
 ### 6.2 Adding an evidence/read-contract test
 
@@ -174,8 +201,18 @@ handling, external source failure/rate-limit behavior, and bad external data.
 
 ### 6.6 Per-rollout-phase notes
 
-TBD - each rollout phase should append 2-3 lines here when it ships,
-capturing the reference test pattern and the cheapest useful layer chosen.
+- 2026-06-03, §3 Phase 1 `testing-auth-privacy-regression-floor`: shipped the
+  auth/privacy regression floor for risks #1 and #2 using xUnit,
+  Testcontainers PostgreSQL, real EF Core/Identity wiring, fake sender/logger
+  boundaries, and small internal helper seams.
+- Cheapest useful layer: service + PostgreSQL integration tests covered token
+  lifecycle, request equivalence, return URL hardening, persistence privacy,
+  failure-log privacy, failed-send cleanup, production email composition, and
+  the Development full-link logging exception. Endpoint/browser cookie and
+  `Location` proof remains deferred to the critical UI smoke rollout.
+- AI-native guidance checked 2026-06-03: no AI-native testing layer is
+  recommended for this phase because deterministic xUnit/Testcontainers
+  coverage is cheaper and directly tied to risks #1 and #2.
 
 ## 7. What We Deliberately Don't Test
 
