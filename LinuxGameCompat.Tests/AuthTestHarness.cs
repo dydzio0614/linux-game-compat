@@ -94,7 +94,7 @@ public sealed class AuthTestHarness : IAsyncDisposable
 		public Task SendLoginLinkAsync(string email, Uri loginLink, CancellationToken cancellationToken = default)
 		{
 			LastLoginLink = loginLink;
-			throw new InvalidOperationException("SMTP unavailable");
+			throw new InvalidOperationException($"SMTP unavailable for {loginLink}");
 		}
 	}
 

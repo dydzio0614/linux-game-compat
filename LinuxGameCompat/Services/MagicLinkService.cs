@@ -69,7 +69,10 @@ public sealed class MagicLinkService(
 		{
 			dbContext.MagicLinkRequests.Remove(request);
 			await dbContext.SaveChangesAsync(cancellationToken);
-			logger.LogWarning(exception, "Failed to send magic-link email to {NormalizedEmail}. The saved request was removed.", normalizedEmail);
+			logger.LogWarning(
+				"Failed to send magic-link email to {NormalizedEmail}. The saved request was removed. ExceptionType: {ExceptionType}",
+				normalizedEmail,
+				exception.GetType().Name);
 			return new MagicLinkRequestResult(Accepted: false);
 		}
 

@@ -199,13 +199,14 @@ public sealed class AuthPrivacyRegressionTests(PostgreSqlFixture fixture) : ICla
 
 		var rawToken = AuthTestHarness.ExtractToken(emailSender.LastLoginLink);
 		var warning = Assert.Single(logProvider.Entries, entry => entry.Level == LogLevel.Warning);
+		var renderedWarning = $"{warning.Message}\n{warning.ExceptionText}";
 
 		Assert.False(result.Accepted);
 		Assert.Empty(await harness.DbContext.MagicLinkRequests.Where(request => request.NormalizedEmail == "SEND-FAILURE@EXAMPLE.TEST").ToArrayAsync());
 		Assert.Contains("SEND-FAILURE@EXAMPLE.TEST", warning.Message, StringComparison.Ordinal);
-		Assert.DoesNotContain(rawToken, warning.Message, StringComparison.Ordinal);
-		Assert.DoesNotContain("token=", warning.Message, StringComparison.OrdinalIgnoreCase);
-		Assert.DoesNotContain(emailSender.LastLoginLink.ToString(), warning.Message, StringComparison.Ordinal);
+		Assert.DoesNotContain(rawToken, renderedWarning, StringComparison.Ordinal);
+		Assert.DoesNotContain("token=", renderedWarning, StringComparison.OrdinalIgnoreCase);
+		Assert.DoesNotContain(emailSender.LastLoginLink.ToString(), renderedWarning, StringComparison.Ordinal);
 	}
 
 	[Fact]
@@ -309,9 +310,13 @@ public sealed class AuthPrivacyRegressionTests(PostgreSqlFixture fixture) : ICla
 			Exception? exception,
 			Func<TState, Exception?, string> formatter)
 		{
-			entries.Add(new LogEntry(category, logLevel, formatter(state, exception)));
+			entries.Add(new LogEntry(
+				category,
+				logLevel,
+				formatter(state, exception),
+				exception?.ToString() ?? string.Empty));
 		}
 	}
 
-	private sealed record LogEntry(string Category, LogLevel Level, string Message);
+	private sealed record LogEntry(string Category, LogLevel Level, string Message, string ExceptionText);
 }
