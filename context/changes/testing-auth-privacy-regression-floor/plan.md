@@ -488,13 +488,13 @@ may refactor test files and small internal helper seams only.
 
 #### Automated
 
-- [ ] 1.1 `dotnet build LinuxGameCompat.sln --no-restore` passes after test-support extraction
-- [ ] 1.2 `dotnet test LinuxGameCompat.sln --no-restore` passes with the existing 39 tests
-- [ ] 1.3 Existing auth tests still use real PostgreSQL-backed Identity service wiring
+- [x] 1.1 `dotnet build LinuxGameCompat.sln --no-restore` passes after test-support extraction
+- [x] 1.2 `dotnet test LinuxGameCompat.sln --no-restore` passes with the existing 39 tests
+- [x] 1.3 Existing auth tests still use real PostgreSQL-backed Identity service wiring
 
 #### Manual
 
-- [ ] 1.4 Review confirms no production app behavior changed in this structural phase
+- [x] 1.4 Review confirms no production app behavior changed in this structural phase
 
 ### Phase 2: Auth Safety Regressions And Return URL Hardening
 

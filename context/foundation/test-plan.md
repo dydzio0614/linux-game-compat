@@ -81,7 +81,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
-| 1 | Auth and privacy regression floor | Defend magic-link auth, redirects, replay, generic responses, and email/token privacy at the cheapest layer. | #1, #2 | integration + service | researched | testing-auth-privacy-regression-floor |
+| 1 | Auth and privacy regression floor | Defend magic-link auth, redirects, replay, generic responses, and email/token privacy at the cheapest layer. | #1, #2 | integration + service | implementing | testing-auth-privacy-regression-floor |
 | 2 | Evidence and public read contracts | Protect source-link integrity, no-evidence uncertainty, hidden records, search, and browse contracts. | #3, #4 | integration + contract | not started | — |
 | 3 | Critical UI smoke layer | Add a thin signal for critical lookup, browse, detail, login, logout, and nav behavior. | #5 | browser smoke | not started | — |
 | 4 | Quality gates and cookbook | Lock build/test gates and document future favorites plus ingestion test requirements. | cross-cutting | gates + cookbook | not started | — |
