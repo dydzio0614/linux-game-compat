@@ -89,8 +89,11 @@ public sealed class AuthTestHarness : IAsyncDisposable
 
 	public sealed class ThrowingAuthEmailSender : IAuthEmailSender
 	{
+		public Uri LastLoginLink { get; private set; } = null!;
+
 		public Task SendLoginLinkAsync(string email, Uri loginLink, CancellationToken cancellationToken = default)
 		{
+			LastLoginLink = loginLink;
 			throw new InvalidOperationException("SMTP unavailable");
 		}
 	}

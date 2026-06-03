@@ -500,32 +500,32 @@ may refactor test files and small internal helper seams only.
 
 #### Automated
 
-- [x] 2.1 `dotnet build LinuxGameCompat.sln --no-restore` passes after shared normalization changes
-- [x] 2.2 `dotnet test LinuxGameCompat.sln --no-restore` passes with new auth safety tests
-- [x] 2.3 Existing-vs-new valid email requests have equivalent accepted service outcomes
-- [x] 2.4 Invalid, expired, consumed, and replayed consume attempts do not create or sign in unintended members
-- [x] 2.5 Raw and encoded slash/backslash external-looking return URL cases normalize to `/`
-- [x] 2.6 Ordinary local return URLs still round-trip through request and consume behavior
+- [x] 2.1 `dotnet build LinuxGameCompat.sln --no-restore` passes after shared normalization changes — a48fc23
+- [x] 2.2 `dotnet test LinuxGameCompat.sln --no-restore` passes with new auth safety tests — a48fc23
+- [x] 2.3 Existing-vs-new valid email requests have equivalent accepted service outcomes — a48fc23
+- [x] 2.4 Invalid, expired, consumed, and replayed consume attempts do not create or sign in unintended members — a48fc23
+- [x] 2.5 Raw and encoded slash/backslash external-looking return URL cases normalize to `/` — a48fc23
+- [x] 2.6 Ordinary local return URLs still round-trip through request and consume behavior — a48fc23
 
 #### Manual
 
-- [x] 2.7 Review confirms return URL hardening is shared by service and login UI normalization
+- [x] 2.7 Review confirms return URL hardening is shared by service and login UI normalization — a48fc23
 
 ### Phase 3: Privacy Boundary Regressions
 
 #### Automated
 
-- [ ] 3.1 `dotnet build LinuxGameCompat.sln --no-restore` passes after sender composition seam changes
-- [ ] 3.2 `dotnet test LinuxGameCompat.sln --no-restore` passes with new privacy boundary tests
-- [ ] 3.3 Raw token is absent from saved `MagicLinkRequest` rows
-- [ ] 3.4 Raw token, `token=`, and full login links are absent from send-failure warning logs
-- [ ] 3.5 Failed sends leave no active magic-link request row
-- [ ] 3.6 Production email composition includes the intended login link and no extra auth material
-- [ ] 3.7 Development full-link logging is covered as an explicit local-only exception, not as a privacy failure
+- [x] 3.1 `dotnet build LinuxGameCompat.sln --no-restore` passes after sender composition seam changes
+- [x] 3.2 `dotnet test LinuxGameCompat.sln --no-restore` passes with new privacy boundary tests
+- [x] 3.3 Raw token is absent from saved `MagicLinkRequest` rows
+- [x] 3.4 Raw token, `token=`, and full login links are absent from send-failure warning logs
+- [x] 3.5 Failed sends leave no active magic-link request row
+- [x] 3.6 Production email composition includes the intended login link and no extra auth material
+- [x] 3.7 Development full-link logging is covered as an explicit local-only exception, not as a privacy failure
 
 #### Manual
 
-- [ ] 3.8 Review confirms the privacy assertions match the accepted policy: normalized email is allowed in failed-send logs, Development full-link logging is an exception
+- [x] 3.8 Review confirms the privacy assertions match the accepted policy: normalized email is allowed in failed-send logs, Development full-link logging is an exception
 
 ### Phase 4: Cookbook And Handoff Gates
 

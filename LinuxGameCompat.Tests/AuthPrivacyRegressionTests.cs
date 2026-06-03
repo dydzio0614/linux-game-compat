@@ -1,6 +1,7 @@
 using LinuxGameCompat.Data;
 using LinuxGameCompat.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace LinuxGameCompat.Tests;
 
@@ -154,6 +155,97 @@ public sealed class AuthPrivacyRegressionTests(PostgreSqlFixture fixture) : ICla
 		Assert.Equal("/games/baldurs-gate-3", result.RedirectUrl);
 	}
 
+	[Fact]
+	public async Task MagicLinkRequest_StoresTokenHashWithoutRawToken()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+
+		await harness.Service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"token-persistence@example.test",
+			"/",
+			new Uri("https://example.test"),
+			null,
+			null));
+
+		var rawToken = AuthTestHarness.ExtractToken(emailSender.LastLoginLink);
+		var request = await harness.DbContext.MagicLinkRequests.SingleAsync(request => request.NormalizedEmail == "TOKEN-PERSISTENCE@EXAMPLE.TEST");
+
+		Assert.NotEqual(rawToken, request.TokenHash);
+		Assert.DoesNotContain(rawToken, request.TokenHash, StringComparison.Ordinal);
+		Assert.Matches("^[A-F0-9]{64}$", request.TokenHash);
+	}
+
+	[Fact]
+	public async Task MagicLinkRequest_SendFailureLogsNoRawTokenOrLoginLinkAndRemovesSavedRequest()
+	{
+		var emailSender = new AuthTestHarness.ThrowingAuthEmailSender();
+		var logProvider = new CapturingLoggerProvider();
+		await using var harness = AuthTestHarness.Create(
+			fixture,
+			emailSender,
+			configureLogging: builder =>
+			{
+				builder.ClearProviders();
+				builder.AddProvider(logProvider);
+			});
+
+		var result = await harness.Service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"send-failure@example.test",
+			"/",
+			new Uri("https://example.test"),
+			null,
+			null));
+
+		var rawToken = AuthTestHarness.ExtractToken(emailSender.LastLoginLink);
+		var warning = Assert.Single(logProvider.Entries, entry => entry.Level == LogLevel.Warning);
+
+		Assert.False(result.Accepted);
+		Assert.Empty(await harness.DbContext.MagicLinkRequests.Where(request => request.NormalizedEmail == "SEND-FAILURE@EXAMPLE.TEST").ToArrayAsync());
+		Assert.Contains("SEND-FAILURE@EXAMPLE.TEST", warning.Message, StringComparison.Ordinal);
+		Assert.DoesNotContain(rawToken, warning.Message, StringComparison.Ordinal);
+		Assert.DoesNotContain("token=", warning.Message, StringComparison.OrdinalIgnoreCase);
+		Assert.DoesNotContain(emailSender.LastLoginLink.ToString(), warning.Message, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void SmtpAuthEmailSender_ComposesProductionPlainTextLoginMessage()
+	{
+		var loginLink = new Uri("https://example.test/auth/magic-link/consume?token=abc123");
+
+		var message = SmtpAuthEmailSender.ComposeLoginLinkMessage(
+			"login@example.test",
+			"member@example.test",
+			loginLink);
+
+		Assert.Equal("login@example.test", message.Sender);
+		Assert.Equal("member@example.test", message.Recipient);
+		Assert.Equal("Your LinuxGameCompat login link", message.Subject);
+		Assert.False(message.IsBodyHtml);
+		Assert.Equal($"Use this link to sign in: {loginLink}", message.Body);
+		Assert.DoesNotContain("abc123", message.Subject, StringComparison.Ordinal);
+		Assert.DoesNotContain("token=", message.Subject, StringComparison.OrdinalIgnoreCase);
+		Assert.Equal(1, CountOccurrences(message.Body, loginLink.ToString()));
+		Assert.Equal(1, CountOccurrences(message.Body, "token="));
+	}
+
+	[Fact]
+	public async Task LoggingAuthEmailSender_LogsFullLinkAsDevelopmentOnlyException()
+	{
+		var logProvider = new CapturingLoggerProvider();
+		using var loggerFactory = LoggerFactory.Create(builder => builder.AddProvider(logProvider));
+		var sender = new LoggingAuthEmailSender(loggerFactory.CreateLogger<LoggingAuthEmailSender>());
+		var loginLink = new Uri("https://localhost/auth/magic-link/consume?token=development-smoke-token");
+
+		await sender.SendLoginLinkAsync("member@example.test", loginLink);
+
+		var entry = Assert.Single(logProvider.Entries, entry => entry.Category == typeof(LoggingAuthEmailSender).FullName);
+		Assert.Equal(LogLevel.Information, entry.Level);
+		Assert.Contains(loginLink.ToString(), entry.Message, StringComparison.Ordinal);
+		Assert.Contains("development-smoke-token", entry.Message, StringComparison.Ordinal);
+		Assert.Contains("member@example.test", entry.Message, StringComparison.Ordinal);
+	}
+
 	private static async Task CreateMemberAsync(AuthTestHarness harness, string email)
 	{
 		var user = new ApplicationUser
@@ -166,4 +258,60 @@ public sealed class AuthPrivacyRegressionTests(PostgreSqlFixture fixture) : ICla
 		var result = await harness.UserManager.CreateAsync(user);
 		Assert.True(result.Succeeded);
 	}
+
+	private static int CountOccurrences(string value, string search)
+	{
+		var count = 0;
+		var index = 0;
+
+		while ((index = value.IndexOf(search, index, StringComparison.Ordinal)) >= 0)
+		{
+			count++;
+			index += search.Length;
+		}
+
+		return count;
+	}
+
+	private sealed class CapturingLoggerProvider : ILoggerProvider
+	{
+		private readonly List<LogEntry> _entries = [];
+
+		public IReadOnlyList<LogEntry> Entries => _entries;
+
+		public ILogger CreateLogger(string categoryName)
+		{
+			return new CapturingLogger(categoryName, _entries);
+		}
+
+		public void Dispose()
+		{
+		}
+	}
+
+	private sealed class CapturingLogger(string category, List<LogEntry> entries) : ILogger
+	{
+		public IDisposable? BeginScope<TState>(TState state)
+			where TState : notnull
+		{
+			return null;
+		}
+
+		public bool IsEnabled(LogLevel logLevel)
+		{
+			return true;
+		}
+
+		public void Log<TState>(
+			LogLevel logLevel,
+			EventId eventId,
+			TState state,
+			Exception? exception,
+			Func<TState, Exception?, string> formatter)
+		{
+			entries.Add(new LogEntry(category, logLevel, formatter(state, exception)));
+		}
+	}
+
+	private sealed record LogEntry(string Category, LogLevel Level, string Message);
 }
