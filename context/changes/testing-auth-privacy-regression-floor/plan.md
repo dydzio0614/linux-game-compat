@@ -488,28 +488,28 @@ may refactor test files and small internal helper seams only.
 
 #### Automated
 
-- [x] 1.1 `dotnet build LinuxGameCompat.sln --no-restore` passes after test-support extraction
-- [x] 1.2 `dotnet test LinuxGameCompat.sln --no-restore` passes with the existing 39 tests
-- [x] 1.3 Existing auth tests still use real PostgreSQL-backed Identity service wiring
+- [x] 1.1 `dotnet build LinuxGameCompat.sln --no-restore` passes after test-support extraction — c459d7e
+- [x] 1.2 `dotnet test LinuxGameCompat.sln --no-restore` passes with the existing 39 tests — c459d7e
+- [x] 1.3 Existing auth tests still use real PostgreSQL-backed Identity service wiring — c459d7e
 
 #### Manual
 
-- [x] 1.4 Review confirms no production app behavior changed in this structural phase
+- [x] 1.4 Review confirms no production app behavior changed in this structural phase — c459d7e
 
 ### Phase 2: Auth Safety Regressions And Return URL Hardening
 
 #### Automated
 
-- [ ] 2.1 `dotnet build LinuxGameCompat.sln --no-restore` passes after shared normalization changes
-- [ ] 2.2 `dotnet test LinuxGameCompat.sln --no-restore` passes with new auth safety tests
-- [ ] 2.3 Existing-vs-new valid email requests have equivalent accepted service outcomes
-- [ ] 2.4 Invalid, expired, consumed, and replayed consume attempts do not create or sign in unintended members
-- [ ] 2.5 Raw and encoded slash/backslash external-looking return URL cases normalize to `/`
-- [ ] 2.6 Ordinary local return URLs still round-trip through request and consume behavior
+- [x] 2.1 `dotnet build LinuxGameCompat.sln --no-restore` passes after shared normalization changes
+- [x] 2.2 `dotnet test LinuxGameCompat.sln --no-restore` passes with new auth safety tests
+- [x] 2.3 Existing-vs-new valid email requests have equivalent accepted service outcomes
+- [x] 2.4 Invalid, expired, consumed, and replayed consume attempts do not create or sign in unintended members
+- [x] 2.5 Raw and encoded slash/backslash external-looking return URL cases normalize to `/`
+- [x] 2.6 Ordinary local return URLs still round-trip through request and consume behavior
 
 #### Manual
 
-- [ ] 2.7 Review confirms return URL hardening is shared by service and login UI normalization
+- [x] 2.7 Review confirms return URL hardening is shared by service and login UI normalization
 
 ### Phase 3: Privacy Boundary Regressions
 

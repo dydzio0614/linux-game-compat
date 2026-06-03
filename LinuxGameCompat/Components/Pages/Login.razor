@@ -1,4 +1,5 @@
 ﻿@page "/login"
+@using LinuxGameCompat.Services
 @rendermode InteractiveServer
 
 <PageTitle>Login</PageTitle>
@@ -69,21 +70,5 @@
 
 	private bool RequestFailed => RequestFailedValue == "1";
 
-	private string SafeReturnUrl => NormalizeLocalReturnUrl(ReturnUrl);
-
-	private static string NormalizeLocalReturnUrl(string? returnUrl)
-	{
-		if (string.IsNullOrWhiteSpace(returnUrl) || !Uri.TryCreate(returnUrl, UriKind.Relative, out var uri))
-		{
-			return "/";
-		}
-
-		var value = uri.ToString();
-		if (!value.StartsWith("/", StringComparison.Ordinal) || value.StartsWith("//", StringComparison.Ordinal))
-		{
-			return "/";
-		}
-
-		return value;
-	}
+	private string SafeReturnUrl => LocalReturnUrlNormalizer.Normalize(ReturnUrl);
 }
