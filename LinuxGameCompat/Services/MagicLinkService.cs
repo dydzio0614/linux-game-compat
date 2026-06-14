@@ -21,7 +21,6 @@ public sealed class MagicLinkService(
 	private static readonly TimeSpan LinkLifetime = TimeSpan.FromMinutes(15);
 	private static readonly EmailAddressAttribute EmailAddressValidator = new();
 	private const int MaxEmailLength = 256;
-	private const int MaxReturnUrlLength = 2048;
 	private const int MaxIpAddressLength = 64;
 	private const int MaxUserAgentLength = 512;
 
@@ -49,7 +48,7 @@ public sealed class MagicLinkService(
 			TokenHash = HashToken(token),
 			CreatedAt = now,
 			ExpiresAt = now.Add(LinkLifetime),
-			ReturnUrl = NormalizeLocalReturnUrl(input.ReturnUrl),
+			ReturnUrl = LocalReturnUrlNormalizer.Normalize(input.ReturnUrl),
 			RequestIpAddress = Truncate(input.RequestIpAddress, MaxIpAddressLength),
 			UserAgent = Truncate(input.UserAgent, MaxUserAgentLength)
 		};
@@ -70,7 +69,10 @@ public sealed class MagicLinkService(
 		{
 			dbContext.MagicLinkRequests.Remove(request);
 			await dbContext.SaveChangesAsync(cancellationToken);
-			logger.LogWarning(exception, "Failed to send magic-link email to {NormalizedEmail}. The saved request was removed.", normalizedEmail);
+			logger.LogWarning(
+				"Failed to send magic-link email to {NormalizedEmail}. The saved request was removed. ExceptionType: {ExceptionType}",
+				normalizedEmail,
+				exception.GetType().Name);
 			return new MagicLinkRequestResult(Accepted: false);
 		}
 
@@ -129,7 +131,7 @@ public sealed class MagicLinkService(
 
 		await signInManager.SignInAsync(user, isPersistent: true);
 
-		return new MagicLinkConsumeResult(Succeeded: true, RedirectUrl: NormalizeLocalReturnUrl(request.ReturnUrl));
+		return new MagicLinkConsumeResult(Succeeded: true, RedirectUrl: LocalReturnUrlNormalizer.Normalize(request.ReturnUrl));
 	}
 
 	private static MagicLinkConsumeResult Failed()
@@ -173,24 +175,6 @@ public sealed class MagicLinkService(
 		}
 
 		return trimmed;
-	}
-
-	private static string NormalizeLocalReturnUrl(string? returnUrl)
-	{
-		if (string.IsNullOrWhiteSpace(returnUrl) || !Uri.TryCreate(returnUrl, UriKind.Relative, out var uri))
-		{
-			return "/";
-		}
-
-		var value = uri.ToString();
-		if (value.Length > MaxReturnUrlLength ||
-			!value.StartsWith("/", StringComparison.Ordinal) ||
-			value.StartsWith("//", StringComparison.Ordinal))
-		{
-			return "/";
-		}
-
-		return value;
 	}
 
 	private static string? Truncate(string? value, int maxLength)

@@ -1,48 +1,10 @@
 using LinuxGameCompat.Data;
 using LinuxGameCompat.Services;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Testcontainers.PostgreSql;
 
 namespace LinuxGameCompat.Tests;
-
-public sealed class PostgreSqlFixture : IAsyncLifetime
-{
-	private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18-alpine")
-		.WithDatabase("linux_game_compat_tests")
-		.WithUsername("linux_game_compat")
-		.WithPassword("linux_game_compat_dev")
-		.Build();
-
-	public DbContextOptions<CompatibilityDbContext> Options { get; private set; } = null!;
-	public string ConnectionString { get; private set; } = string.Empty;
-
-	public async Task InitializeAsync()
-	{
-		await _postgres.StartAsync();
-		ConnectionString = _postgres.GetConnectionString();
-		Options = new DbContextOptionsBuilder<CompatibilityDbContext>()
-			.UseNpgsql(ConnectionString)
-			.Options;
-
-		await using var dbContext = CreateDbContext();
-		await dbContext.Database.MigrateAsync();
-	}
-
-	public async Task DisposeAsync()
-	{
-		await _postgres.DisposeAsync();
-	}
-
-	public CompatibilityDbContext CreateDbContext()
-	{
-		return new CompatibilityDbContext(Options);
-	}
-}
 
 public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IClassFixture<PostgreSqlFixture>
 {
@@ -336,40 +298,35 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 	[Fact]
 	public async Task MagicLinkRequest_StoresHashedTokenAndDoesNotCreateMemberImmediately()
 	{
-		var emailSender = new CapturingAuthEmailSender();
-		await using var scope = CreateAuthScope(emailSender);
-		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
 
-		await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+		await harness.Service.RequestLoginLinkAsync(new MagicLinkRequestInput(
 			"new-member@example.test",
 			"/games/baldurs-gate-3",
 			new Uri("https://example.test"),
 			"127.0.0.1",
 			"test-agent"));
 
-		var dbContext = scope.ServiceProvider.GetRequiredService<CompatibilityDbContext>();
-		var request = await dbContext.MagicLinkRequests.SingleAsync(request => request.NormalizedEmail == "NEW-MEMBER@EXAMPLE.TEST");
-		var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+		var request = await harness.DbContext.MagicLinkRequests.SingleAsync(request => request.NormalizedEmail == "NEW-MEMBER@EXAMPLE.TEST");
 
-		Assert.NotEqual(ExtractToken(emailSender.LastLoginLink), request.TokenHash);
+		Assert.NotEqual(AuthTestHarness.ExtractToken(emailSender.LastLoginLink), request.TokenHash);
 		Assert.Equal(64, request.TokenHash.Length);
 		Assert.Null(request.ConsumedAt);
 		Assert.Equal("/games/baldurs-gate-3", request.ReturnUrl);
 		Assert.Equal("127.0.0.1", request.RequestIpAddress);
 		Assert.Equal("test-agent", request.UserAgent);
-		Assert.Null(await userManager.FindByEmailAsync("new-member@example.test"));
+		Assert.Null(await harness.UserManager.FindByEmailAsync("new-member@example.test"));
 	}
 
 	[Fact]
 	public async Task MagicLinkRequest_InvalidEmailDoesNotPersistOrSend()
 	{
-		var emailSender = new CapturingAuthEmailSender();
-		await using var scope = CreateAuthScope(emailSender);
-		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
-		var dbContext = scope.ServiceProvider.GetRequiredService<CompatibilityDbContext>();
-		var initialCount = await dbContext.MagicLinkRequests.CountAsync();
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		var initialCount = await harness.DbContext.MagicLinkRequests.CountAsync();
 
-		var result = await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+		var result = await harness.Service.RequestLoginLinkAsync(new MagicLinkRequestInput(
 			"not-an-email",
 			"/",
 			new Uri("https://example.test"),
@@ -377,26 +334,24 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 			null));
 
 		Assert.False(result.Accepted);
-		Assert.Equal(initialCount, await dbContext.MagicLinkRequests.CountAsync());
+		Assert.Equal(initialCount, await harness.DbContext.MagicLinkRequests.CountAsync());
 		Assert.Equal(0, emailSender.SendCount);
 	}
 
 	[Fact]
 	public async Task MagicLinkRequest_OverlongReturnUrlNormalizesToRoot()
 	{
-		var emailSender = new CapturingAuthEmailSender();
-		await using var scope = CreateAuthScope(emailSender);
-		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
 
-		await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+		await harness.Service.RequestLoginLinkAsync(new MagicLinkRequestInput(
 			"overlong-return@example.test",
 			$"/{new string('a', 2050)}",
 			new Uri("https://example.test"),
 			null,
 			null));
 
-		var dbContext = scope.ServiceProvider.GetRequiredService<CompatibilityDbContext>();
-		var request = await dbContext.MagicLinkRequests.SingleAsync(request => request.NormalizedEmail == "OVERLONG-RETURN@EXAMPLE.TEST");
+		var request = await harness.DbContext.MagicLinkRequests.SingleAsync(request => request.NormalizedEmail == "OVERLONG-RETURN@EXAMPLE.TEST");
 
 		Assert.Equal("/", request.ReturnUrl);
 	}
@@ -404,13 +359,11 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 	[Fact]
 	public async Task MagicLinkRequest_EmailSendFailureRemovesSavedRequest()
 	{
-		var emailSender = new ThrowingAuthEmailSender();
-		await using var scope = CreateAuthScope(emailSender);
-		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
-		var dbContext = scope.ServiceProvider.GetRequiredService<CompatibilityDbContext>();
-		var initialCount = await dbContext.MagicLinkRequests.CountAsync();
+		var emailSender = new AuthTestHarness.ThrowingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		var initialCount = await harness.DbContext.MagicLinkRequests.CountAsync();
 
-		var result = await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+		var result = await harness.Service.RequestLoginLinkAsync(new MagicLinkRequestInput(
 			"send-failure@example.test",
 			"/",
 			new Uri("https://example.test"),
@@ -418,52 +371,48 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 			null));
 
 		Assert.False(result.Accepted);
-		Assert.Equal(initialCount, await dbContext.MagicLinkRequests.CountAsync());
-		Assert.False(await dbContext.MagicLinkRequests.AnyAsync(request => request.NormalizedEmail == "SEND-FAILURE@EXAMPLE.TEST"));
+		Assert.Equal(initialCount, await harness.DbContext.MagicLinkRequests.CountAsync());
+		Assert.False(await harness.DbContext.MagicLinkRequests.AnyAsync(request => request.NormalizedEmail == "SEND-FAILURE@EXAMPLE.TEST"));
 	}
 
 	[Fact]
 	public async Task MagicLinkConsumption_CreatesMemberAndMarksRequestConsumed()
 	{
-		var emailSender = new CapturingAuthEmailSender();
-		await using var scope = CreateAuthScope(emailSender);
-		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
-		await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		await harness.Service.RequestLoginLinkAsync(new MagicLinkRequestInput(
 			"consume-member@example.test",
 			"/games/baldurs-gate-3",
 			new Uri("https://example.test"),
 			null,
 			null));
 
-		var result = await service.ConsumeLoginLinkAsync(ExtractToken(emailSender.LastLoginLink));
+		var result = await harness.Service.ConsumeLoginLinkAsync(AuthTestHarness.ExtractToken(emailSender.LastLoginLink));
 
-		var dbContext = scope.ServiceProvider.GetRequiredService<CompatibilityDbContext>();
-		var request = await dbContext.MagicLinkRequests.SingleAsync(request => request.NormalizedEmail == "CONSUME-MEMBER@EXAMPLE.TEST");
-		await dbContext.Entry(request).ReloadAsync();
-		var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+		var request = await harness.DbContext.MagicLinkRequests.SingleAsync(request => request.NormalizedEmail == "CONSUME-MEMBER@EXAMPLE.TEST");
+		await harness.DbContext.Entry(request).ReloadAsync();
 
 		Assert.True(result.Succeeded);
 		Assert.Equal("/games/baldurs-gate-3", result.RedirectUrl);
 		Assert.NotNull(request.ConsumedAt);
-		Assert.NotNull(await userManager.FindByEmailAsync("consume-member@example.test"));
+		Assert.NotNull(await harness.UserManager.FindByEmailAsync("consume-member@example.test"));
 	}
 
 	[Fact]
 	public async Task MagicLinkConsumption_RejectsConsumedToken()
 	{
-		var emailSender = new CapturingAuthEmailSender();
-		await using var scope = CreateAuthScope(emailSender);
-		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
-		await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		await harness.Service.RequestLoginLinkAsync(new MagicLinkRequestInput(
 			"replay-member@example.test",
 			"/",
 			new Uri("https://example.test"),
 			null,
 			null));
-		var token = ExtractToken(emailSender.LastLoginLink);
+		var token = AuthTestHarness.ExtractToken(emailSender.LastLoginLink);
 
-		var firstResult = await service.ConsumeLoginLinkAsync(token);
-		var replayResult = await service.ConsumeLoginLinkAsync(token);
+		var firstResult = await harness.Service.ConsumeLoginLinkAsync(token);
+		var replayResult = await harness.Service.ConsumeLoginLinkAsync(token);
 
 		Assert.True(firstResult.Succeeded);
 		Assert.False(replayResult.Succeeded);
@@ -472,44 +421,41 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 	[Fact]
 	public async Task MagicLinkConsumption_RejectsExpiredAndInvalidTokens()
 	{
-		var emailSender = new CapturingAuthEmailSender();
-		var timeProvider = new MutableTimeProvider(DateTimeOffset.UtcNow);
-		await using var scope = CreateAuthScope(emailSender, timeProvider);
-		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
-		await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		var timeProvider = new AuthTestHarness.MutableTimeProvider(DateTimeOffset.UtcNow);
+		await using var harness = AuthTestHarness.Create(fixture, emailSender, timeProvider);
+		await harness.Service.RequestLoginLinkAsync(new MagicLinkRequestInput(
 			"expired-member@example.test",
 			"/",
 			new Uri("https://example.test"),
 			null,
 			null));
-		var token = ExtractToken(emailSender.LastLoginLink);
+		var token = AuthTestHarness.ExtractToken(emailSender.LastLoginLink);
 
 		timeProvider.UtcNow = timeProvider.UtcNow.AddMinutes(16);
-		var expiredResult = await service.ConsumeLoginLinkAsync(token);
-		var invalidResult = await service.ConsumeLoginLinkAsync("not-a-real-token");
+		var expiredResult = await harness.Service.ConsumeLoginLinkAsync(token);
+		var invalidResult = await harness.Service.ConsumeLoginLinkAsync("not-a-real-token");
 
-		var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 		Assert.False(expiredResult.Succeeded);
 		Assert.Equal("/login?failed=1", expiredResult.RedirectUrl);
 		Assert.False(invalidResult.Succeeded);
 		Assert.Equal("/login?failed=1", invalidResult.RedirectUrl);
-		Assert.Null(await userManager.FindByEmailAsync("expired-member@example.test"));
+		Assert.Null(await harness.UserManager.FindByEmailAsync("expired-member@example.test"));
 	}
 
 	[Fact]
 	public async Task MagicLinkConsumption_NormalizesNonLocalReturnUrlToRoot()
 	{
-		var emailSender = new CapturingAuthEmailSender();
-		await using var scope = CreateAuthScope(emailSender);
-		var service = scope.ServiceProvider.GetRequiredService<IMagicLinkService>();
-		await service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		await harness.Service.RequestLoginLinkAsync(new MagicLinkRequestInput(
 			"unsafe-return@example.test",
 			"https://evil.example.test/capture",
 			new Uri("https://example.test"),
 			null,
 			null));
 
-		var result = await service.ConsumeLoginLinkAsync(ExtractToken(emailSender.LastLoginLink));
+		var result = await harness.Service.ConsumeLoginLinkAsync(AuthTestHarness.ExtractToken(emailSender.LastLoginLink));
 
 		Assert.True(result.Succeeded);
 		Assert.Equal("/", result.RedirectUrl);
@@ -569,72 +515,4 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 		return count == 1;
 	}
 
-	private AsyncServiceScope CreateAuthScope(
-		IAuthEmailSender emailSender,
-		TimeProvider? timeProvider = null)
-	{
-		var services = new ServiceCollection();
-		services.AddLogging(builder => builder.AddConsole());
-		services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-		services.AddDbContext<CompatibilityDbContext>(options => options.UseNpgsql(fixture.ConnectionString));
-		services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
-		services.AddIdentityCore<ApplicationUser>(options =>
-			{
-				options.User.RequireUniqueEmail = true;
-			})
-			.AddEntityFrameworkStores<CompatibilityDbContext>()
-			.AddSignInManager()
-			.AddDefaultTokenProviders();
-		services.AddScoped<IMagicLinkService, MagicLinkService>();
-		services.AddSingleton<IAuthEmailSender>(emailSender);
-		services.AddSingleton(timeProvider ?? TimeProvider.System);
-
-		var serviceProvider = services.BuildServiceProvider();
-		var scope = serviceProvider.CreateAsyncScope();
-		var httpContextAccessor = scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
-		httpContextAccessor.HttpContext = new DefaultHttpContext
-		{
-			RequestServices = scope.ServiceProvider
-		};
-
-		return scope;
-	}
-
-	private static string ExtractToken(Uri loginLink)
-	{
-		var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(loginLink.Query);
-		return Assert.Single(query["token"]) ?? string.Empty;
-	}
-
-	private sealed class CapturingAuthEmailSender : IAuthEmailSender
-	{
-		public Uri LastLoginLink { get; private set; } = null!;
-
-		public int SendCount { get; private set; }
-
-		public Task SendLoginLinkAsync(string email, Uri loginLink, CancellationToken cancellationToken = default)
-		{
-			SendCount++;
-			LastLoginLink = loginLink;
-			return Task.CompletedTask;
-		}
-	}
-
-	private sealed class ThrowingAuthEmailSender : IAuthEmailSender
-	{
-		public Task SendLoginLinkAsync(string email, Uri loginLink, CancellationToken cancellationToken = default)
-		{
-			throw new InvalidOperationException("SMTP unavailable");
-		}
-	}
-
-	private sealed class MutableTimeProvider(DateTimeOffset utcNow) : TimeProvider
-	{
-		public DateTimeOffset UtcNow { get; set; } = utcNow;
-
-		public override DateTimeOffset GetUtcNow()
-		{
-			return UtcNow;
-		}
-	}
 }

@@ -20,12 +20,13 @@ public sealed class SmtpAuthEmailSender(IConfiguration configuration) : IAuthEma
 		var enableTls = section.GetValue("EnableTls", true);
 		var username = section["Username"];
 		var password = section["Password"];
+		var loginMessage = ComposeLoginLinkMessage(sender, email, loginLink);
 
-		using var message = new MailMessage(sender, email)
+		using var message = new MailMessage(loginMessage.Sender, loginMessage.Recipient)
 		{
-			Subject = "Your LinuxGameCompat login link",
-			Body = $"Use this link to sign in: {loginLink}",
-			IsBodyHtml = false
+			Subject = loginMessage.Subject,
+			Body = loginMessage.Body,
+			IsBodyHtml = loginMessage.IsBodyHtml
 		};
 
 		using var client = new SmtpClient(host, port)
@@ -40,4 +41,21 @@ public sealed class SmtpAuthEmailSender(IConfiguration configuration) : IAuthEma
 
 		await client.SendMailAsync(message, cancellationToken);
 	}
+
+	internal static SmtpAuthEmailMessage ComposeLoginLinkMessage(string sender, string recipient, Uri loginLink)
+	{
+		return new SmtpAuthEmailMessage(
+			sender,
+			recipient,
+			"Your LinuxGameCompat login link",
+			$"Use this link to sign in: {loginLink}",
+			IsBodyHtml: false);
+	}
 }
+
+internal sealed record SmtpAuthEmailMessage(
+	string Sender,
+	string Recipient,
+	string Subject,
+	string Body,
+	bool IsBodyHtml);
