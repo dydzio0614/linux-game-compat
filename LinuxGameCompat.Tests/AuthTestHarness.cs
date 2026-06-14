@@ -1,5 +1,6 @@
 using LinuxGameCompat.Data;
 using LinuxGameCompat.Services;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
@@ -26,6 +27,8 @@ public sealed class AuthTestHarness : IAsyncDisposable
 
 	public IMagicLinkService Service => ServiceProvider.GetRequiredService<IMagicLinkService>();
 
+	public IMemberFavoritesService FavoritesService => ServiceProvider.GetRequiredService<IMemberFavoritesService>();
+
 	public UserManager<ApplicationUser> UserManager => ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
 	public static AuthTestHarness Create(
@@ -47,6 +50,8 @@ public sealed class AuthTestHarness : IAsyncDisposable
 			.AddSignInManager()
 			.AddDefaultTokenProviders();
 		services.AddScoped<IMagicLinkService, MagicLinkService>();
+		services.AddScoped<IMemberFavoritesService, MemberFavoritesService>();
+		services.AddScoped<ICurrentMemberAccessor, CurrentMemberAccessor>();
 		services.AddSingleton<IAuthEmailSender>(emailSender);
 		services.AddSingleton(timeProvider ?? TimeProvider.System);
 
@@ -59,6 +64,35 @@ public sealed class AuthTestHarness : IAsyncDisposable
 		};
 
 		return new AuthTestHarness(serviceProvider, scope);
+	}
+
+	public async Task<ApplicationUser> CreateAuthenticatedUserAsync(string email)
+	{
+		var user = new ApplicationUser
+		{
+			UserName = email,
+			Email = email,
+			EmailConfirmed = true
+		};
+		var result = await UserManager.CreateAsync(user);
+		Assert.True(result.Succeeded, string.Join(", ", result.Errors.Select(error => error.Description)));
+		SetCurrentUser(user);
+		return user;
+	}
+
+	public void SetCurrentUser(ApplicationUser user)
+	{
+		var claims = new[]
+		{
+			new Claim(ClaimTypes.NameIdentifier, user.Id),
+			new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+			new Claim(ClaimTypes.Name, user.UserName ?? user.Email ?? string.Empty)
+		};
+		var identity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
+		var httpContext = ServiceProvider.GetRequiredService<IHttpContextAccessor>().HttpContext
+			?? throw new InvalidOperationException("Test HTTP context was not initialized.");
+
+		httpContext.User = new ClaimsPrincipal(identity);
 	}
 
 	public async ValueTask DisposeAsync()

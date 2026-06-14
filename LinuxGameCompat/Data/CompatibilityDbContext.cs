@@ -19,6 +19,8 @@ public sealed class CompatibilityDbContext(DbContextOptions<CompatibilityDbConte
 
 	public DbSet<MagicLinkRequest> MagicLinkRequests => Set<MagicLinkRequest>();
 
+	public DbSet<MemberFavorite> MemberFavorites => Set<MemberFavorite>();
+
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		base.OnModelCreating(modelBuilder);
@@ -90,6 +92,24 @@ public sealed class CompatibilityDbContext(DbContextOptions<CompatibilityDbConte
 			entity.HasIndex(request => request.TokenHash).IsUnique();
 			entity.HasIndex(request => request.NormalizedEmail);
 			entity.HasIndex(request => request.ExpiresAt);
+		});
+
+		modelBuilder.Entity<MemberFavorite>(entity =>
+		{
+			entity.Property(favorite => favorite.MemberId).IsRequired();
+			entity.HasOne(favorite => favorite.Member)
+				.WithMany()
+				.HasForeignKey(favorite => favorite.MemberId)
+				.OnDelete(DeleteBehavior.Cascade)
+				.IsRequired();
+			entity.HasOne(favorite => favorite.Game)
+				.WithMany()
+				.HasForeignKey(favorite => favorite.GameId)
+				.OnDelete(DeleteBehavior.Cascade)
+				.IsRequired();
+			entity.HasIndex(favorite => new { favorite.MemberId, favorite.GameId }).IsUnique();
+			entity.HasIndex(favorite => favorite.MemberId);
+			entity.HasIndex(favorite => favorite.GameId);
 		});
 
 		CompatibilitySeedData.Apply(modelBuilder);

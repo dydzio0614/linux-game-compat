@@ -45,6 +45,23 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 	}
 
 	[Fact]
+	public async Task Migration_CreatesMemberFavoritesSchema()
+	{
+		await using var dbContext = CreateDbContext();
+
+		Assert.True(await TableExistsAsync(dbContext, "MemberFavorites"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MemberFavorites", "Id"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MemberFavorites", "MemberId"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MemberFavorites", "GameId"));
+		Assert.True(await ColumnExistsAsync(dbContext, "MemberFavorites", "CreatedAt"));
+		Assert.True(await IndexExistsAsync(dbContext, "IX_MemberFavorites_MemberId_GameId"));
+		Assert.True(await IndexExistsAsync(dbContext, "IX_MemberFavorites_MemberId"));
+		Assert.True(await IndexExistsAsync(dbContext, "IX_MemberFavorites_GameId"));
+		Assert.True(await ForeignKeyExistsAsync(dbContext, "MemberFavorites", "AspNetUsers", "FK_MemberFavorites_AspNetUsers_MemberId"));
+		Assert.True(await ForeignKeyExistsAsync(dbContext, "MemberFavorites", "Games", "FK_MemberFavorites_Games_GameId"));
+	}
+
+	[Fact]
 	public async Task ReadService_ReturnsVisibleGamesAndExcludesHiddenGames()
 	{
 		await using var dbContext = CreateDbContext();
@@ -239,6 +256,126 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 		});
 
 		await Assert.ThrowsAnyAsync<DbUpdateException>(() => dbContext.SaveChangesAsync());
+	}
+
+	[Fact]
+	public async Task Model_EnforcesUniqueMemberGameFavorite()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		var member = await harness.CreateAuthenticatedUserAsync(UniqueEmail("unique-favorite"));
+
+		harness.DbContext.MemberFavorites.AddRange(
+			new MemberFavorite
+			{
+				MemberId = member.Id,
+				GameId = 1,
+				CreatedAt = DateTimeOffset.UtcNow
+			},
+			new MemberFavorite
+			{
+				MemberId = member.Id,
+				GameId = 1,
+				CreatedAt = DateTimeOffset.UtcNow
+			});
+
+		await Assert.ThrowsAnyAsync<DbUpdateException>(() => harness.DbContext.SaveChangesAsync());
+	}
+
+	[Fact]
+	public async Task MemberFavoritesService_AddsCurrentMemberFavoriteAndIsIdempotent()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		var member = await harness.CreateAuthenticatedUserAsync(UniqueEmail("favorite-add"));
+
+		var firstResult = await harness.FavoritesService.AddCurrentMemberFavoriteAsync(1);
+		var secondResult = await harness.FavoritesService.AddCurrentMemberFavoriteAsync(1);
+		var state = await harness.FavoritesService.GetFavoriteStateAsync(1);
+
+		Assert.True(firstResult.Succeeded);
+		Assert.True(secondResult.Succeeded);
+		Assert.True(state.IsAuthenticated);
+		Assert.True(state.IsVisibleGame);
+		Assert.True(state.IsFavorite);
+		Assert.Equal(1, await harness.DbContext.MemberFavorites.CountAsync(
+			favorite => favorite.MemberId == member.Id && favorite.GameId == 1));
+	}
+
+	[Fact]
+	public async Task MemberFavoritesService_RemoveIsIdempotentAndOwnerIsolated()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		var memberA = await harness.CreateAuthenticatedUserAsync(UniqueEmail("favorite-owner-a"));
+		var memberB = await harness.CreateAuthenticatedUserAsync(UniqueEmail("favorite-owner-b"));
+		await harness.FavoritesService.AddCurrentMemberFavoriteAsync(2);
+		harness.SetCurrentUser(memberA);
+		await harness.FavoritesService.AddCurrentMemberFavoriteAsync(1);
+
+		var ownerBListBeforeRemove = await harness.FavoritesService.GetCurrentMemberFavoritesAsync();
+		var removeOwnerBGame = await harness.FavoritesService.RemoveCurrentMemberFavoriteAsync(2);
+		var removeAlreadyAbsent = await harness.FavoritesService.RemoveCurrentMemberFavoriteAsync(2);
+		var ownerAListAfterRemove = await harness.FavoritesService.GetCurrentMemberFavoritesAsync();
+		harness.SetCurrentUser(memberB);
+		var ownerBListAfterRemove = await harness.FavoritesService.GetCurrentMemberFavoritesAsync();
+
+		Assert.True(removeOwnerBGame.Succeeded);
+		Assert.True(removeAlreadyAbsent.Succeeded);
+		Assert.Collection(ownerBListBeforeRemove, game => Assert.Equal("Baldur's Gate 3", game.Title));
+		Assert.Collection(ownerAListAfterRemove, game => Assert.Equal("Baldur's Gate 3", game.Title));
+		Assert.Collection(ownerBListAfterRemove, game => Assert.Equal("Helldivers 2", game.Title));
+	}
+
+	[Fact]
+	public async Task MemberFavoritesService_RejectsUnauthenticatedHiddenAndMissingFavorites()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+
+		var unauthenticatedResult = await harness.FavoritesService.AddCurrentMemberFavoriteAsync(1);
+		var member = await harness.CreateAuthenticatedUserAsync(UniqueEmail("favorite-hidden"));
+		var hiddenResult = await harness.FavoritesService.AddCurrentMemberFavoriteAsync(5);
+		var missingResult = await harness.FavoritesService.AddCurrentMemberFavoriteAsync(999_999);
+
+		Assert.Equal(MemberFavoriteMutationStatus.Unauthenticated, unauthenticatedResult.Status);
+		Assert.Equal(MemberFavoriteMutationStatus.HiddenOrMissingGame, hiddenResult.Status);
+		Assert.Equal(MemberFavoriteMutationStatus.HiddenOrMissingGame, missingResult.Status);
+		Assert.False(await harness.DbContext.MemberFavorites.AnyAsync(
+			favorite => favorite.MemberId == member.Id && favorite.GameId == 5));
+	}
+
+	[Fact]
+	public async Task MemberFavoritesService_ListsVisibleFavoritesWithCurrentStatusInTitleOrder()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		var member = await harness.CreateAuthenticatedUserAsync(UniqueEmail("favorite-list"));
+		await harness.FavoritesService.AddCurrentMemberFavoriteAsync(3);
+		await harness.FavoritesService.AddCurrentMemberFavoriteAsync(1);
+		harness.DbContext.MemberFavorites.Add(new MemberFavorite
+		{
+			MemberId = member.Id,
+			GameId = 5,
+			CreatedAt = DateTimeOffset.UtcNow
+		});
+		await harness.DbContext.SaveChangesAsync();
+
+		var favorites = await harness.FavoritesService.GetCurrentMemberFavoritesAsync();
+
+		Assert.Collection(
+			favorites,
+			game =>
+			{
+				Assert.Equal("Baldur's Gate 3", game.Title);
+				Assert.Equal(CompatibilityStatus.Playable, game.CompatibilityStatus);
+			},
+			game =>
+			{
+				Assert.Equal("Destiny 2", game.Title);
+				Assert.Equal(CompatibilityStatus.Unsupported, game.CompatibilityStatus);
+			});
+		Assert.DoesNotContain(favorites, game => game.Slug == "suppressed-test-record");
 	}
 
 	[Fact]
@@ -515,4 +652,37 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 		return count == 1;
 	}
 
+	private static async Task<bool> ForeignKeyExistsAsync(
+		CompatibilityDbContext dbContext,
+		string tableName,
+		string referencedTableName,
+		string constraintName)
+	{
+		var count = await dbContext.Database
+			.SqlQueryRaw<int>(
+				"""
+				SELECT COUNT(*)::int AS "Value"
+				FROM information_schema.table_constraints tc
+				JOIN information_schema.referential_constraints rc
+					ON tc.constraint_name = rc.constraint_name
+				JOIN information_schema.constraint_column_usage ccu
+					ON rc.unique_constraint_name = ccu.constraint_name
+				WHERE tc.table_schema = 'public'
+					AND tc.table_name = {0}
+					AND ccu.table_name = {1}
+					AND tc.constraint_name = {2}
+					AND tc.constraint_type = 'FOREIGN KEY'
+				""",
+				tableName,
+				referencedTableName,
+				constraintName)
+			.SingleAsync();
+
+		return count == 1;
+	}
+
+	private static string UniqueEmail(string prefix)
+	{
+		return $"{prefix}-{Guid.NewGuid():N}@example.test";
+	}
 }

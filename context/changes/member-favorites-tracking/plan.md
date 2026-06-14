@@ -312,15 +312,15 @@ The migration adds a new `MemberFavorites` table only. No existing data needs ba
 
 #### Automated
 
-- [ ] 1.1 Migration creates `MemberFavorites` table, required columns, foreign keys, and unique `(MemberId, GameId)` index.
-- [ ] 1.2 Favorite add creates one row bound to the authenticated local member id.
-- [ ] 1.3 Duplicate favorite add is idempotent and does not create a second row.
-- [ ] 1.4 Favorite remove is idempotent when the row is already absent.
-- [ ] 1.5 Member A cannot list or remove member B's favorites.
-- [ ] 1.6 Hidden or missing games cannot be favorited and hidden favorited games are excluded from list results.
-- [ ] 1.7 Favorites list returns current `Game.CompatibilityStatus` and sorts rows by title A-Z.
-- [ ] 1.8 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [ ] 1.9 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 1.1 Migration creates `MemberFavorites` table, required columns, foreign keys, and unique `(MemberId, GameId)` index.
+- [x] 1.2 Favorite add creates one row bound to the authenticated local member id.
+- [x] 1.3 Duplicate favorite add is idempotent and does not create a second row.
+- [x] 1.4 Favorite remove is idempotent when the row is already absent.
+- [x] 1.5 Member A cannot list or remove member B's favorites.
+- [x] 1.6 Hidden or missing games cannot be favorited and hidden favorited games are excluded from list results.
+- [x] 1.7 Favorites list returns current `Game.CompatibilityStatus` and sorts rows by title A-Z.
+- [x] 1.8 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
+- [x] 1.9 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
 
 ### Phase 2: Detail And Favorites UI
 
