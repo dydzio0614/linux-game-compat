@@ -345,13 +345,13 @@ The migration adds a new `MemberFavorites` table only. No existing data needs ba
 
 #### Automated
 
-- [x] 3.1 All Phase 1 and Phase 2 automated checks pass.
-- [x] 3.2 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [x] 3.3 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 3.1 All Phase 1 and Phase 2 automated checks pass. — 58291d1
+- [x] 3.2 Build passes: `dotnet build LinuxGameCompat.sln --no-restore` — 58291d1
+- [x] 3.3 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore` — 58291d1
 
 #### Manual
 
-- [x] 3.4 Full login-to-favorite smoke flow works using the development logging email sender.
-- [x] 3.5 Logout hides member favorites navigation and prevents direct `/favorites` access through the existing auth flow.
-- [x] 3.6 Existing lookup, browse, and detail flows still work for anonymous users.
-- [x] 3.7 No UI copy implies social features, profile management, or personalized compatibility.
+- [x] 3.4 Full login-to-favorite smoke flow works using the development logging email sender. — 58291d1
+- [x] 3.5 Logout hides member favorites navigation and prevents direct `/favorites` access through the existing auth flow. — 58291d1
+- [x] 3.6 Existing lookup, browse, and detail flows still work for anonymous users. — 58291d1
+- [x] 3.7 No UI copy implies social features, profile management, or personalized compatibility. — 58291d1
