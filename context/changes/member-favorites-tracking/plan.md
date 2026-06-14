@@ -326,32 +326,32 @@ The migration adds a new `MemberFavorites` table only. No existing data needs ba
 
 #### Automated
 
-- [x] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [x] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore` — 42f682f
+- [x] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore` — 42f682f
 
 #### Manual
 
-- [x] 2.3 Anonymous detail page still shows compatibility evidence without login.
-- [x] 2.4 Anonymous favorite CTA routes to `/login` with a local return URL for the current game detail page.
-- [x] 2.5 Signed-in detail page shows the correct add/remove favorite state.
-- [x] 2.6 Adding a favorite updates the detail page inline.
-- [x] 2.7 Removing a favorite updates the detail page inline.
-- [x] 2.8 `/favorites` shows only the signed-in member's visible favorite games in title order.
-- [x] 2.9 Removing from `/favorites` updates the list inline.
-- [x] 2.10 Signed-in nav shows `Favorites`; anonymous nav does not.
-- [x] 2.11 Favorites UI remains usable on narrow mobile widths without clipped text or overflowing buttons.
+- [x] 2.3 Anonymous detail page still shows compatibility evidence without login. — 42f682f
+- [x] 2.4 Anonymous favorite CTA routes to `/login` with a local return URL for the current game detail page. — 42f682f
+- [x] 2.5 Signed-in detail page shows the correct add/remove favorite state. — 42f682f
+- [x] 2.6 Adding a favorite updates the detail page inline. — 42f682f
+- [x] 2.7 Removing a favorite updates the detail page inline. — 42f682f
+- [x] 2.8 `/favorites` shows only the signed-in member's visible favorite games in title order. — 42f682f
+- [x] 2.9 Removing from `/favorites` updates the list inline. — 42f682f
+- [x] 2.10 Signed-in nav shows `Favorites`; anonymous nav does not. — 42f682f
+- [x] 2.11 Favorites UI remains usable on narrow mobile widths without clipped text or overflowing buttons. — 42f682f
 
 ### Phase 3: Documentation And Final Manual Verification
 
 #### Automated
 
-- [ ] 3.1 All Phase 1 and Phase 2 automated checks pass.
-- [ ] 3.2 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [ ] 3.3 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 3.1 All Phase 1 and Phase 2 automated checks pass.
+- [x] 3.2 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
+- [x] 3.3 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
 
 #### Manual
 
-- [ ] 3.4 Full login-to-favorite smoke flow works using the development logging email sender.
-- [ ] 3.5 Logout hides member favorites navigation and prevents direct `/favorites` access through the existing auth flow.
-- [ ] 3.6 Existing lookup, browse, and detail flows still work for anonymous users.
-- [ ] 3.7 No UI copy implies social features, profile management, or personalized compatibility.
+- [x] 3.4 Full login-to-favorite smoke flow works using the development logging email sender.
+- [x] 3.5 Logout hides member favorites navigation and prevents direct `/favorites` access through the existing auth flow.
+- [x] 3.6 Existing lookup, browse, and detail flows still work for anonymous users.
+- [x] 3.7 No UI copy implies social features, profile management, or personalized compatibility.

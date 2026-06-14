@@ -4,7 +4,7 @@ LinuxGameCompat is an early-stage web app for checking Linux game compatibility 
 
 Primary reason of existence of this app is practicing AI-native software development workflow with heavy use of proprietary coding agent skills.
 
-The project currently contains a .NET Blazor Server app backed by PostgreSQL. It includes the first anonymous game search flow, a compatibility evidence data model, seed data, Entity Framework Core migrations, and tests around compatibility data validation and PostgreSQL integration.
+The project currently contains a .NET Blazor Server app backed by PostgreSQL. It includes anonymous game search and browse flows, game detail pages with source-linked evidence, passwordless member access, member favorites with current compatibility status, a compatibility evidence data model, seed data, Entity Framework Core migrations, and tests around compatibility data validation and PostgreSQL integration.
 
 ## Features
 
@@ -13,8 +13,9 @@ The project currently contains a .NET Blazor Server app backed by PostgreSQL. It
 - Store source-backed compatibility evidence from systems such as ProtonDB and Are We Anti-Cheat Yet?
 - Track source references, evidence claims, and generated compatibility summaries.
 - Hide internal or suppressed game records from public lookup.
+- Let signed-in members save visible games as favorites and view a personal favorites list with current compatibility status.
 
-Planned MVP work includes game detail pages with source-linked evidence breakdowns, caveats, common workarounds, and member favorites.
+Planned MVP work includes broader source coverage and compatibility-summary refresh behavior.
 
 ## Tech Stack
 
