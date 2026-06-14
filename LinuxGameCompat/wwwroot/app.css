@@ -126,6 +126,36 @@ a, .btn-link {
     font-size: 0.92rem;
 }
 
+.favorite-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.favorite-action {
+    min-width: 10rem;
+}
+
+.favorite-feedback {
+    margin: 0;
+    color: #475467;
+    font-size: 0.92rem;
+}
+
+.favorite-row-actions,
+.favorite-empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.favorite-row-actions {
+    justify-content: flex-end;
+}
+
 .empty-state,
 .summary-note {
     padding: 1rem;
@@ -171,7 +201,10 @@ a, .btn-link {
     }
 
     .lookup-form .input-group,
-    .result-item {
+    .result-item,
+    .favorite-panel,
+    .favorite-row-actions,
+    .favorite-empty-actions {
         display: grid;
     }
 
@@ -182,6 +215,9 @@ a, .btn-link {
 
     .lookup-form .btn,
     .result-item .btn,
+    .favorite-panel .btn,
+    .favorite-row-actions .btn,
+    .favorite-empty-actions .btn,
     .browse-pager .btn {
         width: 100%;
     }

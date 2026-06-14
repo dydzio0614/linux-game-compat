@@ -38,6 +38,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IGameCompatibilityReadService, GameCompatibilityReadService>();
+builder.Services.AddScoped<IMemberFavoritesService, MemberFavoritesService>();
 builder.Services.AddScoped<IMagicLinkService, MagicLinkService>();
 builder.Services.AddScoped<ICurrentMemberAccessor, CurrentMemberAccessor>();
 builder.Services.AddSingleton(TimeProvider.System);
