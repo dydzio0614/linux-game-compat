@@ -1,10 +1,10 @@
 ---
 change_id: testing-auth-privacy-regression-floor
 title: Auth and privacy regression floor
-status: impl_reviewed
+status: archived
 created: 2026-06-03
-updated: 2026-06-03
-archived_at: null
+updated: 2026-06-14
+archived_at: 2026-06-14T11:31:53Z
 ---
 
 ## Notes
