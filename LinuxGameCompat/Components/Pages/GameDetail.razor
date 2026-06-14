@@ -1,8 +1,10 @@
 @page "/games/{Slug}"
+@rendermode InteractiveServer
 @using LinuxGameCompat.Data
 @using LinuxGameCompat.Services
 @using GameDetailReadModel = LinuxGameCompat.Services.GameDetail
 @inject IGameCompatibilityReadService GameCompatibilityReadService
+@inject IMemberFavoritesService MemberFavoritesService
 
 <PageTitle>@(game is null ? "Game not found" : $"{game.Title} compatibility")</PageTitle>
 
@@ -35,6 +37,40 @@ else
 				@if (game.SteamAppId is not null)
 				{
 					<span>Steam App ID @game.SteamAppId</span>
+				}
+			</div>
+			<div class="favorite-panel">
+				@if (favoriteState is null)
+				{
+					<p class="favorite-feedback">Loading favorite state...</p>
+				}
+				else if (!favoriteState.IsAuthenticated)
+				{
+					<a class="btn btn-outline-primary" href="@LoginReturnUrl">Login to save favorite</a>
+				}
+				else
+				{
+					<button class="btn @(favoriteState.IsFavorite ? "btn-outline-secondary" : "btn-primary") favorite-action"
+							type="button"
+							disabled="@isFavoriteActionRunning"
+							@onclick="ToggleFavoriteAsync">
+						@if (isFavoriteActionRunning)
+						{
+							<span>Saving...</span>
+						}
+						else if (favoriteState.IsFavorite)
+						{
+							<span>Remove favorite</span>
+						}
+						else
+						{
+							<span>Add favorite</span>
+						}
+					</button>
+					@if (!string.IsNullOrWhiteSpace(favoriteFeedback))
+					{
+						<p class="favorite-feedback" role="status">@favoriteFeedback</p>
+					}
 				}
 			</div>
 		</header>
@@ -146,15 +182,67 @@ else
 	];
 
 	private GameDetailReadModel? game;
+	private MemberFavoriteState? favoriteState;
 	private bool isLoading = true;
+	private bool isFavoriteActionRunning;
+	private string? favoriteFeedback;
+
+	private string LoginReturnUrl => $"/login?returnUrl={Uri.EscapeDataString($"/games/{Slug}")}";
 
 	protected override async Task OnParametersSetAsync()
 	{
 		isLoading = true;
+		favoriteState = null;
+		favoriteFeedback = null;
 		game = string.IsNullOrWhiteSpace(Slug)
 			? null
 			: await GameCompatibilityReadService.GetVisibleGameBySlugAsync(Slug);
+		if (game is not null)
+		{
+			favoriteState = await MemberFavoritesService.GetFavoriteStateAsync(game.Id);
+		}
 		isLoading = false;
+	}
+
+	private async Task ToggleFavoriteAsync()
+	{
+		if (game is null || favoriteState is null || isFavoriteActionRunning)
+		{
+			return;
+		}
+
+		isFavoriteActionRunning = true;
+		favoriteFeedback = null;
+
+		try
+		{
+			var result = favoriteState.IsFavorite
+				? await MemberFavoritesService.RemoveCurrentMemberFavoriteAsync(game.Id)
+				: await MemberFavoritesService.AddCurrentMemberFavoriteAsync(game.Id);
+
+			if (result.Succeeded)
+			{
+				favoriteState = await MemberFavoritesService.GetFavoriteStateAsync(game.Id);
+				favoriteFeedback = favoriteState.IsFavorite ? "Added to favorites." : "Removed from favorites.";
+				return;
+			}
+
+			favoriteFeedback = ToFavoriteError(result.Status);
+		}
+		finally
+		{
+			isFavoriteActionRunning = false;
+		}
+	}
+
+	private static string ToFavoriteError(MemberFavoriteMutationStatus status)
+	{
+		return status switch
+		{
+			MemberFavoriteMutationStatus.Unauthenticated => "Login is required to update favorites.",
+			MemberFavoriteMutationStatus.HiddenOrMissingGame => "This game is no longer available to favorite.",
+			_ => "Favorite could not be updated. Try again."
+		};
 	}
 
 	private static bool IsPublicWebUrl(string url)

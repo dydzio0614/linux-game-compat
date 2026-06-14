@@ -1,0 +1,131 @@
+@page "/favorites"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@using LinuxGameCompat.Services
+@inject IMemberFavoritesService MemberFavoritesService
+
+<PageTitle>Favorite games</PageTitle>
+
+<section class="lookup-page favorites-page">
+	<div class="lookup-header">
+		<p class="eyebrow">Member favorites</p>
+		<h1>Favorite games</h1>
+		<p class="lead">Track saved games with their current public compatibility status.</p>
+	</div>
+
+	<section class="lookup-results browse-results" aria-live="polite">
+		@if (isLoading)
+		{
+			<p>Loading favorites...</p>
+		}
+		else if (favorites.Count == 0)
+		{
+			<div class="empty-state">
+				<h2>No favorite games yet</h2>
+				<p>Find a game through lookup or browse, then save it from the detail page.</p>
+				<div class="favorite-empty-actions">
+					<a class="btn btn-primary" href="/">Lookup</a>
+					<a class="btn btn-outline-primary" href="/games">Browse games</a>
+				</div>
+			</div>
+		}
+		else
+		{
+			<h2>Saved games</h2>
+			<ul class="result-list">
+				@foreach (var game in favorites)
+				{
+					<li class="result-item favorite-row">
+						<div>
+							<h3>@game.Title</h3>
+							<div class="result-meta">
+								<span class="status-label">@CompatibilityStatusLabels.ToPublicLabel(game.CompatibilityStatus)</span>
+								@if (game.SteamAppId is not null)
+								{
+									<span>Steam App ID @game.SteamAppId</span>
+								}
+							</div>
+						</div>
+						<div class="favorite-row-actions">
+							<a class="btn btn-outline-primary" href="@($"/games/{game.Slug}")">View details</a>
+							<button class="btn btn-outline-secondary"
+									type="button"
+									disabled="@removingGameIds.Contains(game.Id)"
+									@onclick="() => RemoveFavoriteAsync(game.Id)">
+								@(removingGameIds.Contains(game.Id) ? "Removing..." : "Remove")
+							</button>
+						</div>
+					</li>
+				}
+			</ul>
+
+			@if (!string.IsNullOrWhiteSpace(feedback))
+			{
+				<p class="favorite-feedback" role="status">@feedback</p>
+			}
+		}
+	</section>
+</section>
+
+@code {
+	private bool isLoading = true;
+	private string? feedback;
+	private IReadOnlyList<GameListItem> favorites = [];
+	private readonly HashSet<int> removingGameIds = [];
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadFavoritesAsync();
+	}
+
+	private async Task RemoveFavoriteAsync(int gameId)
+	{
+		if (!removingGameIds.Add(gameId))
+		{
+			return;
+		}
+
+		feedback = null;
+
+		try
+		{
+			var result = await MemberFavoritesService.RemoveCurrentMemberFavoriteAsync(gameId);
+			if (result.Succeeded)
+			{
+				await LoadFavoritesAsync();
+				feedback = "Favorite removed.";
+				return;
+			}
+
+			feedback = ToFavoriteError(result.Status);
+		}
+		finally
+		{
+			removingGameIds.Remove(gameId);
+		}
+	}
+
+	private async Task LoadFavoritesAsync()
+	{
+		isLoading = true;
+
+		try
+		{
+			favorites = await MemberFavoritesService.GetCurrentMemberFavoritesAsync();
+		}
+		finally
+		{
+			isLoading = false;
+		}
+	}
+
+	private static string ToFavoriteError(MemberFavoriteMutationStatus status)
+	{
+		return status switch
+		{
+			MemberFavoriteMutationStatus.Unauthenticated => "Login is required to update favorites.",
+			MemberFavoriteMutationStatus.HiddenOrMissingGame => "This game is no longer available in favorites.",
+			_ => "Favorite could not be updated. Try again."
+		};
+	}
+}

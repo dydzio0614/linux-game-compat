@@ -312,34 +312,34 @@ The migration adds a new `MemberFavorites` table only. No existing data needs ba
 
 #### Automated
 
-- [x] 1.1 Migration creates `MemberFavorites` table, required columns, foreign keys, and unique `(MemberId, GameId)` index.
-- [x] 1.2 Favorite add creates one row bound to the authenticated local member id.
-- [x] 1.3 Duplicate favorite add is idempotent and does not create a second row.
-- [x] 1.4 Favorite remove is idempotent when the row is already absent.
-- [x] 1.5 Member A cannot list or remove member B's favorites.
-- [x] 1.6 Hidden or missing games cannot be favorited and hidden favorited games are excluded from list results.
-- [x] 1.7 Favorites list returns current `Game.CompatibilityStatus` and sorts rows by title A-Z.
-- [x] 1.8 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [x] 1.9 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 1.1 Migration creates `MemberFavorites` table, required columns, foreign keys, and unique `(MemberId, GameId)` index. — 6f1ee43
+- [x] 1.2 Favorite add creates one row bound to the authenticated local member id. — 6f1ee43
+- [x] 1.3 Duplicate favorite add is idempotent and does not create a second row. — 6f1ee43
+- [x] 1.4 Favorite remove is idempotent when the row is already absent. — 6f1ee43
+- [x] 1.5 Member A cannot list or remove member B's favorites. — 6f1ee43
+- [x] 1.6 Hidden or missing games cannot be favorited and hidden favorited games are excluded from list results. — 6f1ee43
+- [x] 1.7 Favorites list returns current `Game.CompatibilityStatus` and sorts rows by title A-Z. — 6f1ee43
+- [x] 1.8 Build passes: `dotnet build LinuxGameCompat.sln --no-restore` — 6f1ee43
+- [x] 1.9 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore` — 6f1ee43
 
 ### Phase 2: Detail And Favorites UI
 
 #### Automated
 
-- [ ] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [ ] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
+- [x] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
 
 #### Manual
 
-- [ ] 2.3 Anonymous detail page still shows compatibility evidence without login.
-- [ ] 2.4 Anonymous favorite CTA routes to `/login` with a local return URL for the current game detail page.
-- [ ] 2.5 Signed-in detail page shows the correct add/remove favorite state.
-- [ ] 2.6 Adding a favorite updates the detail page inline.
-- [ ] 2.7 Removing a favorite updates the detail page inline.
-- [ ] 2.8 `/favorites` shows only the signed-in member's visible favorite games in title order.
-- [ ] 2.9 Removing from `/favorites` updates the list inline.
-- [ ] 2.10 Signed-in nav shows `Favorites`; anonymous nav does not.
-- [ ] 2.11 Favorites UI remains usable on narrow mobile widths without clipped text or overflowing buttons.
+- [x] 2.3 Anonymous detail page still shows compatibility evidence without login.
+- [x] 2.4 Anonymous favorite CTA routes to `/login` with a local return URL for the current game detail page.
+- [x] 2.5 Signed-in detail page shows the correct add/remove favorite state.
+- [x] 2.6 Adding a favorite updates the detail page inline.
+- [x] 2.7 Removing a favorite updates the detail page inline.
+- [x] 2.8 `/favorites` shows only the signed-in member's visible favorite games in title order.
+- [x] 2.9 Removing from `/favorites` updates the list inline.
+- [x] 2.10 Signed-in nav shows `Favorites`; anonymous nav does not.
+- [x] 2.11 Favorites UI remains usable on narrow mobile widths without clipped text or overflowing buttons.
 
 ### Phase 3: Documentation And Final Manual Verification
 
