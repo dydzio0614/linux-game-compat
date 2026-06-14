@@ -48,29 +48,15 @@ public sealed class MemberFavoritesService(
 			return MemberFavoriteMutationResult.HiddenOrMissingGame;
 		}
 
-		var exists = await dbContext.MemberFavorites
-			.AnyAsync(favorite => favorite.MemberId == member.Id && favorite.GameId == gameId, cancellationToken);
-		if (exists)
-		{
-			return MemberFavoriteMutationResult.SucceededResult;
-		}
+		await dbContext.Database.ExecuteSqlInterpolatedAsync(
+			$"""
+			INSERT INTO "MemberFavorites" ("MemberId", "GameId", "CreatedAt")
+			VALUES ({member.Id}, {gameId}, {DateTimeOffset.UtcNow})
+			ON CONFLICT ("MemberId", "GameId") DO NOTHING
+			""",
+			cancellationToken);
 
-		dbContext.MemberFavorites.Add(new MemberFavorite
-		{
-			MemberId = member.Id,
-			GameId = gameId,
-			CreatedAt = DateTimeOffset.UtcNow
-		});
-
-		try
-		{
-			await dbContext.SaveChangesAsync(cancellationToken);
-			return MemberFavoriteMutationResult.SucceededResult;
-		}
-		catch (DbUpdateException)
-		{
-			return MemberFavoriteMutationResult.Failed;
-		}
+		return MemberFavoriteMutationResult.SucceededResult;
 	}
 
 	public async Task<MemberFavoriteMutationResult> RemoveCurrentMemberFavoriteAsync(
@@ -91,17 +77,9 @@ public sealed class MemberFavoritesService(
 			return MemberFavoriteMutationResult.HiddenOrMissingGame;
 		}
 
-		var favorite = await dbContext.MemberFavorites
-			.SingleOrDefaultAsync(
-				favorite => favorite.MemberId == member.Id && favorite.GameId == gameId,
-				cancellationToken);
-		if (favorite is null)
-		{
-			return MemberFavoriteMutationResult.SucceededResult;
-		}
-
-		dbContext.MemberFavorites.Remove(favorite);
-		await dbContext.SaveChangesAsync(cancellationToken);
+		await dbContext.MemberFavorites
+			.Where(favorite => favorite.MemberId == member.Id && favorite.GameId == gameId)
+			.ExecuteDeleteAsync(cancellationToken);
 		return MemberFavoriteMutationResult.SucceededResult;
 	}
 

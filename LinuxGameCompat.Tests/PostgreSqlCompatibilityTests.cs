@@ -303,6 +303,27 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 	}
 
 	[Fact]
+	public async Task MemberFavoritesService_DuplicateAddAfterExternalInsertIsIdempotent()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		var member = await harness.CreateAuthenticatedUserAsync(UniqueEmail("favorite-add-race"));
+		harness.DbContext.MemberFavorites.Add(new MemberFavorite
+		{
+			MemberId = member.Id,
+			GameId = 1,
+			CreatedAt = DateTimeOffset.UtcNow
+		});
+		await harness.DbContext.SaveChangesAsync();
+
+		var result = await harness.FavoritesService.AddCurrentMemberFavoriteAsync(1);
+
+		Assert.True(result.Succeeded);
+		Assert.Equal(1, await harness.DbContext.MemberFavorites.CountAsync(
+			favorite => favorite.MemberId == member.Id && favorite.GameId == 1));
+	}
+
+	[Fact]
 	public async Task MemberFavoritesService_RemoveIsIdempotentAndOwnerIsolated()
 	{
 		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
