@@ -55,9 +55,9 @@ Add a dedicated `IMemberFavoritesService` instead of expanding `IGameCompatibili
 
 | Phase | What it delivers | Key risk |
 | --- | --- | --- |
-| 1. Favorites Persistence And Service Contract | Table, migration, service, DI, core behavior | Owner isolation and hidden-game filtering must be correct. |
+| 1. Favorites Persistence And Service Contract | Table, migration, service, DI, core behavior, integration coverage | Owner isolation and hidden-game filtering must be correct. |
 | 2. Detail And Favorites UI | Detail controls, `/favorites`, nav, inline feedback | UI must not block anonymous lookup or leak member data. |
-| 3. Regression Coverage And Manual Verification | Integration coverage, docs, final smoke | Tests must prove privacy boundaries, not just happy paths. |
+| 3. Documentation And Final Manual Verification | Docs and final smoke | Final verification must catch route, auth, and copy regressions. |
 
 **Prerequisites:** Existing S-01 anonymous lookup/detail and F-02 passwordless member access remain in place.
 **Estimated effort:** ~2-3 focused implementation sessions across 3 phases.

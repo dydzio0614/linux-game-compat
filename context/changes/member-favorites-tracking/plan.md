@@ -58,7 +58,7 @@ The anonymous detail page remains public. The login-to-favorite action should pr
 
 ### Overview
 
-Add the database model, migration, service interface, implementation, and DI registration for member-owned favorites.
+Add the database model, migration, service interface, implementation, DI registration, and PostgreSQL integration coverage for member-owned favorites.
 
 ### Changes Required:
 
@@ -108,6 +108,22 @@ Add is successful if the row already exists. Remove is successful if the row is 
 **Intent**: Make the service available to Razor components through the existing scoped service pattern.
 
 **Contract**: Register `IMemberFavoritesService` as scoped next to `IGameCompatibilityReadService`, `IMagicLinkService`, and `ICurrentMemberAccessor`.
+
+#### 6. PostgreSQL Integration Tests
+
+**File**: `LinuxGameCompat.Tests/PostgreSqlCompatibilityTests.cs`
+
+**Intent**: Prove the persistence, member ownership, and visible-game boundaries at the same phase gate as the service implementation.
+
+**Contract**: Add tests for schema shape, unique member-game constraint, idempotent add/remove, owner isolation, hidden-game exclusion, current-status reads, and title ordering. Use existing PostgreSQL fixture patterns.
+
+#### 7. Auth/Favorites Harness Support
+
+**File**: `LinuxGameCompat.Tests/AuthTestHarness.cs`
+
+**Intent**: Reuse the existing Identity/Testcontainers setup for member-owned favorites tests.
+
+**Contract**: Add only the minimum helper support needed to create authenticated users and resolve favorites services in tests. Do not weaken existing auth/privacy test behavior.
 
 ### Success Criteria:
 
@@ -194,31 +210,15 @@ Expose the member favorites flow in the Blazor UI while preserving anonymous pub
 
 ---
 
-## Phase 3: Regression Coverage And Manual Verification
+## Phase 3: Documentation And Final Manual Verification
 
 ### Overview
 
-Harden the completed slice with integration coverage and final smoke verification.
+Close out the completed slice with documentation updates and final smoke verification.
 
 ### Changes Required:
 
-#### 1. PostgreSQL Integration Tests
-
-**File**: `LinuxGameCompat.Tests/PostgreSqlCompatibilityTests.cs`
-
-**Intent**: Extend the existing database-backed regression floor to cover member favorites.
-
-**Contract**: Add tests for schema shape, unique member-game constraint, idempotent add/remove, owner isolation, hidden-game exclusion, current-status reads, and title ordering. Use existing PostgreSQL fixture patterns.
-
-#### 2. Auth/Favorites Harness Support
-
-**File**: `LinuxGameCompat.Tests/AuthTestHarness.cs`
-
-**Intent**: Reuse the existing Identity/Testcontainers setup for member-owned favorites tests.
-
-**Contract**: Add only the minimum helper support needed to create authenticated users and resolve favorites services in tests. Do not weaken existing auth/privacy test behavior.
-
-#### 3. Project Documentation
+#### 1. Project Documentation
 
 **File**: `README.md`
 
@@ -226,7 +226,7 @@ Harden the completed slice with integration coverage and final smoke verificatio
 
 **Contract**: Update feature/planned-work wording to mention saved favorite games with current compatibility status. Do not add operational docs beyond existing setup/test instructions unless implementation introduces new configuration, which is not expected.
 
-#### 4. Change Metadata
+#### 2. Change Metadata
 
 **File**: `context/changes/member-favorites-tracking/change.md`
 
@@ -239,10 +239,8 @@ Harden the completed slice with integration coverage and final smoke verificatio
 #### Automated Verification:
 
 - All Phase 1 and Phase 2 automated checks pass.
-- Owner-isolation test proves one member cannot read another member's favorites.
-- Owner-isolation test proves one member cannot remove another member's favorite.
-- Hidden-game test proves hidden saved games do not appear in favorites list.
-- Current-status test proves the favorites list reflects the latest `Games.CompatibilityStatus`.
+- Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
+- Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
 
 #### Manual Verification:
 
@@ -343,19 +341,17 @@ The migration adds a new `MemberFavorites` table only. No existing data needs ba
 - [ ] 2.10 Signed-in nav shows `Favorites`; anonymous nav does not.
 - [ ] 2.11 Favorites UI remains usable on narrow mobile widths without clipped text or overflowing buttons.
 
-### Phase 3: Regression Coverage And Manual Verification
+### Phase 3: Documentation And Final Manual Verification
 
 #### Automated
 
 - [ ] 3.1 All Phase 1 and Phase 2 automated checks pass.
-- [ ] 3.2 Owner-isolation test proves one member cannot read another member's favorites.
-- [ ] 3.3 Owner-isolation test proves one member cannot remove another member's favorite.
-- [ ] 3.4 Hidden-game test proves hidden saved games do not appear in favorites list.
-- [ ] 3.5 Current-status test proves the favorites list reflects the latest `Games.CompatibilityStatus`.
+- [ ] 3.2 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
+- [ ] 3.3 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
 
 #### Manual
 
-- [ ] 3.6 Full login-to-favorite smoke flow works using the development logging email sender.
-- [ ] 3.7 Logout hides member favorites navigation and prevents direct `/favorites` access through the existing auth flow.
-- [ ] 3.8 Existing lookup, browse, and detail flows still work for anonymous users.
-- [ ] 3.9 No UI copy implies social features, profile management, or personalized compatibility.
+- [ ] 3.4 Full login-to-favorite smoke flow works using the development logging email sender.
+- [ ] 3.5 Logout hides member favorites navigation and prevents direct `/favorites` access through the existing auth flow.
+- [ ] 3.6 Existing lookup, browse, and detail flows still work for anonymous users.
+- [ ] 3.7 No UI copy implies social features, profile management, or personalized compatibility.
