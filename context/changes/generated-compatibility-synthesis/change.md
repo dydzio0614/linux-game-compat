@@ -1,9 +1,9 @@
 ---
 change_id: generated-compatibility-synthesis
 title: Generated compatibility synthesis
-status: new
+status: planned
 created: 2026-06-14
-updated: 2026-06-14
+updated: 2026-06-19
 archived_at: null
 ---
 
