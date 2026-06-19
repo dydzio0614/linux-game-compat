@@ -360,40 +360,40 @@ Add only nullable summary-attempt metadata. Apply the migration explicitly befor
 
 #### Automated
 
-- [x] 1.1 Every listed ProtonDB and Are We Anti-Cheat Yet status maps exactly as specified.
-- [x] 1.2 ProtonDB Gold maps to `Playable`.
-- [x] 1.3 Unknown native values provide no deterministic signal.
-- [x] 1.4 Pessimistic reduction is independent of claim order.
-- [x] 1.5 Canonical hashes are order-independent and change when any source or claim field changes.
-- [x] 1.6 Prompt truncation never changes the complete evidence hash and never exceeds configured limits.
-- [x] 1.7 Structured provider output rejects unknown statuses, blank text, and oversized text.
-- [x] 1.8 Retry classification distinguishes transient, permanent, and cancelled requests.
-- [x] 1.9 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
-- [x] 1.10 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [x] 1.1 Every listed ProtonDB and Are We Anti-Cheat Yet status maps exactly as specified. — ee84d98
+- [x] 1.2 ProtonDB Gold maps to `Playable`. — ee84d98
+- [x] 1.3 Unknown native values provide no deterministic signal. — ee84d98
+- [x] 1.4 Pessimistic reduction is independent of claim order. — ee84d98
+- [x] 1.5 Canonical hashes are order-independent and change when any source or claim field changes. — ee84d98
+- [x] 1.6 Prompt truncation never changes the complete evidence hash and never exceeds configured limits. — ee84d98
+- [x] 1.7 Structured provider output rejects unknown statuses, blank text, and oversized text. — ee84d98
+- [x] 1.8 Retry classification distinguishes transient, permanent, and cancelled requests. — ee84d98
+- [x] 1.9 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`. — ee84d98
+- [x] 1.10 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`. — ee84d98
 
 #### Manual
 
-- [x] 1.11 Human confirms generation contracts before persistence work.
+- [x] 1.11 Human confirms generation contracts before persistence work. — ee84d98
 
 ### Phase 2: Safe Orchestration and CLI Mode
 
 #### Automated
 
-- [ ] 2.1 Migration applies cleanly to a fresh PostgreSQL database and preserves seeded summaries.
-- [ ] 2.2 Missing, stale, failed, current, forced, targeted, hidden, and no-evidence selection paths behave as specified.
-- [ ] 2.3 Concurrent generator execution performs no duplicate provider calls.
-- [ ] 2.4 Evidence changed during generation cannot receive stale output.
-- [ ] 2.5 Failed refresh preserves prior successful text and hides bounded operator errors from public consumers.
-- [ ] 2.6 Deterministic status wins disagreement; AI is used only when native parsing returns no signal.
-- [ ] 2.7 Oldest-attempted ordering prevents repeated failures from starving later games.
-- [ ] 2.8 CLI parser, configuration validation, and every exit code are covered.
-- [ ] 2.9 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
-- [ ] 2.10 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [x] 2.1 Migration applies cleanly to a fresh PostgreSQL database and preserves seeded summaries.
+- [x] 2.2 Missing, stale, failed, current, forced, targeted, hidden, and no-evidence selection paths behave as specified.
+- [x] 2.3 Concurrent generator execution performs no duplicate provider calls.
+- [x] 2.4 Evidence changed during generation cannot receive stale output.
+- [x] 2.5 Failed refresh preserves prior successful text and hides bounded operator errors from public consumers.
+- [x] 2.6 Deterministic status wins disagreement; AI is used only when native parsing returns no signal.
+- [x] 2.7 Oldest-attempted ordering prevents repeated failures from starving later games.
+- [x] 2.8 CLI parser, configuration validation, and every exit code are covered.
+- [x] 2.9 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
+- [x] 2.10 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
 
 #### Manual
 
-- [ ] 2.11 Running the command locally with a fake/test provider exits without starting the web server.
-- [ ] 2.12 Normal web startup remains unchanged and does not require `OPENAI_API_KEY`.
+- [x] 2.11 Running the command locally with a fake/test provider exits without starting the web server.
+- [x] 2.12 Normal web startup remains unchanged and does not require `OPENAI_API_KEY`.
 
 ### Phase 3: Trust-Aware Summary UI
 

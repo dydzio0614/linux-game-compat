@@ -3,6 +3,7 @@ using LinuxGameCompat.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using LinuxGameCompat.Services.SummaryGeneration;
 
 namespace LinuxGameCompat.Tests;
 
@@ -19,6 +20,82 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 		Assert.Equal(3, await dbContext.EvidenceClaims.CountAsync());
 		Assert.Equal(2, await dbContext.GameCompatibilitySummaries.CountAsync());
 		Assert.True(await dbContext.Games.AnyAsync(game => game.IsHidden));
+	}
+
+	[Fact]
+	public async Task Migration_AddsNullableSummaryAttemptMetadataAndPreservesSeededSummaries()
+	{
+		await using var dbContext = CreateDbContext();
+
+		Assert.True(await ColumnExistsAsync(dbContext, "GameCompatibilitySummaries", "LastAttemptedAt"));
+		Assert.True(await ColumnExistsAsync(dbContext, "GameCompatibilitySummaries", "InputTokenCount"));
+		Assert.True(await ColumnExistsAsync(dbContext, "GameCompatibilitySummaries", "OutputTokenCount"));
+		Assert.Equal(2, await dbContext.GameCompatibilitySummaries.CountAsync());
+		Assert.All(await dbContext.GameCompatibilitySummaries.ToListAsync(), summary => Assert.Null(summary.LastAttemptedAt));
+	}
+
+	[Fact]
+	public async Task Generator_GeneratesTargetedSummaryAndUsesDeterministicStatus()
+	{
+		await using var dbContext = CreateDbContext();
+		await using var transaction = await dbContext.Database.BeginTransactionAsync();
+		var provider = new FakeSummaryProvider(new(CompatibilityStatus.Unsupported, "Generated evidence summary.", 20, 8));
+		var generator = new CompatibilitySummaryGenerator(dbContext, provider,
+			new EvidencePromptBuilder(new FixedTokenCounter()), new GenerationOptions(), TimeProvider.System);
+
+		SummaryGenerationRunResult result = await generator.RunAsync(new SummaryGenerationRunOptions(1, "baldurs-gate-3", true), CancellationToken.None);
+		dbContext.ChangeTracker.Clear();
+		Game game = await dbContext.Games.Include(item => item.CompatibilitySummary).SingleAsync(item => item.Slug == "baldurs-gate-3");
+
+		Assert.Equal(1, result.Succeeded);
+		Assert.Equal(1, provider.CallCount);
+		Assert.Equal(CompatibilityStatus.Playable, game.CompatibilityStatus);
+		Assert.Equal(CompatibilityStatus.Unsupported, game.CompatibilitySummary!.SummaryStatus);
+		Assert.Equal(20, game.CompatibilitySummary.InputTokenCount);
+		Assert.False(game.CompatibilitySummary.IsStale);
+		await transaction.RollbackAsync();
+	}
+
+	[Fact]
+	public async Task Generator_SkipsCurrentTargetUnlessForcedAndExcludesHiddenOrNoEvidence()
+	{
+		await using var dbContext = CreateDbContext();
+		await using var transaction = await dbContext.Database.BeginTransactionAsync();
+		Game game = await dbContext.Games.Include(item => item.CompatibilitySummary)
+			.Include(item => item.SourceReferences).ThenInclude(reference => reference.SourceSystem)
+			.Include(item => item.SourceReferences).ThenInclude(reference => reference.EvidenceClaims)
+			.SingleAsync(item => item.Slug == "baldurs-gate-3");
+		var claims = game.SourceReferences.SelectMany(reference => reference.EvidenceClaims.Select(claim =>
+			new GenerationEvidenceClaim(claim.Id, claim.ClaimType, claim.ClaimValue, claim.ClaimText, claim.ObservedAt,
+				reference.SourceSystem.Type, reference.SourceSystem.Name, reference.SourceGameId, reference.Url))).ToList();
+		game.CompatibilitySummary!.EvidenceHash = EvidencePromptBuilder.Canonicalize(claims).Hash;
+		game.CompatibilitySummary.EvidenceVersion = CanonicalEvidence.ContractVersion;
+		await dbContext.SaveChangesAsync();
+		var provider = new FakeSummaryProvider(new(CompatibilityStatus.Playable, "Unused.", 1, 1));
+		var generator = new CompatibilitySummaryGenerator(dbContext, provider,
+			new EvidencePromptBuilder(new FixedTokenCounter()), new GenerationOptions(), TimeProvider.System);
+
+		SummaryGenerationRunResult current = await generator.RunAsync(new SummaryGenerationRunOptions(10, "baldurs-gate-3"), CancellationToken.None);
+		SummaryGenerationRunResult hidden = await generator.RunAsync(new SummaryGenerationRunOptions(10, "suppressed-test-record", true), CancellationToken.None);
+		SummaryGenerationRunResult noEvidence = await generator.RunAsync(new SummaryGenerationRunOptions(10, "unnamed-prototype", true), CancellationToken.None);
+
+		Assert.Equal(1, current.Skipped);
+		Assert.Equal(0, current.Selected);
+		Assert.Equal(0, hidden.Selected);
+		Assert.Equal(0, noEvidence.Selected);
+		Assert.Equal(0, provider.CallCount);
+		await transaction.RollbackAsync();
+	}
+
+	private sealed class FixedTokenCounter : IGenerationTokenCounter { public int Count(string text) => 10; }
+	private sealed class FakeSummaryProvider(CompatibilitySummaryProviderResult result) : ICompatibilitySummaryProvider
+	{
+		public int CallCount { get; private set; }
+		public Task<CompatibilitySummaryProviderResult> GenerateAsync(CompatibilitySummaryProviderRequest request, CancellationToken cancellationToken)
+		{
+			CallCount++;
+			return Task.FromResult(result);
+		}
 	}
 
 	[Fact]

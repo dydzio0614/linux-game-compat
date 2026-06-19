@@ -41,6 +41,12 @@ public sealed class GameCompatibilitySummary
 
 	public DateTimeOffset? GeneratedAt { get; set; }
 
+	public DateTimeOffset? LastAttemptedAt { get; set; }
+
+	public int? InputTokenCount { get; set; }
+
+	public int? OutputTokenCount { get; set; }
+
 	/// <summary>
 	/// Explicit stale marker so read paths do not need to recompute freshness.
 	/// </summary>

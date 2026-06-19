@@ -51,7 +51,7 @@ public sealed class EvidencePromptBuilder(IGenerationTokenCounter tokenCounter)
 		}
 	}
 
-	private static CanonicalEvidence Canonicalize(IEnumerable<GenerationEvidenceClaim> claims)
+	public static CanonicalEvidence Canonicalize(IEnumerable<GenerationEvidenceClaim> claims)
 	{
 		GenerationEvidenceClaim[] orderedClaims = claims.OrderBy(claim => claim.SourceType)
 			.ThenBy(claim => claim.SourceName, StringComparer.Ordinal)

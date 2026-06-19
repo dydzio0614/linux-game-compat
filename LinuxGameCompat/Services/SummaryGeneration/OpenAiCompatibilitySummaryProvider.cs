@@ -1,4 +1,5 @@
 using System.ClientModel;
+using System.ClientModel.Primitives;
 using LinuxGameCompat.Data;
 using OpenAI.Responses;
 
@@ -59,10 +60,10 @@ public sealed class OpenAiCompatibilitySummaryProvider(ResponsesClient client) :
 		}
 	}
 
-	public static OpenAiCompatibilitySummaryProvider Create(string apiKey, TimeSpan timeout)
+	public static OpenAiCompatibilitySummaryProvider Create(string apiKey, TimeSpan timeout, int maximumRetries = 2)
 	{
 		if (string.IsNullOrWhiteSpace(apiKey)) throw new ArgumentException("OPENAI_API_KEY is required in generation mode.", nameof(apiKey));
-		ResponsesClientOptions options = new() { NetworkTimeout = timeout };
+		ResponsesClientOptions options = new() { NetworkTimeout = timeout, RetryPolicy = new ClientRetryPolicy(maximumRetries) };
 		return new OpenAiCompatibilitySummaryProvider(new ResponsesClient(new ApiKeyCredential(apiKey), options));
 	}
 }
