@@ -26,7 +26,7 @@ An operator can run a finite `generate-summaries` command that safely writes cur
 | AWA Planned | `Unsupported` | Product describes current usability, not future prognosis | Plan |
 | AI status | Fallback only; advisory on disagreement | Preserves usefulness when native values do not map | Plan |
 | Cost boundary | 10 games, 12 claims, 2,500 input/500 output tokens | Bounds Railway and provider usage | Plan |
-| Retry policy | 30 seconds plus two transient retries | Handles ordinary provider instability within a hard limit | Plan |
+| Retry policy | Official SDK only; 30 seconds per attempt and two retries | Prevents nested retry multiplication while handling ordinary provider instability | Plan / Review |
 | Targeting | `--slug` plus explicit `--force` | Prevents accidental paid regeneration | Plan |
 | Failure UX | Preserve prose with trust labels | Keeps useful context without hiding staleness | Plan |
 | Coordination | PostgreSQL advisory lock, lock contention exits 0 | Prevents duplicate paid calls safely | Research / Plan |
@@ -67,6 +67,7 @@ Curated evidence is canonicalized and fully hashed. Native status parsers produc
 ## Open Risks & Assumptions
 
 - `gpt-5.4-mini` availability and the current official SDK/API contract must be re-verified before implementation; no silent model substitution is allowed.
+- Provider requests use no reasoning, low verbosity, strict structured output, and a 500-token output cap; incomplete output is rejected.
 - Upstream native vocabularies can change, so unrecognized values intentionally yield no deterministic signal until mappings are updated.
 - Railway remains manual and unscheduled until the representative run is reviewed.
 - Existing uncommitted `change.md` and `research.md` work belongs to the user and must be preserved.

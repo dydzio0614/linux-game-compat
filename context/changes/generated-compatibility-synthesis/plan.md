@@ -98,7 +98,7 @@ Define deterministic inputs, provider contracts, prompt limits, and OpenAI outpu
 
 **Intent**: Isolate external API behavior and make generation testable without network calls.
 
-**Contract**: Add `ICompatibilitySummaryProvider.GenerateAsync(request, cancellationToken)`. The production adapter uses the official `OpenAI` package and Responses API with model `gpt-5.4-mini`, supplied through configuration. Structured output contains exactly a normalized status and non-empty plain-text summary no longer than 4,000 characters.
+**Contract**: Add `ICompatibilitySummaryProvider.GenerateAsync(request, cancellationToken)`. The production adapter uses the official `OpenAI` package and Responses API with model `gpt-5.4-mini`, supplied through configuration. Requests use reasoning effort `none`, low text verbosity, strict JSON-schema output, and `store: false`. Structured output contains exactly a normalized status and non-empty plain-text summary no longer than 4,000 characters. Treat an incomplete response, including exhaustion of the 500-token output budget, as permanent malformed output for that attempt.
 
 Re-verify `gpt-5.4-mini` against current official OpenAI documentation during implementation; fail configuration validation rather than silently substituting another model.
 
@@ -108,7 +108,7 @@ Re-verify `gpt-5.4-mini` against current official OpenAI documentation during im
 
 **Intent**: Centralize bounded generation defaults without requiring provider secrets during web startup.
 
-**Contract**: Defaults are provider `OpenAI`, model `gpt-5.4-mini`, maximum 10 games, 12 claims, 2,500 input tokens, 500 output tokens, concurrency one, 30-second request timeout, and two retries. Read the secret from `OPENAI_API_KEY` and validate it only in generation mode.
+**Contract**: Defaults are provider `OpenAI`, model `gpt-5.4-mini`, maximum 10 games, 12 claims, 2,500 input tokens, 500 output tokens, concurrency one, 30-second request timeout, and two SDK retries (three total HTTP attempts). Read the secret from `OPENAI_API_KEY` and validate it only in generation mode.
 
 ### Success Criteria
 
@@ -127,7 +127,7 @@ Re-verify `gpt-5.4-mini` against current official OpenAI documentation during im
 
 #### Manual Verification
 
-- None; contracts are covered through isolated automated tests.
+- Human confirms generation contracts before persistence work.
 
 **Implementation Note**: After automated verification passes, pause for human confirmation before Phase 2.
 
@@ -157,7 +157,7 @@ Add summary attempt metadata, concurrency-safe state transitions, bounded select
 
 **Contract**: `ICompatibilitySummaryGenerator.RunAsync(options, cancellationToken)` processes visible games with at least one evidence claim. Eligible records are missing, failed, stale, or differ by full evidence hash/generator version; `--force` additionally admits current records. Order null/oldest `LastAttemptedAt` first, then game ID.
 
-Before limiting provider work, mark all detected hash mismatches stale. On success, persist current prose, AI status, provenance, hash/version, generated/attempt timestamps, usage, and cleared errors; update `Game.CompatibilityStatus` from deterministic status or AI fallback. On failure, preserve prior successful prose/provenance, set `Failed` and `IsStale`, and store sanitized bounded errors. Requested cancellation is propagated.
+Before limiting provider work, mark all detected hash mismatches stale. On success, persist current prose, AI status, provenance, hash/version, generated/attempt timestamps, usage, and cleared errors; update `Game.CompatibilityStatus` from deterministic status or AI fallback. On failure, preserve prior successful prose/provenance and the last public `Game.CompatibilityStatus`, set `Failed` and `IsStale`, and store sanitized bounded errors. This intentionally retains a potentially stale status until generation succeeds; detail-page trust labels communicate summary staleness, while list and favorites status remain last-known. Requested cancellation is propagated.
 
 #### 3. Concurrency and Evidence Recheck
 
@@ -173,7 +173,7 @@ Before limiting provider work, mark all detected hash mismatches stale. On succe
 
 **Intent**: Recover from ordinary provider instability without unbounded time or spend.
 
-**Contract**: Use a 30-second timeout per attempt and at most two jittered retries for network failures, timeouts, HTTP 408/429/5xx, honoring `Retry-After`. Do not retry authentication, validation, malformed-output, or other permanent failures.
+**Contract**: Configure the official OpenAI SDK as the only retry layer, with at most two retries (three total HTTP attempts) for its supported transient failures. Do not add an application-level retry loop. Use a 30-second timeout per HTTP attempt, propagate requested cancellation, and surface the terminal SDK failure through the adapter's transient/permanent classification. Authentication, local validation, and malformed or incomplete output are permanent failures and are never retried by application code.
 
 #### 5. Command Dispatch
 
@@ -360,54 +360,73 @@ Add only nullable summary-attempt metadata. Apply the migration explicitly befor
 
 #### Automated
 
-- [ ] 1.1 Native source status mappings and pessimistic reduction pass exhaustive tests
-- [ ] 1.2 Evidence hash and prompt budget contracts pass tests
-- [ ] 1.3 Structured provider validation and retry contracts pass tests
-- [ ] 1.4 Build and full test suite pass
+- [ ] 1.1 Every listed ProtonDB and Are We Anti-Cheat Yet status maps exactly as specified.
+- [ ] 1.2 ProtonDB Gold maps to `Playable`.
+- [ ] 1.3 Unknown native values provide no deterministic signal.
+- [ ] 1.4 Pessimistic reduction is independent of claim order.
+- [ ] 1.5 Canonical hashes are order-independent and change when any source or claim field changes.
+- [ ] 1.6 Prompt truncation never changes the complete evidence hash and never exceeds configured limits.
+- [ ] 1.7 Structured provider output rejects unknown statuses, blank text, and oversized text.
+- [ ] 1.8 Retry classification distinguishes transient, permanent, and cancelled requests.
+- [ ] 1.9 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
+- [ ] 1.10 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
 
 #### Manual
 
-- [ ] 1.5 Human confirms generation contracts before persistence work
+- [ ] 1.11 Human confirms generation contracts before persistence work.
 
 ### Phase 2: Safe Orchestration and CLI Mode
 
 #### Automated
 
-- [ ] 2.1 Additive summary metadata migration applies and preserves existing data
-- [ ] 2.2 Eligibility, lifecycle, status authority, and failure preservation tests pass
-- [ ] 2.3 Advisory lock, fairness, and evidence recheck tests pass
-- [ ] 2.4 CLI parser and exit-code tests pass
-- [ ] 2.5 Build and full test suite pass
+- [ ] 2.1 Migration applies cleanly to a fresh PostgreSQL database and preserves seeded summaries.
+- [ ] 2.2 Missing, stale, failed, current, forced, targeted, hidden, and no-evidence selection paths behave as specified.
+- [ ] 2.3 Concurrent generator execution performs no duplicate provider calls.
+- [ ] 2.4 Evidence changed during generation cannot receive stale output.
+- [ ] 2.5 Failed refresh preserves prior successful text and hides bounded operator errors from public consumers.
+- [ ] 2.6 Deterministic status wins disagreement; AI is used only when native parsing returns no signal.
+- [ ] 2.7 Oldest-attempted ordering prevents repeated failures from starving later games.
+- [ ] 2.8 CLI parser, configuration validation, and every exit code are covered.
+- [ ] 2.9 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
+- [ ] 2.10 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
 
 #### Manual
 
-- [ ] 2.6 Finite command exits without starting Kestrel
-- [ ] 2.7 Web startup works without provider credentials
+- [ ] 2.11 Running the command locally with a fake/test provider exits without starting the web server.
+- [ ] 2.12 Normal web startup remains unchanged and does not require `OPENAI_API_KEY`.
 
 ### Phase 3: Trust-Aware Summary UI
 
 #### Automated
 
-- [ ] 3.1 Public read models exclude provider error details
-- [ ] 3.2 Summary lifecycle and authority read-service tests pass
-- [ ] 3.3 Build and full test suite pass
+- [ ] 3.1 Public read models contain no provider error code or message.
+- [ ] 3.2 Read-service tests cover current, stale, failed, disagreement, and AI-fallback metadata.
+- [ ] 3.3 Existing visible/hidden/no-evidence lookup and favorites tests remain green.
+- [ ] 3.4 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
+- [ ] 3.5 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
 
 #### Manual
 
-- [ ] 3.4 Current, stale, failed, disagreement, and fallback states render correctly
-- [ ] 3.5 Raw evidence remains visible and mobile layout remains usable
+- [ ] 3.6 Current summaries show prose and generation date.
+- [ ] 3.7 Stale and failed summaries preserve useful prose with an explicit warning.
+- [ ] 3.8 Provider failures never expose internal errors publicly.
+- [ ] 3.9 Deterministic/AI disagreement and AI fallback are clearly disclosed.
+- [ ] 3.10 Raw evidence and source links remain visible and authoritative.
+- [ ] 3.11 Summary states remain readable on narrow mobile widths.
 
 ### Phase 4: Manual Railway Rollout and Handoff
 
 #### Automated
 
-- [ ] 4.1 Release build and full test suite pass
-- [ ] 4.2 Published image preserves default web startup
+- [ ] 4.1 Release build passes: `dotnet build LinuxGameCompat.sln --configuration Release --no-restore`.
+- [ ] 4.2 Full tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [ ] 4.3 Published image retains unchanged default web startup.
 
 #### Manual
 
-- [ ] 4.3 Human approves production migration and provider spend
-- [ ] 4.4 Finite Railway service completes one bounded representative run
-- [ ] 4.5 Unchanged rerun performs no provider calls
-- [ ] 4.6 Production web and source-linked summary experience pass smoke verification
-- [ ] 4.7 Runtime, token, and resource measurements are recorded before scheduling
+- [ ] 4.4 Human approves production migration and provider spend before the first run.
+- [ ] 4.5 Railway generation service terminates after its bounded batch and is not restarted.
+- [ ] 4.6 Re-running unchanged evidence makes no provider calls.
+- [ ] 4.7 Web service remains online and does not require provider credentials.
+- [ ] 4.8 Production pages show deterministic status, generated prose, trust labels, and unchanged raw source evidence.
+- [ ] 4.9 Measured runtime/token/resource data is captured before any cron schedule is proposed.
