@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+		<NoWarn>$(NoWarn);OPENAI001;SCME0001</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,6 +15,8 @@
       </PackageReference>
       <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.8" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+      <PackageReference Include="OpenAI" Version="2.11.0" />
+      <PackageReference Include="SharpToken" Version="2.0.6" />
     </ItemGroup>
 
 </Project>

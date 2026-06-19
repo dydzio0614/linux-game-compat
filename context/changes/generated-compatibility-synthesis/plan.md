@@ -360,20 +360,20 @@ Add only nullable summary-attempt metadata. Apply the migration explicitly befor
 
 #### Automated
 
-- [ ] 1.1 Every listed ProtonDB and Are We Anti-Cheat Yet status maps exactly as specified.
-- [ ] 1.2 ProtonDB Gold maps to `Playable`.
-- [ ] 1.3 Unknown native values provide no deterministic signal.
-- [ ] 1.4 Pessimistic reduction is independent of claim order.
-- [ ] 1.5 Canonical hashes are order-independent and change when any source or claim field changes.
-- [ ] 1.6 Prompt truncation never changes the complete evidence hash and never exceeds configured limits.
-- [ ] 1.7 Structured provider output rejects unknown statuses, blank text, and oversized text.
-- [ ] 1.8 Retry classification distinguishes transient, permanent, and cancelled requests.
-- [ ] 1.9 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
-- [ ] 1.10 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [x] 1.1 Every listed ProtonDB and Are We Anti-Cheat Yet status maps exactly as specified.
+- [x] 1.2 ProtonDB Gold maps to `Playable`.
+- [x] 1.3 Unknown native values provide no deterministic signal.
+- [x] 1.4 Pessimistic reduction is independent of claim order.
+- [x] 1.5 Canonical hashes are order-independent and change when any source or claim field changes.
+- [x] 1.6 Prompt truncation never changes the complete evidence hash and never exceeds configured limits.
+- [x] 1.7 Structured provider output rejects unknown statuses, blank text, and oversized text.
+- [x] 1.8 Retry classification distinguishes transient, permanent, and cancelled requests.
+- [x] 1.9 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
+- [x] 1.10 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
 
 #### Manual
 
-- [ ] 1.11 Human confirms generation contracts before persistence work.
+- [x] 1.11 Human confirms generation contracts before persistence work.
 
 ### Phase 2: Safe Orchestration and CLI Mode
 
