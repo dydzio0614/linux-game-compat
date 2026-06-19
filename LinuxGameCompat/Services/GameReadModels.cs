@@ -39,11 +39,7 @@ public sealed record GameCompatibilitySummaryDetail(
 	SummaryState State,
 	CompatibilityStatus SummaryStatus,
 	string? SummaryText,
-	string? Provider,
-	string? Model,
-	string? EvidenceVersion,
-	string? EvidenceHash,
 	DateTimeOffset? GeneratedAt,
 	bool IsStale,
-	string? ErrorCode,
-	string? ErrorMessage);
+	bool HasStatusDisagreement,
+	bool IsAiStatusFallback);

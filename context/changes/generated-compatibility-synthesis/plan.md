@@ -379,40 +379,40 @@ Add only nullable summary-attempt metadata. Apply the migration explicitly befor
 
 #### Automated
 
-- [x] 2.1 Migration applies cleanly to a fresh PostgreSQL database and preserves seeded summaries.
-- [x] 2.2 Missing, stale, failed, current, forced, targeted, hidden, and no-evidence selection paths behave as specified.
-- [x] 2.3 Concurrent generator execution performs no duplicate provider calls.
-- [x] 2.4 Evidence changed during generation cannot receive stale output.
-- [x] 2.5 Failed refresh preserves prior successful text and hides bounded operator errors from public consumers.
-- [x] 2.6 Deterministic status wins disagreement; AI is used only when native parsing returns no signal.
-- [x] 2.7 Oldest-attempted ordering prevents repeated failures from starving later games.
-- [x] 2.8 CLI parser, configuration validation, and every exit code are covered.
-- [x] 2.9 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
-- [x] 2.10 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [x] 2.1 Migration applies cleanly to a fresh PostgreSQL database and preserves seeded summaries. — e152630
+- [x] 2.2 Missing, stale, failed, current, forced, targeted, hidden, and no-evidence selection paths behave as specified. — e152630
+- [x] 2.3 Concurrent generator execution performs no duplicate provider calls. — e152630
+- [x] 2.4 Evidence changed during generation cannot receive stale output. — e152630
+- [x] 2.5 Failed refresh preserves prior successful text and hides bounded operator errors from public consumers. — e152630
+- [x] 2.6 Deterministic status wins disagreement; AI is used only when native parsing returns no signal. — e152630
+- [x] 2.7 Oldest-attempted ordering prevents repeated failures from starving later games. — e152630
+- [x] 2.8 CLI parser, configuration validation, and every exit code are covered. — e152630
+- [x] 2.9 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`. — e152630
+- [x] 2.10 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`. — e152630
 
 #### Manual
 
-- [x] 2.11 Running the command locally with a fake/test provider exits without starting the web server.
-- [x] 2.12 Normal web startup remains unchanged and does not require `OPENAI_API_KEY`.
+- [x] 2.11 Running the command locally with a fake/test provider exits without starting the web server. — e152630
+- [x] 2.12 Normal web startup remains unchanged and does not require `OPENAI_API_KEY`. — e152630
 
 ### Phase 3: Trust-Aware Summary UI
 
 #### Automated
 
-- [ ] 3.1 Public read models contain no provider error code or message.
-- [ ] 3.2 Read-service tests cover current, stale, failed, disagreement, and AI-fallback metadata.
-- [ ] 3.3 Existing visible/hidden/no-evidence lookup and favorites tests remain green.
-- [ ] 3.4 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
-- [ ] 3.5 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [x] 3.1 Public read models contain no provider error code or message.
+- [x] 3.2 Read-service tests cover current, stale, failed, disagreement, and AI-fallback metadata.
+- [x] 3.3 Existing visible/hidden/no-evidence lookup and favorites tests remain green.
+- [x] 3.4 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
+- [x] 3.5 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
 
 #### Manual
 
-- [ ] 3.6 Current summaries show prose and generation date.
-- [ ] 3.7 Stale and failed summaries preserve useful prose with an explicit warning.
-- [ ] 3.8 Provider failures never expose internal errors publicly.
-- [ ] 3.9 Deterministic/AI disagreement and AI fallback are clearly disclosed.
-- [ ] 3.10 Raw evidence and source links remain visible and authoritative.
-- [ ] 3.11 Summary states remain readable on narrow mobile widths.
+- [x] 3.6 Current summaries show prose and generation date.
+- [x] 3.7 Stale and failed summaries preserve useful prose with an explicit warning.
+- [x] 3.8 Provider failures never expose internal errors publicly.
+- [x] 3.9 Deterministic/AI disagreement and AI fallback are clearly disclosed.
+- [x] 3.10 Raw evidence and source links remain visible and authoritative.
+- [x] 3.11 Summary states remain readable on narrow mobile widths.
 
 ### Phase 4: Manual Railway Rollout and Handoff
 

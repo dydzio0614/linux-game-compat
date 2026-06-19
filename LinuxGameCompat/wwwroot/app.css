@@ -173,6 +173,35 @@ a, .btn-link {
     margin-bottom: 0;
 }
 
+.summary-note--warning {
+    border-color: #f5b546;
+    background: #fffaf0;
+}
+
+.summary-note .summary-meta {
+    margin-top: 0.75rem;
+    color: #475467;
+    font-size: 0.9rem;
+}
+
+.summary-alert,
+.summary-advisory {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 6px;
+}
+
+.summary-alert {
+    background: #ffefd1;
+    color: #7a2e0e;
+}
+
+.summary-advisory {
+    border-left: 4px solid #528bff;
+    background: #eef4ff;
+    color: #1849a9;
+}
+
 .back-link {
     display: inline-block;
     margin-bottom: 1rem;

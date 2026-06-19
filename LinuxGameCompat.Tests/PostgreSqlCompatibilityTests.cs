@@ -184,7 +184,57 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 		Assert.Contains(detail.EvidenceClaims, claim => claim.ClaimType == EvidenceClaimType.Status);
 		Assert.NotNull(detail.Summary);
 		Assert.Equal(SummaryState.Current, detail.Summary.State);
-		Assert.Equal("placeholder", detail.Summary.Provider);
+		Assert.False(detail.Summary.IsStale);
+		Assert.False(detail.Summary.HasStatusDisagreement);
+		Assert.False(detail.Summary.IsAiStatusFallback);
+	}
+
+	[Fact]
+	public async Task ReadService_MapsSummaryTrustMetadataWithoutProviderErrors()
+	{
+		await using var dbContext = CreateDbContext();
+		await using var transaction = await dbContext.Database.BeginTransactionAsync();
+		var game = await dbContext.Games
+			.Include(item => item.CompatibilitySummary)
+			.SingleAsync(item => item.Slug == "baldurs-gate-3");
+		game.CompatibilitySummary!.State = SummaryState.Failed;
+		game.CompatibilitySummary.IsStale = true;
+		game.CompatibilitySummary.SummaryStatus = CompatibilityStatus.Unsupported;
+		game.CompatibilitySummary.ErrorCode = "secret-code";
+		game.CompatibilitySummary.ErrorMessage = "secret provider detail";
+		await dbContext.SaveChangesAsync();
+
+		var service = new GameCompatibilityReadService(dbContext);
+		var disagreement = await service.GetVisibleGameBySlugAsync("baldurs-gate-3");
+
+		Assert.NotNull(disagreement?.Summary);
+		Assert.Equal(SummaryState.Failed, disagreement.Summary.State);
+		Assert.True(disagreement.Summary.IsStale);
+		Assert.True(disagreement.Summary.HasStatusDisagreement);
+		Assert.False(disagreement.Summary.IsAiStatusFallback);
+		Assert.DoesNotContain(
+			typeof(GameCompatibilitySummaryDetail).GetProperties(),
+			property => property.Name is "ErrorCode" or "ErrorMessage");
+
+		var noEvidenceGame = await dbContext.Games
+			.Include(item => item.CompatibilitySummary)
+			.SingleAsync(item => item.Slug == "unnamed-prototype");
+		noEvidenceGame.CompatibilityStatus = CompatibilityStatus.Playable;
+		noEvidenceGame.CompatibilitySummary = new GameCompatibilitySummary
+		{
+			State = SummaryState.Current,
+			SummaryStatus = CompatibilityStatus.Playable,
+			SummaryText = "Generated fallback.",
+			GeneratedAt = DateTimeOffset.UtcNow
+		};
+		await dbContext.SaveChangesAsync();
+
+		var fallback = await service.GetVisibleGameBySlugAsync("unnamed-prototype");
+
+		Assert.NotNull(fallback?.Summary);
+		Assert.True(fallback.Summary.IsAiStatusFallback);
+		Assert.False(fallback.Summary.HasStatusDisagreement);
+		await transaction.RollbackAsync();
 	}
 
 	[Fact]

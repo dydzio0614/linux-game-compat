@@ -1,4 +1,5 @@
 using LinuxGameCompat.Data;
+using LinuxGameCompat.Services.SummaryGeneration;
 using Microsoft.EntityFrameworkCore;
 
 namespace LinuxGameCompat.Services;
@@ -117,7 +118,7 @@ public sealed class GameCompatibilityReadService(CompatibilityDbContext dbContex
 			game.CompatibilityStatus,
 			references,
 			claims,
-			MapSummary(game.CompatibilitySummary));
+			MapSummary(game.CompatibilitySummary, game.CompatibilityStatus, claims));
 	}
 
 	private static GameListItem MapGameListItem(Game game)
@@ -141,24 +142,27 @@ public sealed class GameCompatibilityReadService(CompatibilityDbContext dbContex
 			reference.MetadataJson);
 	}
 
-	private static GameCompatibilitySummaryDetail? MapSummary(GameCompatibilitySummary? summary)
+	private static GameCompatibilitySummaryDetail? MapSummary(
+		GameCompatibilitySummary? summary,
+		CompatibilityStatus publicStatus,
+		IReadOnlyList<EvidenceClaimDetail> claims)
 	{
 		if (summary is null)
 		{
 			return null;
 		}
 
+		CompatibilityStatus? deterministicStatus = NativeStatusNormalizer.Reduce(claims
+			.Where(claim => claim.ClaimType == EvidenceClaimType.Status)
+			.Select(claim => new NativeStatusEvidence(claim.SourceReference.SourceType, claim.ClaimValue)));
+
 		return new GameCompatibilitySummaryDetail(
 			summary.State,
 			summary.SummaryStatus,
 			summary.SummaryText,
-			summary.Provider,
-			summary.Model,
-			summary.EvidenceVersion,
-			summary.EvidenceHash,
 			summary.GeneratedAt,
 			summary.IsStale,
-			summary.ErrorCode,
-			summary.ErrorMessage);
+			deterministicStatus is not null && deterministicStatus != summary.SummaryStatus,
+			deterministicStatus is null && publicStatus == summary.SummaryStatus && summary.SummaryStatus != CompatibilityStatus.Unknown);
 	}
 }
