@@ -3,7 +3,7 @@ WORKDIR /src
 
 COPY LinuxGameCompat.sln ./
 COPY LinuxGameCompat/LinuxGameCompat.csproj LinuxGameCompat/
-RUN dotnet restore LinuxGameCompat.sln
+RUN dotnet restore LinuxGameCompat/LinuxGameCompat.csproj
 
 COPY . .
 RUN dotnet publish LinuxGameCompat/LinuxGameCompat.csproj \

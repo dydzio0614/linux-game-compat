@@ -33,6 +33,7 @@ New people switching to Linux face decision paralysis because compatibility evid
 | S-02 | member-favorites-tracking | logged-in member can save games and view favorites with current status | S-01, F-02 | US-02, FR-007, FR-008 | done |
 | S-03 | browse-available-games | user can browse available games without a search phrase | F-01 | FR-005 | done |
 | S-04 | generated-compatibility-synthesis | user can see a generated source-linked compatibility summary when curated evidence exists | F-01, S-01 | US-01, FR-004, NFR generated or available summary | blocked |
+| S-05 | production-summary-generation-rollout | operator can run and measure bounded compatibility-summary generation on Railway | S-04 | Operational follow-up | planned |
 
 ## Streams
 
@@ -138,6 +139,18 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** F-01 intentionally reserved only the summary-ready schema; this slice must add generation, prompt grounding, retry/failure states, cost controls, basic telemetry, and source traceability without drifting into broad crawling or automated refresh.
 - **Status:** blocked
 
+### S-05: Production summary generation rollout
+
+- **Outcome:** operator can deploy the Railway-compatible finite generator, approve and apply its migration, execute a bounded production batch, prove an unchanged-input no-work rerun, and capture runtime, token, quality, and resource measurements before considering scheduling.
+- **Change ID:** production-summary-generation-rollout
+- **PRD refs:** Operational follow-up to US-01 and FR-004
+- **Prerequisites:** S-04
+- **Parallel with:** -
+- **Blockers:** Production migration and provider-spend approval.
+- **Unknowns:** Whether measured demand, cost, and runtime justify a cron schedule.
+- **Risk:** Enabling production generation before explicit approval could incur provider spend or affect shared database capacity.
+- **Status:** planned
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID | Suggested issue title | Ready for `/10x-plan` | Notes |
@@ -148,6 +161,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-02 | member-favorites-tracking | Add member favorites tracking | no | Depends on S-01 and F-02 |
 | S-03 | browse-available-games | Add browseable available-games list | no | Nice-to-have; depends on F-01 |
 | S-04 | generated-compatibility-synthesis | Add generated source-linked compatibility summaries | no | Blocked on LLM provider/model and cost/failure limits; depends on F-01 and S-01 |
+| S-05 | production-summary-generation-rollout | Roll out and measure production summary generation on Railway | no | Deferred operational follow-up; depends on S-04 |
 
 ## Open Roadmap Questions
 

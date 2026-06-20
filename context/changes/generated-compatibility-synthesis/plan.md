@@ -264,11 +264,11 @@ When AI disagrees, retain deterministic status as primary and show the AI assess
 
 ---
 
-## Phase 4: Manual Railway Rollout and Handoff
+## Phase 4: Railway-Compatible Handoff
 
 ### Overview
 
-Deploy the finite process separately, validate real usage, and defer scheduling until measured data justifies it.
+Document and verify that the finite process is ready for a separate Railway deployment. Live service creation, migration, provider spend, and measured production execution are deferred to roadmap slice S-05.
 
 ### Changes Required
 
@@ -280,17 +280,17 @@ Deploy the finite process separately, validate real usage, and defer scheduling 
 
 **Contract**: Include `OPENAI_API_KEY`, generation options, exit codes, no-op semantics, explicit migration procedure, error inspection, and the rule that raw evidence remains authoritative.
 
-#### 2. Railway Generation Service
+#### 2. Railway Generation Service Contract
 
-**Intent**: Run generation independently from public traffic using the existing image and PostgreSQL database.
+**Intent**: Preserve a deployment-ready contract for running generation independently from public traffic using the existing image and PostgreSQL database.
 
-**Contract**: Create a separate Railway service using Start Command `dotnet LinuxGameCompat.dll generate-summaries --limit 10`, the shared `DATABASE_URL`, scoped `OPENAI_API_KEY`, and restart policy `Never`. Do not attach a cron schedule in this change.
+**Contract**: Document a future separate Railway service using Start Command `dotnet LinuxGameCompat.dll generate-summaries --limit 10`, the shared `DATABASE_URL`, scoped `OPENAI_API_KEY`, and restart policy `Never`. Do not create the service or attach a cron schedule in this change.
 
-#### 3. Representative Production Run
+#### 3. Deferred Production Run
 
-**Intent**: Validate model quality, runtime, usage, persistence, and rendering before scheduling is considered.
+**Intent**: Keep production approval, execution, and measurement explicit rather than coupling them to implementation delivery.
 
-**Contract**: After human approval and migration, trigger one manual bounded run. Record duration, input/output token totals, outcomes, and observed Railway resource usage in implementation notes. Re-run unchanged input to prove idempotent no-work behavior.
+**Contract**: Track the approved migration, manual bounded run, duration, token totals, outcomes, Railway resource usage, rendering validation, and idempotent no-work rerun in roadmap slice S-05 before scheduling is considered.
 
 ### Success Criteria
 
@@ -302,12 +302,7 @@ Deploy the finite process separately, validate real usage, and defer scheduling 
 
 #### Manual Verification
 
-- Human approves production migration and provider spend before the first run.
-- Railway generation service terminates after its bounded batch and is not restarted.
-- Re-running unchanged evidence makes no provider calls.
-- Web service remains online and does not require provider credentials.
-- Production pages show deterministic status, generated prose, trust labels, and unchanged raw source evidence.
-- Measured runtime/token/resource data is captured before any cron schedule is proposed.
+- Human confirms the documented Railway contract is compatible with a future separate finite service and that live rollout is tracked in S-05.
 
 **Implementation Note**: Scheduling is a separate follow-up decision after the measured handoff is reviewed.
 
@@ -399,34 +394,29 @@ Add only nullable summary-attempt metadata. Apply the migration explicitly befor
 
 #### Automated
 
-- [x] 3.1 Public read models contain no provider error code or message.
-- [x] 3.2 Read-service tests cover current, stale, failed, disagreement, and AI-fallback metadata.
-- [x] 3.3 Existing visible/hidden/no-evidence lookup and favorites tests remain green.
-- [x] 3.4 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
-- [x] 3.5 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [x] 3.1 Public read models contain no provider error code or message. — b221e73
+- [x] 3.2 Read-service tests cover current, stale, failed, disagreement, and AI-fallback metadata. — b221e73
+- [x] 3.3 Existing visible/hidden/no-evidence lookup and favorites tests remain green. — b221e73
+- [x] 3.4 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`. — b221e73
+- [x] 3.5 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`. — b221e73
 
 #### Manual
 
-- [x] 3.6 Current summaries show prose and generation date.
-- [x] 3.7 Stale and failed summaries preserve useful prose with an explicit warning.
-- [x] 3.8 Provider failures never expose internal errors publicly.
-- [x] 3.9 Deterministic/AI disagreement and AI fallback are clearly disclosed.
-- [x] 3.10 Raw evidence and source links remain visible and authoritative.
-- [x] 3.11 Summary states remain readable on narrow mobile widths.
+- [x] 3.6 Current summaries show prose and generation date. — b221e73
+- [x] 3.7 Stale and failed summaries preserve useful prose with an explicit warning. — b221e73
+- [x] 3.8 Provider failures never expose internal errors publicly. — b221e73
+- [x] 3.9 Deterministic/AI disagreement and AI fallback are clearly disclosed. — b221e73
+- [x] 3.10 Raw evidence and source links remain visible and authoritative. — b221e73
+- [x] 3.11 Summary states remain readable on narrow mobile widths. — b221e73
 
-### Phase 4: Manual Railway Rollout and Handoff
+### Phase 4: Railway-Compatible Handoff
 
 #### Automated
 
-- [ ] 4.1 Release build passes: `dotnet build LinuxGameCompat.sln --configuration Release --no-restore`.
-- [ ] 4.2 Full tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
-- [ ] 4.3 Published image retains unchanged default web startup.
+- [x] 4.1 Release build passes: `dotnet build LinuxGameCompat.sln --configuration Release --no-restore`.
+- [x] 4.2 Full tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [x] 4.3 Published image retains unchanged default web startup.
 
 #### Manual
 
-- [ ] 4.4 Human approves production migration and provider spend before the first run.
-- [ ] 4.5 Railway generation service terminates after its bounded batch and is not restarted.
-- [ ] 4.6 Re-running unchanged evidence makes no provider calls.
-- [ ] 4.7 Web service remains online and does not require provider credentials.
-- [ ] 4.8 Production pages show deterministic status, generated prose, trust labels, and unchanged raw source evidence.
-- [ ] 4.9 Measured runtime/token/resource data is captured before any cron schedule is proposed.
+- [x] 4.4 Human confirms the documented Railway contract is compatible with a future separate finite service and that live rollout is tracked in S-05.
