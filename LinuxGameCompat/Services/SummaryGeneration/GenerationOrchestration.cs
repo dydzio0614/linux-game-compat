@@ -27,7 +27,7 @@ public sealed class CompatibilitySummaryGenerator(
 	public async Task<SummaryGenerationRunResult> RunAsync(SummaryGenerationRunOptions options, CancellationToken cancellationToken)
 	{
 		ArgumentNullException.ThrowIfNull(options);
-		if (options.Limit is < 1 or > 10) throw new ArgumentOutOfRangeException(nameof(options), "Limit must be between 1 and 10.");
+		if (options.Limit < 1 || options.Limit > settings.MaximumGames) throw new ArgumentOutOfRangeException(nameof(options), $"Limit must be between 1 and {settings.MaximumGames}.");
 		Stopwatch stopwatch = Stopwatch.StartNew();
 		await dbContext.Database.OpenConnectionAsync(cancellationToken);
 		bool acquired = false;

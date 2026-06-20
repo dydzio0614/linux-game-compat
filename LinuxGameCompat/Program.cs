@@ -51,7 +51,7 @@ builder.Services.AddSingleton<EvidencePromptBuilder>();
 builder.Services.AddScoped<ICompatibilitySummaryGenerator, CompatibilitySummaryGenerator>();
 builder.Services.AddSingleton<ICompatibilitySummaryProvider>(_ => OpenAiCompatibilitySummaryProvider.Create(
 	Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty,
-	TimeSpan.FromSeconds(generationSettings.RequestTimeoutSeconds), generationSettings.MaximumRetries));
+	generationSettings));
 if (builder.Environment.IsDevelopment())
 {
 	builder.Services.AddScoped<IAuthEmailSender, LoggingAuthEmailSender>();

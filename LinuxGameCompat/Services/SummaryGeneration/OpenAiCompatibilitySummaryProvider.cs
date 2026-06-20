@@ -5,17 +5,17 @@ using OpenAI.Responses;
 
 namespace LinuxGameCompat.Services.SummaryGeneration;
 
-public sealed class OpenAiCompatibilitySummaryProvider(ResponsesClient client) : ICompatibilitySummaryProvider
+public sealed class OpenAiCompatibilitySummaryProvider(ResponsesClient client, GenerationOptions settings) : ICompatibilitySummaryProvider
 {
 	private static readonly BinaryData OutputSchema = BinaryData.FromString(CompatibilitySummaryPromptContract.OutputSchemaJson);
 
 	public async Task<CompatibilitySummaryProviderResult> GenerateAsync(CompatibilitySummaryProviderRequest request, CancellationToken cancellationToken)
 	{
 		ArgumentNullException.ThrowIfNull(request);
-		if (!string.Equals(request.Model, "gpt-5.4-mini", StringComparison.Ordinal))
+		if (!string.Equals(request.Model, settings.Model, StringComparison.Ordinal))
 			throw new CompatibilitySummaryProviderException(ProviderFailureKind.Permanent, "The configured model is not approved by generator contract v1.");
-		if (request.MaximumOutputTokens is < 1 or > 500)
-			throw new CompatibilitySummaryProviderException(ProviderFailureKind.Permanent, "The output-token limit must be between 1 and 500.");
+		if (request.MaximumOutputTokens < 1 || request.MaximumOutputTokens > settings.MaximumOutputTokens)
+			throw new CompatibilitySummaryProviderException(ProviderFailureKind.Permanent, $"The output-token limit must be between 1 and {settings.MaximumOutputTokens}.");
 
 		ResponseTextOptions textOptions = new()
 		{
@@ -50,10 +50,10 @@ public sealed class OpenAiCompatibilitySummaryProvider(ResponsesClient client) :
 		}
 	}
 
-	public static OpenAiCompatibilitySummaryProvider Create(string apiKey, TimeSpan timeout, int maximumRetries = 2)
+	public static OpenAiCompatibilitySummaryProvider Create(string apiKey, GenerationOptions settings)
 	{
 		if (string.IsNullOrWhiteSpace(apiKey)) throw new ArgumentException("OPENAI_API_KEY is required in generation mode.", nameof(apiKey));
-		ResponsesClientOptions options = new() { NetworkTimeout = timeout, RetryPolicy = new ClientRetryPolicy(maximumRetries) };
-		return new OpenAiCompatibilitySummaryProvider(new ResponsesClient(new ApiKeyCredential(apiKey), options));
+		ResponsesClientOptions options = new() { NetworkTimeout = TimeSpan.FromSeconds(settings.RequestTimeoutSeconds), RetryPolicy = new ClientRetryPolicy(settings.MaximumRetries) };
+		return new OpenAiCompatibilitySummaryProvider(new ResponsesClient(new ApiKeyCredential(apiKey), options), settings);
 	}
 }
