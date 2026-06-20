@@ -32,7 +32,7 @@ New people switching to Linux face decision paralysis because compatibility evid
 | F-02 | passwordless-member-access | (foundation) passwordless member identity is available for favorites | S-01 | Access Control, FR-006 | done |
 | S-02 | member-favorites-tracking | logged-in member can save games and view favorites with current status | S-01, F-02 | US-02, FR-007, FR-008 | done |
 | S-03 | browse-available-games | user can browse available games without a search phrase | F-01 | FR-005 | done |
-| S-04 | generated-compatibility-synthesis | user can see a generated source-linked compatibility summary when curated evidence exists | F-01, S-01 | US-01, FR-004, NFR generated or available summary | blocked |
+| S-04 | generated-compatibility-synthesis | user can see a generated source-linked compatibility summary when curated evidence exists | F-01, S-01 | US-01, FR-004, NFR generated or available summary | done |
 | S-05 | production-summary-generation-rollout | operator can run and measure bounded compatibility-summary generation on Railway | S-04 | Operational follow-up | planned |
 
 ## Streams
@@ -135,9 +135,9 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** -
 - **Unknowns:**
   - What exact compatibility status vocabulary should the UI expose? - Owner: user. Block: no.
-  - Which LLM provider/model should generate MVP summaries, and what hard cost/failure limits should apply? - Owner: user. Block: yes.
+  - Resolved 2026-06-20: OpenAI `gpt-5.4-mini` with the bounded generation contract implemented by S-04.
 - **Risk:** F-01 intentionally reserved only the summary-ready schema; this slice must add generation, prompt grounding, retry/failure states, cost controls, basic telemetry, and source traceability without drifting into broad crawling or automated refresh.
-- **Status:** blocked
+- **Status:** done
 
 ### S-05: Production summary generation rollout
 

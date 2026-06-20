@@ -3,6 +3,7 @@ namespace LinuxGameCompat.Services.SummaryGeneration;
 public sealed class GenerationOptions
 {
 	public const string SectionName = "SummaryGeneration";
+	public const int MinimumInputTokens = 256;
 	public string Provider { get; set; } = "OpenAI";
 	public string Model { get; set; } = "gpt-5.4-mini";
 	public int MaximumGames { get; set; } = 10;
@@ -20,7 +21,7 @@ public sealed class GenerationOptions
 		if (!string.Equals(Model, "gpt-5.4-mini", StringComparison.Ordinal)) errors.Add("Model must be gpt-5.4-mini for generator contract v1.");
 		if (MaximumGames is < 1 or > 10) errors.Add("MaximumGames must be between 1 and 10.");
 		if (MaximumClaims is < 1 or > 12) errors.Add("MaximumClaims must be between 1 and 12.");
-		if (MaximumInputTokens <= 0) errors.Add("MaximumInputTokens must be positive.");
+		if (MaximumInputTokens < MinimumInputTokens) errors.Add($"MaximumInputTokens must be at least {MinimumInputTokens}.");
 		if (MaximumOutputTokens is < 1 or > 500) errors.Add("MaximumOutputTokens must be between 1 and 500.");
 		if (Concurrency != 1) errors.Add("Concurrency must be 1 for the MVP.");
 		if (RequestTimeoutSeconds <= 0) errors.Add("RequestTimeoutSeconds must be positive.");

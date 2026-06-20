@@ -13,3 +13,7 @@
 Live Railway service creation, migration, provider spend, representative generation, idempotency rerun, and resource measurement were removed from this change's scope on 2026-06-20. They are tracked as roadmap slice `S-05: production-summary-generation-rollout`.
 
 The implementation is ready for that follow-up because the same published artifact supports a finite `generate-summaries` mode, accepts Railway's shared `DATABASE_URL`, validates `OPENAI_API_KEY` only in generation mode, uses a PostgreSQL advisory lock, emits bounded aggregate usage, and leaves default web startup unchanged.
+
+## OpenAI Contract Verification
+
+Re-verified on 2026-06-20 that `gpt-5.4-mini` has an official OpenAI API model page and remains the pinned model for generator contract v1: <https://developers.openai.com/api/docs/models/gpt-5.4-mini>. The implementation uses the Responses API through the official OpenAI .NET SDK, with structured JSON-schema output, `store: false`, reasoning effort `none`, low verbosity, and bounded output. Configuration validation rejects silent model substitution.

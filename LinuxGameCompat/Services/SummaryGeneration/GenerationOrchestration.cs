@@ -1,6 +1,8 @@
 using System.Diagnostics;
+using System.Data;
 using LinuxGameCompat.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace LinuxGameCompat.Services.SummaryGeneration;
 
@@ -73,36 +75,61 @@ public sealed class CompatibilitySummaryGenerator(
 					CompatibilitySummaryProviderResult result = await provider.GenerateAsync(
 						new CompatibilitySummaryProviderRequest(settings.Model, selection.Prompt, settings.MaximumOutputTokens), cancellationToken);
 					dbContext.ChangeTracker.Clear();
-					Candidate? refreshed = (await LoadCandidatesAsync(candidate.Game.Slug, cancellationToken)).SingleOrDefault();
-					if (refreshed is null || EvidencePromptBuilder.Canonicalize(refreshed.Claims).Hash != selection.Evidence.Hash)
+					bool evidenceChanged;
+					IDbContextTransaction? transaction = dbContext.Database.CurrentTransaction;
+					bool ownsTransaction = transaction is null;
+					transaction ??= await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+					try
 					{
+						// These short-lived locks close the final recheck/write race without spanning the provider call.
+						await dbContext.Database.ExecuteSqlRawAsync("LOCK TABLE \"SourceSystems\" IN SHARE MODE", cancellationToken);
+						await dbContext.Database.ExecuteSqlRawAsync("LOCK TABLE \"SourceReferences\" IN SHARE MODE", cancellationToken);
+						await dbContext.Database.ExecuteSqlRawAsync("LOCK TABLE \"EvidenceClaims\" IN SHARE MODE", cancellationToken);
+						Candidate? refreshed = (await LoadCandidatesAsync(candidate.Game.Slug, cancellationToken)).SingleOrDefault();
+						evidenceChanged = refreshed is null || EvidencePromptBuilder.Canonicalize(refreshed.Claims).Hash != selection.Evidence.Hash;
+						if (evidenceChanged)
+						{
+							if (ownsTransaction) await transaction.RollbackAsync(cancellationToken);
+						}
+						else
+						{
+							Game trackedGame = refreshed!.Game;
+							GameCompatibilitySummary trackedSummary = refreshed.Summary ?? new GameCompatibilitySummary { GameId = trackedGame.Id };
+							if (refreshed.Summary is null) dbContext.GameCompatibilitySummaries.Add(trackedSummary);
+							CompatibilityStatus? deterministic = NativeStatusNormalizer.Reduce(refreshed.Claims
+								.Where(claim => claim.ClaimType == EvidenceClaimType.Status)
+								.Select(claim => new NativeStatusEvidence(claim.SourceType, claim.ClaimValue)));
+							trackedSummary.State = SummaryState.Current;
+							trackedSummary.SummaryStatus = result.Status;
+							trackedSummary.SummaryText = result.Summary;
+							trackedSummary.Provider = settings.Provider;
+							trackedSummary.Model = settings.Model;
+							trackedSummary.EvidenceVersion = CanonicalEvidence.ContractVersion;
+							trackedSummary.EvidenceHash = selection.Evidence.Hash;
+							trackedSummary.GeneratedAt = timeProvider.GetUtcNow();
+							trackedSummary.LastAttemptedAt = attemptedAt;
+							trackedSummary.InputTokenCount = result.InputTokens;
+							trackedSummary.OutputTokenCount = result.OutputTokens;
+							trackedSummary.IsStale = false;
+							trackedSummary.ErrorCode = null;
+							trackedSummary.ErrorMessage = null;
+							trackedGame.CompatibilityStatus = deterministic ?? result.Status;
+							trackedGame.UpdatedAt = timeProvider.GetUtcNow();
+							await dbContext.SaveChangesAsync(cancellationToken);
+							if (ownsTransaction) await transaction.CommitAsync(cancellationToken);
+						}
+					}
+					finally
+					{
+						if (ownsTransaction) await transaction.DisposeAsync();
+					}
+					if (evidenceChanged)
+					{
+						dbContext.ChangeTracker.Clear();
 						await MarkFailureAsync(candidate.Game.Id, attemptedAt, "evidence_changed", "Evidence changed during generation; output was discarded.", cancellationToken);
 						failed++;
 						continue;
 					}
-					Game trackedGame = refreshed.Game;
-					GameCompatibilitySummary trackedSummary = refreshed.Summary ?? new GameCompatibilitySummary { GameId = trackedGame.Id };
-					if (refreshed.Summary is null) dbContext.GameCompatibilitySummaries.Add(trackedSummary);
-					CompatibilityStatus? deterministic = NativeStatusNormalizer.Reduce(refreshed.Claims
-						.Where(claim => claim.ClaimType == EvidenceClaimType.Status)
-						.Select(claim => new NativeStatusEvidence(claim.SourceType, claim.ClaimValue)));
-					trackedSummary.State = SummaryState.Current;
-					trackedSummary.SummaryStatus = result.Status;
-					trackedSummary.SummaryText = result.Summary;
-					trackedSummary.Provider = settings.Provider;
-					trackedSummary.Model = settings.Model;
-					trackedSummary.EvidenceVersion = CanonicalEvidence.ContractVersion;
-					trackedSummary.EvidenceHash = selection.Evidence.Hash;
-					trackedSummary.GeneratedAt = timeProvider.GetUtcNow();
-					trackedSummary.LastAttemptedAt = attemptedAt;
-					trackedSummary.InputTokenCount = result.InputTokens;
-					trackedSummary.OutputTokenCount = result.OutputTokens;
-					trackedSummary.IsStale = false;
-					trackedSummary.ErrorCode = null;
-					trackedSummary.ErrorMessage = null;
-					trackedGame.CompatibilityStatus = deterministic ?? result.Status;
-					trackedGame.UpdatedAt = timeProvider.GetUtcNow();
-					await dbContext.SaveChangesAsync(cancellationToken);
 					succeeded++; inputTokens += result.InputTokens; outputTokens += result.OutputTokens;
 				}
 				catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }

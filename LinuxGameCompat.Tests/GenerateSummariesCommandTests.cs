@@ -33,4 +33,20 @@ public sealed class GenerateSummariesCommandTests
 
 		Assert.Equal(3, options.Validate().Count);
 	}
+
+	[Fact]
+	public void ResultFormattingAndExitCodesCoverSuccessNoWorkLockContentionAndFailure()
+	{
+		SummaryGenerationRunResult success = new(2, 2, 0, 1, TimeSpan.FromMilliseconds(125), 40, 12);
+		SummaryGenerationRunResult noWork = new(0, 0, 0, 0, TimeSpan.Zero, 0, 0);
+		SummaryGenerationRunResult contended = noWork with { LockContended = true };
+		SummaryGenerationRunResult failure = new(1, 0, 1, 0, TimeSpan.FromMilliseconds(50), 10, 0);
+
+		Assert.Equal(0, GenerateSummariesCommand.ExitCodeFor(success));
+		Assert.Equal(0, GenerateSummariesCommand.ExitCodeFor(noWork));
+		Assert.Equal(0, GenerateSummariesCommand.ExitCodeFor(contended));
+		Assert.Equal(1, GenerateSummariesCommand.ExitCodeFor(failure));
+		Assert.Equal("selected=2 succeeded=2 failed=0 skipped=1 duration_ms=125 input_tokens=40 output_tokens=12",
+			GenerateSummariesCommand.FormatResult(success));
+	}
 }

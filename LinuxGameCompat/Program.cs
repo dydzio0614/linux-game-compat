@@ -90,8 +90,8 @@ if (generationCommandRequested)
 	{
 		SummaryGenerationRunResult result = await scope.ServiceProvider.GetRequiredService<ICompatibilitySummaryGenerator>().RunAsync(
 			new SummaryGenerationRunOptions(command!.Limit, command.Slug, command.Force), shutdown.Token);
-		Console.WriteLine($"selected={result.Selected} succeeded={result.Succeeded} failed={result.Failed} skipped={result.Skipped} duration_ms={result.Duration.TotalMilliseconds:F0} input_tokens={result.InputTokens} output_tokens={result.OutputTokens}");
-		return result.Failed > 0 ? 1 : 0;
+		Console.WriteLine(GenerateSummariesCommand.FormatResult(result));
+		return GenerateSummariesCommand.ExitCodeFor(result);
 	}
 	catch (OperationCanceledException)
 	{

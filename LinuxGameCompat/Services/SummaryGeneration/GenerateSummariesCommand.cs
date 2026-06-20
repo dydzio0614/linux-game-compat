@@ -24,4 +24,9 @@ public static class GenerateSummariesCommand
 		if (limit is < 1 or > 10) { error = "--limit must be between 1 and 10."; return false; }
 		options = new GenerateSummariesCommandOptions(limit, slug, force); return true;
 	}
+
+	public static string FormatResult(SummaryGenerationRunResult result) =>
+		$"selected={result.Selected} succeeded={result.Succeeded} failed={result.Failed} skipped={result.Skipped} duration_ms={result.Duration.TotalMilliseconds:F0} input_tokens={result.InputTokens} output_tokens={result.OutputTokens}";
+
+	public static int ExitCodeFor(SummaryGenerationRunResult result) => result.Failed > 0 ? 1 : 0;
 }

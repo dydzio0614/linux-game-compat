@@ -2,6 +2,7 @@ using LinuxGameCompat.Data;
 using LinuxGameCompat.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using LinuxGameCompat.Services.SummaryGeneration;
 
@@ -87,6 +88,165 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 		await transaction.RollbackAsync();
 	}
 
+	[Fact]
+	public async Task Generator_LockContentionReturnsSuccessfulNoWorkWithoutProviderCall()
+	{
+		await using CompatibilityDbContext lockContext = CreateDbContext();
+		await lockContext.Database.OpenConnectionAsync();
+		await lockContext.Database.ExecuteSqlRawAsync("SELECT pg_advisory_lock(5496435895421455681)");
+		try
+		{
+			await using CompatibilityDbContext generatorContext = CreateDbContext();
+			FakeSummaryProvider provider = new(new(CompatibilityStatus.Playable, "Unused.", 1, 1));
+			CompatibilitySummaryGenerator generator = CreateGenerator(generatorContext, provider);
+
+			SummaryGenerationRunResult result = await generator.RunAsync(new SummaryGenerationRunOptions(10, null, true), CancellationToken.None);
+
+			Assert.True(result.LockContended);
+			Assert.Equal(0, result.Selected);
+			Assert.Equal(0, provider.CallCount);
+		}
+		finally
+		{
+			await lockContext.Database.ExecuteSqlRawAsync("SELECT pg_advisory_unlock(5496435895421455681)");
+		}
+	}
+
+	[Fact]
+	public async Task Generator_FailedRefreshPreservesSuccessfulOutputAndPublicStatus()
+	{
+		await using CompatibilityDbContext dbContext = CreateDbContext();
+		await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync();
+		Game before = await dbContext.Games.Include(game => game.CompatibilitySummary)
+			.SingleAsync(game => game.Slug == "baldurs-gate-3");
+		string? originalText = before.CompatibilitySummary!.SummaryText;
+		string? originalProvider = before.CompatibilitySummary.Provider;
+		CompatibilityStatus originalStatus = before.CompatibilityStatus;
+		CallbackSummaryProvider provider = new((_, _) => throw new HttpRequestException("temporary provider failure"));
+		CompatibilitySummaryGenerator generator = CreateGenerator(dbContext, provider);
+
+		SummaryGenerationRunResult result = await generator.RunAsync(new SummaryGenerationRunOptions(1, before.Slug, true), CancellationToken.None);
+		dbContext.ChangeTracker.Clear();
+		Game after = await dbContext.Games.Include(game => game.CompatibilitySummary)
+			.SingleAsync(game => game.Slug == before.Slug);
+
+		Assert.Equal(1, result.Failed);
+		Assert.Equal(originalText, after.CompatibilitySummary!.SummaryText);
+		Assert.Equal(originalProvider, after.CompatibilitySummary.Provider);
+		Assert.Equal(originalStatus, after.CompatibilityStatus);
+		Assert.Equal(SummaryState.Failed, after.CompatibilitySummary.State);
+		Assert.True(after.CompatibilitySummary.IsStale);
+		await transaction.RollbackAsync();
+	}
+
+	[Fact]
+	public async Task Generator_DiscardsOutputWhenEvidenceChangesDuringProviderCall()
+	{
+		await using CompatibilityDbContext dbContext = CreateDbContext();
+		await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync();
+		CallbackSummaryProvider provider = new(async (_, cancellationToken) =>
+		{
+			EvidenceClaim claim = await dbContext.EvidenceClaims.FirstAsync(cancellationToken);
+			claim.ClaimText += " changed";
+			await dbContext.SaveChangesAsync(cancellationToken);
+			return new CompatibilitySummaryProviderResult(CompatibilityStatus.Playable, "Stale output.", 10, 5);
+		});
+		CompatibilitySummaryGenerator generator = CreateGenerator(dbContext, provider);
+
+		SummaryGenerationRunResult result = await generator.RunAsync(
+			new SummaryGenerationRunOptions(1, "baldurs-gate-3", true), CancellationToken.None);
+		dbContext.ChangeTracker.Clear();
+		GameCompatibilitySummary summary = await dbContext.GameCompatibilitySummaries
+			.SingleAsync(item => item.Game.Slug == "baldurs-gate-3");
+
+		Assert.Equal(1, result.Failed);
+		Assert.Equal("evidence_changed", summary.ErrorCode);
+		Assert.NotEqual("Stale output.", summary.SummaryText);
+		Assert.True(summary.IsStale);
+		await transaction.RollbackAsync();
+	}
+
+	[Fact]
+	public async Task Generator_PropagatesRequestedCancellation()
+	{
+		await using CompatibilityDbContext dbContext = CreateDbContext();
+		using CancellationTokenSource cancellation = new();
+		CallbackSummaryProvider provider = new((_, _) =>
+		{
+			cancellation.Cancel();
+			throw new OperationCanceledException(cancellation.Token);
+		});
+		CompatibilitySummaryGenerator generator = CreateGenerator(dbContext, provider);
+
+		await Assert.ThrowsAsync<OperationCanceledException>(() => generator.RunAsync(
+			new SummaryGenerationRunOptions(1, "baldurs-gate-3", true), cancellation.Token));
+	}
+
+	[Fact]
+	public async Task Generator_SelectsMissingStaleAndFailedSummariesAndUsesAiFallbackWithoutNativeStatus()
+	{
+		await using CompatibilityDbContext dbContext = CreateDbContext();
+		await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync();
+		FakeSummaryProvider provider = new(new(CompatibilityStatus.PlayableWithCaveats, "Generated summary.", 12, 4));
+		CompatibilitySummaryGenerator generator = CreateGenerator(dbContext, provider);
+
+		SummaryGenerationRunResult missing = await generator.RunAsync(
+			new SummaryGenerationRunOptions(1, "destiny-2"), CancellationToken.None);
+		SummaryGenerationRunResult stale = await generator.RunAsync(
+			new SummaryGenerationRunOptions(1, "helldivers-2"), CancellationToken.None);
+		dbContext.ChangeTracker.Clear();
+		Game helldivers = await dbContext.Games.Include(game => game.CompatibilitySummary)
+			.SingleAsync(game => game.Slug == "helldivers-2");
+		Assert.Equal(CompatibilityStatus.PlayableWithCaveats, helldivers.CompatibilityStatus);
+		Assert.Equal(CompatibilityStatus.PlayableWithCaveats, helldivers.CompatibilitySummary!.SummaryStatus);
+
+		helldivers.CompatibilitySummary.State = SummaryState.Failed;
+		helldivers.CompatibilitySummary.IsStale = true;
+		await dbContext.SaveChangesAsync();
+		SummaryGenerationRunResult failed = await generator.RunAsync(
+			new SummaryGenerationRunOptions(1, "helldivers-2"), CancellationToken.None);
+
+		Assert.Equal(1, missing.Succeeded);
+		Assert.Equal(1, stale.Succeeded);
+		Assert.Equal(1, failed.Succeeded);
+		Assert.Equal(3, provider.CallCount);
+		await transaction.RollbackAsync();
+	}
+
+	[Fact]
+	public async Task Generator_OrdersEligibleGamesByOldestAttemptBeforeGameId()
+	{
+		await using CompatibilityDbContext dbContext = CreateDbContext();
+		await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync();
+		Game baldursGate = await dbContext.Games.Include(game => game.CompatibilitySummary)
+			.SingleAsync(game => game.Slug == "baldurs-gate-3");
+		Game helldivers = await dbContext.Games.Include(game => game.CompatibilitySummary)
+			.SingleAsync(game => game.Slug == "helldivers-2");
+		Game destiny = await dbContext.Games.SingleAsync(game => game.Slug == "destiny-2");
+		baldursGate.CompatibilitySummary!.State = SummaryState.Stale;
+		baldursGate.CompatibilitySummary.IsStale = true;
+		baldursGate.CompatibilitySummary.LastAttemptedAt = new DateTimeOffset(2026, 6, 19, 0, 0, 0, TimeSpan.Zero);
+		helldivers.CompatibilitySummary!.State = SummaryState.Stale;
+		helldivers.CompatibilitySummary.IsStale = true;
+		helldivers.CompatibilitySummary.LastAttemptedAt = new DateTimeOffset(2026, 6, 18, 0, 0, 0, TimeSpan.Zero);
+		destiny.IsHidden = true;
+		await dbContext.SaveChangesAsync();
+		CompatibilitySummaryGenerator generator = CreateGenerator(dbContext,
+			new FakeSummaryProvider(new(CompatibilityStatus.PlayableWithCaveats, "Generated summary.", 12, 4)));
+
+		SummaryGenerationRunResult result = await generator.RunAsync(new SummaryGenerationRunOptions(1), CancellationToken.None);
+		dbContext.ChangeTracker.Clear();
+		baldursGate = await dbContext.Games.Include(game => game.CompatibilitySummary)
+			.SingleAsync(game => game.Slug == "baldurs-gate-3");
+		helldivers = await dbContext.Games.Include(game => game.CompatibilitySummary)
+			.SingleAsync(game => game.Slug == "helldivers-2");
+
+		Assert.Equal(1, result.Succeeded);
+		Assert.Equal(SummaryState.Stale, baldursGate.CompatibilitySummary!.State);
+		Assert.Equal(SummaryState.Current, helldivers.CompatibilitySummary!.State);
+		await transaction.RollbackAsync();
+	}
+
 	private sealed class FixedTokenCounter : IGenerationTokenCounter { public int Count(string text) => 10; }
 	private sealed class FakeSummaryProvider(CompatibilitySummaryProviderResult result) : ICompatibilitySummaryProvider
 	{
@@ -97,6 +257,16 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 			return Task.FromResult(result);
 		}
 	}
+	private sealed class CallbackSummaryProvider(
+		Func<CompatibilitySummaryProviderRequest, CancellationToken, Task<CompatibilitySummaryProviderResult>> callback)
+		: ICompatibilitySummaryProvider
+	{
+		public Task<CompatibilitySummaryProviderResult> GenerateAsync(
+			CompatibilitySummaryProviderRequest request, CancellationToken cancellationToken) => callback(request, cancellationToken);
+	}
+
+	private static CompatibilitySummaryGenerator CreateGenerator(CompatibilityDbContext dbContext, ICompatibilitySummaryProvider provider) =>
+		new(dbContext, provider, new EvidencePromptBuilder(new FixedTokenCounter()), new GenerationOptions(), TimeProvider.System);
 
 	[Fact]
 	public async Task Migration_CreatesMemberAuthSchema()

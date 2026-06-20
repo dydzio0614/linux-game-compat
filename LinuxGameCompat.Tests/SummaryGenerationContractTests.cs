@@ -90,6 +90,33 @@ public sealed class SummaryGenerationContractTests
 		Assert.True(result.Claims.Count(c => c.ClaimType == EvidenceClaimType.Note) <= 2);
 	}
 
+	[Fact]
+	public void Prompt_budget_includes_provider_instructions_schema_and_protocol_reserve()
+	{
+		CharacterTokenCounter counter = new();
+		EvidencePromptBuilder builder = new(counter);
+		GenerationEvidenceClaim claim = Claim(1, EvidenceClaimType.Status, "Gold", "Playable", "https://one");
+
+		PromptSelection result = builder.Build([claim], 12, 10_000);
+
+		Assert.Equal(
+			counter.Count(result.Prompt)
+			+ counter.Count(CompatibilitySummaryPromptContract.Instructions)
+			+ counter.Count(CompatibilitySummaryPromptContract.OutputSchemaJson)
+			+ CompatibilitySummaryPromptContract.ProtocolTokenReserve,
+			result.InputTokens);
+	}
+
+	[Fact]
+	public void Prompt_budget_never_returns_a_zero_evidence_request()
+	{
+		EvidencePromptBuilder builder = new(new FixedTokenCounter());
+
+		Assert.Throws<PromptBudgetExceededException>(() => builder.Build([], 12, 100));
+		Assert.Throws<PromptBudgetExceededException>(() => builder.Build(
+			[Claim(1, EvidenceClaimType.Status, "Gold", "Playable", "https://one")], 12, 93));
+	}
+
 	[Theory]
 	[InlineData("{\"status\":\"Unknown\",\"summary\":\"text\"}")]
 	[InlineData("{\"status\":\"Playable\",\"summary\":\" \"}")]
@@ -118,6 +145,18 @@ public sealed class SummaryGenerationContractTests
 		Assert.Equal(ProviderFailureKind.Transient, ProviderFailureClassifier.Classify(new OperationCanceledException()));
 	}
 
+	[Theory]
+	[InlineData(408, ProviderFailureKind.Transient)]
+	[InlineData(429, ProviderFailureKind.Transient)]
+	[InlineData(500, ProviderFailureKind.Transient)]
+	[InlineData(503, ProviderFailureKind.Transient)]
+	[InlineData(400, ProviderFailureKind.Permanent)]
+	[InlineData(401, ProviderFailureKind.Permanent)]
+	public void Failure_classifier_uses_http_status(int status, ProviderFailureKind expected)
+	{
+		Assert.Equal(expected, ProviderFailureClassifier.ClassifyHttpStatus(status));
+	}
+
 	[Fact]
 	public void Configuration_defaults_are_bounded_and_model_is_locked()
 	{
@@ -125,7 +164,12 @@ public sealed class SummaryGenerationContractTests
 		Assert.Empty(options.Validate());
 		options.Model = "gpt-5-mini";
 		Assert.NotEmpty(options.Validate());
+		options = new GenerationOptions { MaximumInputTokens = GenerationOptions.MinimumInputTokens - 1 };
+		Assert.Contains(options.Validate(), error => error.Contains("MaximumInputTokens", StringComparison.Ordinal));
 	}
+
+	private sealed class FixedTokenCounter : IGenerationTokenCounter { public int Count(string text) => 10; }
+	private sealed class CharacterTokenCounter : IGenerationTokenCounter { public int Count(string text) => text.Length; }
 
 	private static GenerationEvidenceClaim Claim(int id, EvidenceClaimType type, string value, string text, string url) =>
 		new(id, type, value, text, new DateTimeOffset(2026, 1, 1, 0, 0, id % 60, TimeSpan.Zero),

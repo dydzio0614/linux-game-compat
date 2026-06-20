@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.ClientModel;
 using LinuxGameCompat.Data;
 
 namespace LinuxGameCompat.Services.SummaryGeneration;
@@ -11,6 +12,25 @@ public interface ICompatibilitySummaryProvider
 public sealed record CompatibilitySummaryProviderRequest(string Model, string Prompt, int MaximumOutputTokens);
 public sealed record CompatibilitySummaryProviderResult(CompatibilityStatus Status, string Summary, int InputTokens, int OutputTokens);
 public enum ProviderFailureKind { Transient, Permanent, Cancelled }
+
+public static class CompatibilitySummaryPromptContract
+{
+	public const string Instructions = "Use only supplied evidence. Do not invent fixes, performance claims, or hardware-specific conclusions.";
+	public const string OutputSchemaJson = """
+	{
+	  "type": "object",
+	  "properties": {
+	    "status": { "type": "string", "enum": ["Unsupported", "PlayableWithCaveats", "Playable"] },
+	    "summary": { "type": "string", "minLength": 1, "maxLength": 4000 }
+	  },
+	  "required": ["status", "summary"],
+	  "additionalProperties": false
+	}
+	""";
+
+	// Covers Responses message/schema framing that is not represented by the literal strings.
+	public const int ProtocolTokenReserve = 64;
+}
 
 public sealed class CompatibilitySummaryProviderException(ProviderFailureKind kind, string message, Exception? innerException = null) : Exception(message, innerException)
 {
@@ -50,7 +70,13 @@ public static class ProviderFailureClassifier
 	{
 		if (exception is OperationCanceledException) return requestedCancellation.IsCancellationRequested ? ProviderFailureKind.Cancelled : ProviderFailureKind.Transient;
 		if (exception is CompatibilitySummaryProviderException providerException) return providerException.Kind;
+		if (exception is ClientResultException clientResultException)
+			return ClassifyHttpStatus(clientResultException.Status);
 		if (exception is TimeoutException or HttpRequestException) return ProviderFailureKind.Transient;
 		return ProviderFailureKind.Permanent;
 	}
+
+	public static ProviderFailureKind ClassifyHttpStatus(int status) => status is 408 or 429 or >= 500
+		? ProviderFailureKind.Transient
+		: ProviderFailureKind.Permanent;
 }

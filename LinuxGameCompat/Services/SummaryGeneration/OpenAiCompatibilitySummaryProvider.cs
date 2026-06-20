@@ -7,17 +7,7 @@ namespace LinuxGameCompat.Services.SummaryGeneration;
 
 public sealed class OpenAiCompatibilitySummaryProvider(ResponsesClient client) : ICompatibilitySummaryProvider
 {
-	private static readonly BinaryData OutputSchema = BinaryData.FromString("""
-	{
-	  "type": "object",
-	  "properties": {
-	    "status": { "type": "string", "enum": ["Unsupported", "PlayableWithCaveats", "Playable"] },
-	    "summary": { "type": "string", "minLength": 1, "maxLength": 4000 }
-	  },
-	  "required": ["status", "summary"],
-	  "additionalProperties": false
-	}
-	""");
+	private static readonly BinaryData OutputSchema = BinaryData.FromString(CompatibilitySummaryPromptContract.OutputSchemaJson);
 
 	public async Task<CompatibilitySummaryProviderResult> GenerateAsync(CompatibilitySummaryProviderRequest request, CancellationToken cancellationToken)
 	{
@@ -35,7 +25,7 @@ public sealed class OpenAiCompatibilitySummaryProvider(ResponsesClient client) :
 		CreateResponseOptions options = new()
 		{
 			Model = request.Model,
-			Instructions = "Use only supplied evidence. Do not invent fixes, performance claims, or hardware-specific conclusions.",
+				Instructions = CompatibilitySummaryPromptContract.Instructions,
 			MaxOutputTokenCount = request.MaximumOutputTokens,
 			StoredOutputEnabled = false,
 			ReasoningOptions = new ResponseReasoningOptions { ReasoningEffortLevel = ResponseReasoningEffortLevel.None },

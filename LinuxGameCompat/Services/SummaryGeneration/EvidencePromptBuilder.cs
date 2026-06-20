@@ -43,9 +43,15 @@ public sealed class EvidencePromptBuilder(IGenerationTokenCounter tokenCounter)
 		while (true)
 		{
 			string prompt = FormatPrompt(selectedClaims);
-			int tokenCount = tokenCounter.Count(prompt);
+			int tokenCount = tokenCounter.Count(prompt)
+				+ tokenCounter.Count(CompatibilitySummaryPromptContract.Instructions)
+				+ tokenCounter.Count(CompatibilitySummaryPromptContract.OutputSchemaJson)
+				+ CompatibilitySummaryPromptContract.ProtocolTokenReserve;
 			if (tokenCount <= maximumInputTokens)
+			{
+				if (selectedClaims.Count == 0) throw new PromptBudgetExceededException(maximumInputTokens);
 				return new PromptSelection(canonicalEvidence, selectedClaims, prompt, tokenCount);
+			}
 			if (selectedClaims.Count == 0) throw new PromptBudgetExceededException(maximumInputTokens);
 			selectedClaims.RemoveAt(selectedClaims.Count - 1);
 		}
