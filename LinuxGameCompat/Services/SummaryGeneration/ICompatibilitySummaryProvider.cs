@@ -1,0 +1,6 @@
+namespace LinuxGameCompat.Services.SummaryGeneration;
+
+public interface ICompatibilitySummaryProvider
+{
+	Task<CompatibilitySummaryProviderResult> GenerateAsync(CompatibilitySummaryProviderRequest request, CancellationToken cancellationToken);
+}
