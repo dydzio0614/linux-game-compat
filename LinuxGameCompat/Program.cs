@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using LinuxGameCompat.Services.SummaryGeneration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,15 @@ builder.Services.AddScoped<IMemberFavoritesService, MemberFavoritesService>();
 builder.Services.AddScoped<IMagicLinkService, MagicLinkService>();
 builder.Services.AddScoped<ICurrentMemberAccessor, CurrentMemberAccessor>();
 builder.Services.AddSingleton(TimeProvider.System);
+var generationSettings = new GenerationOptions();
+builder.Configuration.GetSection(GenerationOptions.SectionName).Bind(generationSettings);
+builder.Services.AddSingleton(generationSettings);
+builder.Services.AddSingleton<IGenerationTokenCounter, OpenAiTokenCounter>();
+builder.Services.AddSingleton<EvidencePromptBuilder>();
+builder.Services.AddScoped<ICompatibilitySummaryGenerator, CompatibilitySummaryGenerator>();
+builder.Services.AddSingleton<ICompatibilitySummaryProvider>(_ => OpenAiCompatibilitySummaryProvider.Create(
+	Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty,
+	generationSettings));
 if (builder.Environment.IsDevelopment())
 {
 	builder.Services.AddScoped<IAuthEmailSender, LoggingAuthEmailSender>();
@@ -51,7 +61,47 @@ else
 	builder.Services.AddScoped<IAuthEmailSender, SmtpAuthEmailSender>();
 }
 
+bool generationCommandRequested = GenerateSummariesCommand.IsRequested(args);
+bool fakeProviderRequested = generationCommandRequested && builder.Environment.IsDevelopment() &&
+	string.Equals(Environment.GetEnvironmentVariable("SUMMARY_GENERATION_USE_FAKE_PROVIDER"), "true", StringComparison.OrdinalIgnoreCase);
+if (fakeProviderRequested)
+	builder.Services.AddSingleton<ICompatibilitySummaryProvider, FakeCompatibilitySummaryProvider>();
 var app = builder.Build();
+
+if (generationCommandRequested)
+{
+	IReadOnlyList<string> configurationErrors = generationSettings.Validate();
+	if (!GenerateSummariesCommand.TryParse(args, generationSettings.MaximumGames, out GenerateSummariesCommandOptions? command, out string? parseError) || configurationErrors.Count > 0)
+	{
+		Console.Error.WriteLine(parseError ?? string.Join(" ", configurationErrors));
+		return 2;
+	}
+	string? apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+	if (!fakeProviderRequested && string.IsNullOrWhiteSpace(apiKey))
+	{
+		Console.Error.WriteLine("OPENAI_API_KEY is required in generation mode.");
+		return 2;
+	}
+	await using AsyncServiceScope scope = app.Services.CreateAsyncScope();
+	using CancellationTokenSource shutdown = new();
+	ConsoleCancelEventHandler cancelHandler = (_, eventArgs) => { eventArgs.Cancel = true; shutdown.Cancel(); };
+	Console.CancelKeyPress += cancelHandler;
+	try
+	{
+		SummaryGenerationRunResult result = await scope.ServiceProvider.GetRequiredService<ICompatibilitySummaryGenerator>().RunAsync(
+			new SummaryGenerationRunOptions(command!.Limit, command.Slug, command.Force), shutdown.Token);
+		Console.WriteLine(GenerateSummariesCommand.FormatResult(result));
+		return GenerateSummariesCommand.ExitCodeFor(result);
+	}
+	catch (OperationCanceledException)
+	{
+		return 130;
+	}
+	finally
+	{
+		Console.CancelKeyPress -= cancelHandler;
+	}
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -109,4 +159,5 @@ app.MapPost("/logout", async (HttpContext httpContext) =>
 app.MapRazorComponents<App>()
 	.AddInteractiveServerRenderMode();
 
-app.Run();
+await app.RunAsync();
+return 0;

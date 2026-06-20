@@ -75,11 +75,34 @@ else
 			</div>
 		</header>
 
-		@if (!string.IsNullOrWhiteSpace(game.Summary?.SummaryText))
+		@if (game.Summary is { } summary && ShouldShowSummary(summary))
 		{
-			<section class="summary-note" aria-labelledby="summary-heading">
-				<h2 id="summary-heading">Stored summary</h2>
-				<p>@game.Summary.SummaryText</p>
+			<section class="summary-note @(IsOutdated(summary) ? "summary-note--warning" : null)" aria-labelledby="summary-heading">
+				<h2 id="summary-heading">Generated compatibility summary</h2>
+				@if (!string.IsNullOrWhiteSpace(summary.SummaryText))
+				{
+					<p>@summary.SummaryText</p>
+					@if (summary.GeneratedAt is not null)
+					{
+						<p class="summary-meta">Generated @summary.GeneratedAt.Value.ToString("yyyy-MM-dd")</p>
+					}
+				}
+				else
+				{
+					<p>Generated summary is temporarily unavailable.</p>
+				}
+				@if (IsOutdated(summary))
+				{
+					<p class="summary-alert" role="status">This summary may be outdated while a refresh is pending.</p>
+				}
+				@if (summary.HasStatusDisagreement)
+				{
+					<p class="summary-advisory">The generated assessment is @CompatibilityStatusLabels.ToPublicLabel(summary.SummaryStatus), but source-native evidence determines the primary status shown above.</p>
+				}
+				else if (summary.IsAiStatusFallback)
+				{
+					<p class="summary-advisory">No recognized source-native status is available, so the primary status shown above uses the generated assessment.</p>
+				}
 			</section>
 		}
 
@@ -250,6 +273,12 @@ else
 		return Uri.TryCreate(url, UriKind.Absolute, out var uri)
 			&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
 	}
+
+	private static bool ShouldShowSummary(GameCompatibilitySummaryDetail summary) =>
+		!string.IsNullOrWhiteSpace(summary.SummaryText) || summary.State == SummaryState.Failed;
+
+	private static bool IsOutdated(GameCompatibilitySummaryDetail summary) =>
+		summary.IsStale || summary.State is SummaryState.Stale or SummaryState.Failed;
 
 	private sealed record EvidenceGroup(EvidenceClaimType ClaimType, string Title, string Anchor);
 }
