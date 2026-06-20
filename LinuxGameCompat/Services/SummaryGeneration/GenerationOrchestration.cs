@@ -182,9 +182,6 @@ public sealed class CompatibilitySummaryGenerator(
 			.Include(game => game.SourceReferences).ThenInclude(reference => reference.EvidenceClaims)
 			.ToListAsync(cancellationToken)).Select(game => new Candidate(game, game.CompatibilitySummary, MapGameToClaims(game), null)).ToList();
 	}
-
-	private static List<GenerationEvidenceClaim> ToClaims(Game game) => game.SourceReferences.SelectMany(reference => reference.EvidenceClaims.Select(claim =>
-		new GenerationEvidenceClaim(claim.Id, claim.ClaimType, claim.ClaimValue, claim.ClaimText, claim.ObservedAt,
-			reference.SourceSystem.Type, reference.SourceSystem.Name, reference.SourceGameId, reference.Url))).ToList();
+	
 	private sealed record Candidate(Game Game, GameCompatibilitySummary? Summary, List<GenerationEvidenceClaim> Claims, CanonicalEvidence? Evidence);
 }
