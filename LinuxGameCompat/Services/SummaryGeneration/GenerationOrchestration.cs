@@ -136,7 +136,9 @@ public sealed class CompatibilitySummaryGenerator(
 				catch (Exception exception)
 				{
 					dbContext.ChangeTracker.Clear();
-					await MarkFailureAsync(candidate.Game.Id, attemptedAt, ErrorCode(exception), Sanitize(exception.Message), cancellationToken);
+					string errorCode = exception is CompatibilitySummaryProviderException provider ? $"provider_{provider.Kind.ToString().ToLowerInvariant()}" : "generation_failed";
+					string sanitizedMessage = string.IsNullOrWhiteSpace(exception.Message) ? "Summary generation failed." : exception.Message.Trim()[..Math.Min(exception.Message.Trim().Length, 2000)];
+					await MarkFailureAsync(candidate.Game.Id, attemptedAt, errorCode, sanitizedMessage, cancellationToken);
 					failed++;
 				}
 			}
@@ -168,18 +170,21 @@ public sealed class CompatibilitySummaryGenerator(
 
 	private async Task<List<Candidate>> LoadCandidatesAsync(string? slug, CancellationToken cancellationToken)
 	{
+		List<GenerationEvidenceClaim> MapGameToClaims(Game game) => game.SourceReferences.SelectMany(reference => reference.EvidenceClaims.Select(claim =>
+			new GenerationEvidenceClaim(claim.Id, claim.ClaimType, claim.ClaimValue, claim.ClaimText, claim.ObservedAt, 
+				reference.SourceSystem.Type, reference.SourceSystem.Name, reference.SourceGameId, reference.Url)))
+			.ToList();
+
 		IQueryable<Game> query = dbContext.Games.AsSplitQuery().Where(game => !game.IsHidden && game.SourceReferences.Any(reference => reference.EvidenceClaims.Any()));
 		if (!string.IsNullOrWhiteSpace(slug)) query = query.Where(game => game.Slug == slug);
 		return (await query.Include(game => game.CompatibilitySummary)
 			.Include(game => game.SourceReferences).ThenInclude(reference => reference.SourceSystem)
 			.Include(game => game.SourceReferences).ThenInclude(reference => reference.EvidenceClaims)
-			.ToListAsync(cancellationToken)).Select(game => new Candidate(game, game.CompatibilitySummary, ToClaims(game), null)).ToList();
+			.ToListAsync(cancellationToken)).Select(game => new Candidate(game, game.CompatibilitySummary, MapGameToClaims(game), null)).ToList();
 	}
 
 	private static List<GenerationEvidenceClaim> ToClaims(Game game) => game.SourceReferences.SelectMany(reference => reference.EvidenceClaims.Select(claim =>
 		new GenerationEvidenceClaim(claim.Id, claim.ClaimType, claim.ClaimValue, claim.ClaimText, claim.ObservedAt,
 			reference.SourceSystem.Type, reference.SourceSystem.Name, reference.SourceGameId, reference.Url))).ToList();
-	private static string ErrorCode(Exception exception) => exception is CompatibilitySummaryProviderException provider ? $"provider_{provider.Kind.ToString().ToLowerInvariant()}" : "generation_failed";
-	private static string Sanitize(string message) => string.IsNullOrWhiteSpace(message) ? "Summary generation failed." : message.Trim()[..Math.Min(message.Trim().Length, 2000)];
 	private sealed record Candidate(Game Game, GameCompatibilitySummary? Summary, List<GenerationEvidenceClaim> Claims, CanonicalEvidence? Evidence);
 }
