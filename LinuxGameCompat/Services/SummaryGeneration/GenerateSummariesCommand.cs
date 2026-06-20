@@ -21,7 +21,7 @@ public static class GenerateSummariesCommand
 				default: error = $"Invalid argument: {args[index]}"; return false;
 			}
 		}
-		if (limit is < 1 or > 10) { error = "--limit must be between 1 and 10."; return false; }
+
 		options = new GenerateSummariesCommandOptions(limit, slug, force); return true;
 	}
 
