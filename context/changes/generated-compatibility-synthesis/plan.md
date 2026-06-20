@@ -413,10 +413,10 @@ Add only nullable summary-attempt metadata. Apply the migration explicitly befor
 
 #### Automated
 
-- [x] 4.1 Release build passes: `dotnet build LinuxGameCompat.sln --configuration Release --no-restore`.
-- [x] 4.2 Full tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
-- [x] 4.3 Published image retains unchanged default web startup.
+- [x] 4.1 Release build passes: `dotnet build LinuxGameCompat.sln --configuration Release --no-restore`. — b78f44b
+- [x] 4.2 Full tests pass: `dotnet test LinuxGameCompat.sln --no-restore`. — b78f44b
+- [x] 4.3 Published image retains unchanged default web startup. — b78f44b
 
 #### Manual
 
-- [x] 4.4 Human confirms the documented Railway contract is compatible with a future separate finite service and that live rollout is tracked in S-05.
+- [x] 4.4 Human confirms the documented Railway contract is compatible with a future separate finite service and that live rollout is tracked in S-05. — b78f44b
