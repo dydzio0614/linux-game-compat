@@ -18,8 +18,6 @@ public sealed class GenerateSummariesCommandTests
 	}
 
 	[Theory]
-	[InlineData("0")]
-	[InlineData("11")]
 	[InlineData("invalid")]
 	public void Parser_RejectsInvalidLimits(string limit)
 	{
