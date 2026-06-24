@@ -1,0 +1,32 @@
+name: 10x Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  statuses: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    concurrency:
+        group: 10x-code-review-${{ github.event.pull_request.number }}
+        cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      # Install the consuming repository's own toolchain here when the skill
+      # should run plan-declared tests, lint, build, or typecheck commands.
+
+      - id: impl-review
+        uses: dydzio0614/10x-Code-Reviewer@1e3e238cc3f7866601a59171fa17160134121215
+        with:
+          api-key: ${{ secrets.OPENAI_API_KEY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
