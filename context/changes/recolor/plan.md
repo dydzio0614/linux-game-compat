@@ -164,21 +164,21 @@ No database, configuration, or deployment migration is required.
 
 #### Automated
 
-- [x] 1.1 App builds successfully: `dotnet build LinuxGameCompat.sln`
-- [x] 1.2 Test suite passes when environment prerequisites are available: `dotnet test LinuxGameCompat.sln`
-- [x] 1.3 App-owned CSS/Razor search shows no unintended blue primary accents outside vendored Bootstrap
+- [x] 1.1 App builds successfully: `dotnet build LinuxGameCompat.sln` — ed21944
+- [x] 1.2 Test suite passes when environment prerequisites are available: `dotnet test LinuxGameCompat.sln` — ed21944
+- [x] 1.3 App-owned CSS/Razor search shows no unintended blue primary accents outside vendored Bootstrap — ed21944
 
 #### Manual
 
-- [x] 1.4 Review the changed CSS and confirm semantic warning, validation, success, and existing error-boundary colors were not broadly recolored
+- [x] 1.4 Review the changed CSS and confirm semantic warning, validation, success, and existing error-boundary colors were not broadly recolored — ed21944
 
 ### Phase 2: Build Verification
 
 #### Automated
 
-- [ ] 2.1 Build result is recorded after running `dotnet build LinuxGameCompat.sln`
-- [ ] 2.2 Test result is recorded after running `dotnet test LinuxGameCompat.sln`, or Docker/Testcontainers limitation is recorded if tests cannot run fully
+- [x] 2.1 Build result is recorded after running `dotnet build LinuxGameCompat.sln`
+- [x] 2.2 Test result is recorded after running `dotnet test LinuxGameCompat.sln`, or Docker/Testcontainers limitation is recorded if tests cannot run fully
 
 #### Manual
 
-- [ ] 2.3 Human confirms the build/test outcome is acceptable for this styling-only change
+- [x] 2.3 Human confirms the build/test outcome is acceptable for this styling-only change
