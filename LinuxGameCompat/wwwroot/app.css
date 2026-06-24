@@ -2,18 +2,77 @@ html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
+:root {
+    --bs-primary: #a61b2b;
+    --bs-primary-rgb: 166, 27, 43;
+    --bs-link-color: #a61b2b;
+    --bs-link-color-rgb: 166, 27, 43;
+    --bs-link-hover-color: #7f1320;
+    --bs-link-hover-color-rgb: 127, 19, 32;
+    --bs-focus-ring-color: rgba(166, 27, 43, 0.25);
+    --bs-primary-text-emphasis: #7f1320;
+    --bs-primary-bg-subtle: #fde8eb;
+    --bs-primary-border-subtle: #f5b8c0;
+}
+
 a, .btn-link {
-    color: #006bb7;
+    color: #a61b2b;
 }
 
 .btn-primary {
     color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+    background-color: #a61b2b;
+    border-color: #8f1725;
+}
+
+.btn-primary:hover {
+    color: #fff;
+    background-color: #8f1725;
+    border-color: #7f1320;
+}
+
+.btn-primary:focus-visible,
+.btn-primary:active,
+.btn-primary.active,
+.show > .btn-primary.dropdown-toggle {
+    color: #fff;
+    background-color: #7f1320;
+    border-color: #6f101b;
+}
+
+.btn-primary:disabled,
+.btn-primary.disabled {
+    color: #fff;
+    background-color: #a61b2b;
+    border-color: #8f1725;
+    opacity: 0.65;
+}
+
+.btn-outline-primary {
+    color: #a61b2b;
+    border-color: #a61b2b;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus-visible,
+.btn-outline-primary:active,
+.btn-outline-primary.active,
+.show > .btn-outline-primary.dropdown-toggle {
+    color: #fff;
+    background-color: #a61b2b;
+    border-color: #8f1725;
+}
+
+.btn-outline-primary:disabled,
+.btn-outline-primary.disabled {
+    color: #a61b2b;
+    background-color: transparent;
+    border-color: #a61b2b;
+    opacity: 0.65;
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem rgba(166, 27, 43, 0.25);
 }
 
 .content {
@@ -107,8 +166,8 @@ a, .btn-link {
     min-height: 1.75rem;
     padding: 0.2rem 0.65rem;
     border-radius: 999px;
-    background: #e7f0ff;
-    color: #1849a9;
+    background: #fde8eb;
+    color: #7f1320;
     font-weight: 700;
 }
 
@@ -197,9 +256,9 @@ a, .btn-link {
 }
 
 .summary-advisory {
-    border-left: 4px solid #528bff;
-    background: #eef4ff;
-    color: #1849a9;
+    border-left: 4px solid #c93549;
+    background: #fff1f3;
+    color: #7f1320;
 }
 
 .back-link {
