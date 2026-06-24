@@ -176,9 +176,9 @@ No database, configuration, or deployment migration is required.
 
 #### Automated
 
-- [x] 2.1 Build result is recorded after running `dotnet build LinuxGameCompat.sln`
-- [x] 2.2 Test result is recorded after running `dotnet test LinuxGameCompat.sln`, or Docker/Testcontainers limitation is recorded if tests cannot run fully
+- [x] 2.1 Build result is recorded after running `dotnet build LinuxGameCompat.sln` — da72ad9
+- [x] 2.2 Test result is recorded after running `dotnet test LinuxGameCompat.sln`, or Docker/Testcontainers limitation is recorded if tests cannot run fully — da72ad9
 
 #### Manual
 
-- [x] 2.3 Human confirms the build/test outcome is acceptable for this styling-only change
+- [x] 2.3 Human confirms the build/test outcome is acceptable for this styling-only change — da72ad9
