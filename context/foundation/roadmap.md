@@ -34,7 +34,7 @@ New people switching to Linux face decision paralysis because compatibility evid
 | S-03 | browse-available-games | user can browse available games without a search phrase | F-01 | FR-005 | done |
 | S-04 | generated-compatibility-synthesis | user can see a generated source-linked compatibility summary when curated evidence exists | F-01, S-01 | US-01, FR-004, NFR generated or available summary | done |
 | S-05 | production-summary-generation-rollout | operator can run and measure bounded compatibility-summary generation on Railway | S-04 | Operational follow-up | planned |
-| S-06 | modernize-visual-presentation | user sees a more polished, modern Blazor UI instead of the current Bootstrap-default-like presentation | S-01, S-03, S-04 | UX quality follow-up | planned |
+| S-06 | modernize-visual-presentation | user sees a more polished, modern Blazor UI instead of the current Bootstrap-default-like presentation | S-01, S-03, S-04 | UX quality follow-up | done |
 
 ## Streams
 
@@ -151,7 +151,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** Production migration and provider-spend approval.
 - **Unknowns:** Whether measured demand, cost, and runtime justify a cron schedule.
 - **Risk:** Enabling production generation before explicit approval could incur provider spend or affect shared database capacity.
-- **Status:** planned
+- **Status:** done
 
 ### S-06: Modernize visual presentation
 
@@ -201,3 +201,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-03: user can browse the available game catalog without submitting a search phrase.** — Archived 2026-06-02 → `context/archive/2026-05-31-browse-available-games/`. Lesson: —.
 - **S-02: logged-in member can save games from detail pages and view a personal favorites list with current compatibility status for each saved game.** — Archived 2026-06-14 → `context/archive/2026-06-14-member-favorites-tracking/`. Lesson: —.
 - **S-04: user can see a generated source-linked compatibility summary for a game when curated evidence exists, with status, reasoning, caveats, workarounds, and uncertainty tied back to source claims.** — Archived 2026-06-25 → `context/archive/2026-06-14-generated-compatibility-synthesis/`. Lesson: —.
+- **S-06: user sees a noticeably more polished and modern application UI across the main Blazor pages, replacing the current Bootstrap-default-like presentation with stronger layout, typography, spacing, color, status treatments, and evidence-focused page composition.** — Archived 2026-06-25 → `context/archive/2026-06-25-modernize-visual-presentation/`. Lesson: —.
