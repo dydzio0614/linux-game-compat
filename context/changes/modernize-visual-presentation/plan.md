@@ -170,11 +170,11 @@ Improve the most important evidence page while preserving the current content or
 
 #### 2. Semantic Status Badges
 
-**File**: `LinuxGameCompat/Components/Pages/Home.razor`, `LinuxGameCompat/Components/Pages/Games.razor`, `LinuxGameCompat/Components/Pages/Favorites.razor`, `LinuxGameCompat/Components/Pages/GameDetail.razor`, `LinuxGameCompat/wwwroot/app.css`
+**File**: `LinuxGameCompat/Components/CompatibilityStatusLabels.cs`, `LinuxGameCompat/Components/Pages/Home.razor`, `LinuxGameCompat/Components/Pages/Games.razor`, `LinuxGameCompat/Components/Pages/Favorites.razor`, `LinuxGameCompat/Components/Pages/GameDetail.razor`, `LinuxGameCompat/wwwroot/app.css`
 
 **Intent**: Make compatibility status faster to scan without relying on color alone.
 
-**Contract**: Add status-specific CSS classes for Playable, Playable with caveats, Unsupported, and Unknown. Badges must still render the existing public text label. Use accessible contrast and preserve wrapping behavior on narrow screens.
+**Contract**: Add one shared helper next to the existing public label mapping, for example `CompatibilityStatusLabels.ToCssClass(CompatibilityStatus status)`, and use it from Home, Games, Favorites, and GameDetail instead of duplicating status switch logic in each Razor page. Add status-specific CSS classes for Playable, Playable with caveats, Unsupported, and Unknown. Badges must still render the existing public text label. Use accessible contrast and preserve wrapping behavior on narrow screens.
 
 #### 3. Generated Summary Panel
 
@@ -232,7 +232,7 @@ Verify the UI change across the app's key surfaces and fix visual regressions wi
 
 **Intent**: Catch visual issues that existing automated tests do not cover.
 
-**Contract**: Review `/`, `/games`, `/games/{slug}`, `/favorites`, and `/login` at desktop and mobile widths. Use seeded data or existing local data to cover populated states. Check for text overlap, horizontal scrolling, clipped actions, unreadable contrast, missing focus states, and awkward evidence/source wrapping.
+**Contract**: Review `/`, `/games`, `/games/{slug}`, `/favorites`, and `/login` at desktop and mobile widths. Use seeded data or existing local data to cover populated states. Check for text overlap, horizontal scrolling, clipped actions, unreadable contrast, missing focus states, and awkward evidence/source wrapping. Pay specific attention to shared selectors whose changes affect multiple states at once: `.empty-state`, `.result-meta`, `.lead`, `a`, `.btn-primary`, and `.btn:focus`.
 
 #### 3. Final Scope Pass
 
