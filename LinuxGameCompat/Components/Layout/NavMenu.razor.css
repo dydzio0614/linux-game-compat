@@ -7,31 +7,55 @@
     position: absolute;
     top: 0.5rem;
     right: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.75rem rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.84%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.55rem rgba(255, 255, 255, 0.1);
 }
 
 .navbar-toggler:checked {
-    background-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(0, 194, 168, 0.34);
+}
+
+.navbar-toggler:focus-visible {
+    outline: 3px solid rgba(0, 194, 168, 0.8);
+    outline-offset: 3px;
 }
 
 .top-row {
-    min-height: 3.5rem;
-    background-color: rgba(0,0,0,0.4);
+    min-height: 4.25rem;
+    background-color: rgba(0, 0, 0, 0.14);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .navbar-brand {
-    font-size: 1.1rem;
+    display: grid;
+    gap: 0.1rem;
+    color: #fff;
+    font-size: 1.02rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1.2;
+}
+
+.navbar-brand small {
+    color: rgba(194, 255, 244, 0.78);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .bi {
-    display: inline-block;
+    display: inline-flex;
+    flex: 0 0 auto;
     position: relative;
-    width: 1.25rem;
-    height: 1.25rem;
-    margin-right: 0.75rem;
-    top: -1px;
-    background-size: cover;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-right: 0.7rem;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 1rem;
+    opacity: 0.9;
 }
 
 .bi-house-door-fill-nav-menu {
@@ -52,11 +76,11 @@
 
 .nav-item {
     font-size: 0.9rem;
-    padding-bottom: 0.5rem;
+    padding-bottom: 0.35rem;
 }
 
     .nav-item:first-of-type {
-        padding-top: 1rem;
+        padding-top: 1.15rem;
     }
 
     .nav-item:last-of-type {
@@ -64,34 +88,47 @@
     }
 
     .nav-item ::deep .nav-link {
-        color: #d7d7d7;
+        color: rgba(238, 247, 242, 0.83);
         background: none;
-        border: none;
-        border-radius: 4px;
-        height: 3rem;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        min-height: 2.85rem;
+        padding: 0 0.85rem;
         display: flex;
         align-items: center;
-        line-height: 3rem;
+        line-height: 1.15;
         width: 100%;
+        font-weight: 750;
     }
 
 .nav-item ::deep a.active {
-    background-color: rgba(255,255,255,0.37);
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.18), rgba(0, 194, 168, 0.12));
+    border-color: rgba(0, 194, 168, 0.42);
+    color: white;
+    box-shadow: inset 3px 0 0 #00c2a8;
+}
+
+.nav-item ::deep .nav-link:hover,
+.nav-item ::deep .nav-link:focus-visible {
+    background-color: rgba(255, 255, 255, 0.1);
     color: white;
 }
 
-.nav-item ::deep .nav-link:hover {
-    background-color: rgba(255,255,255,0.1);
-    color: white;
+.nav-item ::deep .nav-link:focus-visible {
+    outline: 3px solid rgba(0, 194, 168, 0.75);
+    outline-offset: 2px;
 }
 
 .member-label-content {
-    color: #d7d7d7;
+    color: rgba(238, 247, 242, 0.72);
     display: flex;
     align-items: center;
     min-width: 0;
-    height: 3rem;
-    padding: 0 1rem;
+    min-height: 2.85rem;
+    padding: 0 0.85rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.84rem;
 }
 
 .member-label-content span:last-child {
@@ -103,6 +140,10 @@
 .logout-button {
     cursor: pointer;
     text-align: left;
+}
+
+button.nav-link.logout-button {
+    appearance: none;
 }
 
 .nav-scrollable {
@@ -123,7 +164,8 @@
         display: block;
 
         /* Allow sidebar to scroll for tall menus */
-        height: calc(100vh - 3.5rem);
+        height: calc(100vh - 4.25rem);
         overflow-y: auto;
+        padding-top: 0.35rem;
     }
 }

@@ -299,13 +299,13 @@ No database migration is required.
 
 #### Automated
 
-- [ ] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
+- [x] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
 
 #### Manual
 
-- [ ] 1.2 Desktop sidebar, active nav state, top row, and content area look cohesive.
-- [ ] 1.3 Mobile navigation remains collapsible and usable.
-- [ ] 1.4 Keyboard focus is visible on navigation, buttons, links, and inputs.
+- [x] 1.2 Desktop sidebar, active nav state, top row, and content area look cohesive.
+- [x] 1.3 Mobile navigation remains collapsible and usable.
+- [x] 1.4 Keyboard focus is visible on navigation, buttons, links, and inputs.
 
 ### Phase 2: Lookup, Browse, Favorites, and Login Surfaces
 
