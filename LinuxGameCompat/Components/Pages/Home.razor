@@ -12,7 +12,7 @@
 		<p class="lead">Search for a game title to inspect curated compatibility status and source-backed evidence.</p>
 	</div>
 
-	<form class="lookup-form" @onsubmit="SearchAsync">
+	<form class="lookup-form lookup-form--hero" @onsubmit="SearchAsync">
 		<label class="form-label" for="game-search">Game title</label>
 		<div class="input-group">
 			<input id="game-search"
@@ -41,6 +41,7 @@
 			@if (results.Count == 0)
 			{
 				<div class="empty-state">
+					<p class="empty-state-kicker">No match</p>
 					<h2>No matching games found</h2>
 					<p>Try a different title. Compatibility evidence may not have been curated for this game yet.</p>
 				</div>
@@ -52,7 +53,7 @@
 					@foreach (var game in results)
 					{
 						<li class="result-item">
-							<div>
+							<div class="result-main">
 								<h3>@game.Title</h3>
 								<div class="result-meta">
 									<span class="status-label">@CompatibilityStatusLabels.ToPublicLabel(game.CompatibilityStatus)</span>

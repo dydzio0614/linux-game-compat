@@ -13,7 +13,8 @@
 
 	@if (Sent)
 	{
-		<div class="empty-state" role="status">
+		<div class="empty-state login-state login-state--success" role="status">
+			<p class="empty-state-kicker">Link requested</p>
 			<h2>Check your inbox</h2>
 			<p>If the address can receive member access links, a sign-in email is on its way.</p>
 		</div>
@@ -22,20 +23,22 @@
 	{
 		@if (Failed)
 		{
-			<div class="empty-state" role="alert">
+			<div class="empty-state login-state login-state--warning" role="alert">
+				<p class="empty-state-kicker">Expired link</p>
 				<h2>That link did not work</h2>
 				<p>Request a new sign-in link and use it within 15 minutes.</p>
 			</div>
 		}
 		else if (RequestFailed)
 		{
-			<div class="empty-state" role="alert">
+			<div class="empty-state login-state login-state--warning" role="alert">
+				<p class="empty-state-kicker">Request failed</p>
 				<h2>We could not send that link</h2>
 				<p>Please check the email address and try again in a moment.</p>
 			</div>
 		}
 
-		<form class="lookup-form" method="post" action="/auth/magic-link/request">
+		<form class="lookup-form login-form" method="post" action="/auth/magic-link/request">
 			<input type="hidden" name="returnUrl" value="@SafeReturnUrl" />
 			<label class="form-label" for="login-email">Email address</label>
 			<div class="input-group">

@@ -299,27 +299,27 @@ No database migration is required.
 
 #### Automated
 
-- [x] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
+- [x] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`. — c930a7f
 
 #### Manual
 
-- [x] 1.2 Desktop sidebar, active nav state, top row, and content area look cohesive.
-- [x] 1.3 Mobile navigation remains collapsible and usable.
-- [x] 1.4 Keyboard focus is visible on navigation, buttons, links, and inputs.
+- [x] 1.2 Desktop sidebar, active nav state, top row, and content area look cohesive. — c930a7f
+- [x] 1.3 Mobile navigation remains collapsible and usable. — c930a7f
+- [x] 1.4 Keyboard focus is visible on navigation, buttons, links, and inputs. — c930a7f
 
 ### Phase 2: Lookup, Browse, Favorites, and Login Surfaces
 
 #### Automated
 
-- [ ] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
-- [ ] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [x] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
+- [x] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
 
 #### Manual
 
-- [ ] 2.3 Search page looks polished before search, during search, with no results, and with populated results.
-- [ ] 2.4 Browse page loading, empty, populated, and pager states are clear.
-- [ ] 2.5 Favorites empty, populated, feedback, and removing states are readable and stable.
-- [ ] 2.6 Login normal, sent, failed, and request-failed states are visually consistent.
+- [x] 2.3 Search page looks polished before search, during search, with no results, and with populated results.
+- [x] 2.4 Browse page loading, empty, populated, and pager states are clear.
+- [x] 2.5 Favorites empty, populated, feedback, and removing states are readable and stable.
+- [x] 2.6 Login normal, sent, failed, and request-failed states are visually consistent.
 
 ### Phase 3: Game Detail Evidence Composition
 
