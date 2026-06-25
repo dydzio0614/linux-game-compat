@@ -339,12 +339,12 @@ No database migration is required.
 
 #### Automated
 
-- [x] 4.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
-- [x] 4.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [x] 4.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`. — 30d706b
+- [x] 4.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`. — 30d706b
 
 #### Manual
 
-- [x] 4.3 No incoherent overlap, clipping, or horizontal scrolling on key pages at mobile widths.
-- [x] 4.4 Desktop pages have a cohesive visual hierarchy and readable evidence layout.
-- [x] 4.5 Navigation, forms, buttons, links, disabled states, and focus states remain usable.
-- [x] 4.6 The app feels visually modern without changing product behavior.
+- [x] 4.3 No incoherent overlap, clipping, or horizontal scrolling on key pages at mobile widths. — 30d706b
+- [x] 4.4 Desktop pages have a cohesive visual hierarchy and readable evidence layout. — 30d706b
+- [x] 4.5 Navigation, forms, buttons, links, disabled states, and focus states remain usable. — 30d706b
+- [x] 4.6 The app feels visually modern without changing product behavior. — 30d706b
