@@ -325,26 +325,26 @@ No database migration is required.
 
 #### Automated
 
-- [x] 3.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
-- [x] 3.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [x] 3.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`. — eee93d5
+- [x] 3.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`. — eee93d5
 
 #### Manual
 
-- [x] 3.3 Detail page loading, not-found, normal, no-evidence, summary, stale summary, disagreement, and AI-fallback states remain understandable.
-- [x] 3.4 Raw evidence and source links are clearly visible and authoritative.
-- [x] 3.5 Semantic status badges are readable for every compatibility status.
-- [x] 3.6 Favorite actions remain usable and stable on desktop and mobile.
+- [x] 3.3 Detail page loading, not-found, normal, no-evidence, summary, stale summary, disagreement, and AI-fallback states remain understandable. — eee93d5
+- [x] 3.4 Raw evidence and source links are clearly visible and authoritative. — eee93d5
+- [x] 3.5 Semantic status badges are readable for every compatibility status. — eee93d5
+- [x] 3.6 Favorite actions remain usable and stable on desktop and mobile. — eee93d5
 
 ### Phase 4: Responsive and Regression Verification
 
 #### Automated
 
-- [ ] 4.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
-- [ ] 4.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [x] 4.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
+- [x] 4.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
 
 #### Manual
 
-- [ ] 4.3 No incoherent overlap, clipping, or horizontal scrolling on key pages at mobile widths.
-- [ ] 4.4 Desktop pages have a cohesive visual hierarchy and readable evidence layout.
-- [ ] 4.5 Navigation, forms, buttons, links, disabled states, and focus states remain usable.
-- [ ] 4.6 The app feels visually modern without changing product behavior.
+- [x] 4.3 No incoherent overlap, clipping, or horizontal scrolling on key pages at mobile widths.
+- [x] 4.4 Desktop pages have a cohesive visual hierarchy and readable evidence layout.
+- [x] 4.5 Navigation, forms, buttons, links, disabled states, and focus states remain usable.
+- [x] 4.6 The app feels visually modern without changing product behavior.
