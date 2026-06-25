@@ -3,7 +3,7 @@ project: "Linux Compatibility Aggregator"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-14
+updated: 2026-06-25
 prd_version: 1
 main_goal: speed
 top_blocker: capacity
@@ -34,6 +34,7 @@ New people switching to Linux face decision paralysis because compatibility evid
 | S-03 | browse-available-games | user can browse available games without a search phrase | F-01 | FR-005 | done |
 | S-04 | generated-compatibility-synthesis | user can see a generated source-linked compatibility summary when curated evidence exists | F-01, S-01 | US-01, FR-004, NFR generated or available summary | done |
 | S-05 | production-summary-generation-rollout | operator can run and measure bounded compatibility-summary generation on Railway | S-04 | Operational follow-up | planned |
+| S-06 | modernize-visual-presentation | user sees a more polished, modern Blazor UI instead of the current Bootstrap-default-like presentation | S-01, S-03, S-04 | UX quality follow-up | planned |
 
 ## Streams
 
@@ -43,6 +44,7 @@ Navigation aid - groups items that share a Prerequisites chain. Canonical orderi
 |---|---|---|---|
 | A | Lookup, synthesis, and member path | `F-01` -> `S-01`; `S-04` branches from `F-01` and `S-01`; `F-02` -> `S-02` follows `S-01` | Puts the lookup path first, then adds the generated synthesis that F-01 deliberately left for later and the member feature that depends on lookup. |
 | B | Catalog browsing | `S-03` | Uses `F-01` from Stream A, but stays behind the must-have launch path because browsing is nice-to-have. |
+| C | Visual polish | `S-06` | Modernizes the existing Blazor UI after the core user-facing pages exist, without replacing the frontend stack. |
 
 ## Baseline
 
@@ -151,6 +153,19 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Enabling production generation before explicit approval could incur provider spend or affect shared database capacity.
 - **Status:** planned
 
+### S-06: Modernize visual presentation
+
+- **Outcome:** user sees a noticeably more polished and modern application UI across the main Blazor pages, replacing the current Bootstrap-default-like presentation with stronger layout, typography, spacing, color, status treatments, and evidence-focused page composition.
+- **Change ID:** modernize-visual-presentation
+- **PRD refs:** UX quality follow-up
+- **Prerequisites:** S-01, S-03, S-04
+- **Parallel with:** S-05
+- **Blockers:** -
+- **Unknowns:**
+  - What exact visual direction should the app use long term? - Owner: user. Block: no.
+- **Risk:** Because this is an instant-improvement overhaul rather than a long-term design system effort, scope must stay focused on visible quality gains in the existing Blazor project; creating a separate frontend project or switching frontend technology is out of scope.
+- **Status:** planned
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID | Suggested issue title | Ready for `/10x-plan` | Notes |
@@ -162,6 +177,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-03 | browse-available-games | Add browseable available-games list | no | Nice-to-have; depends on F-01 |
 | S-04 | generated-compatibility-synthesis | Add generated source-linked compatibility summaries | no | Blocked on LLM provider/model and cost/failure limits; depends on F-01 and S-01 |
 | S-05 | production-summary-generation-rollout | Roll out and measure production summary generation on Railway | no | Deferred operational follow-up; depends on S-04 |
+| S-06 | modernize-visual-presentation | Modernize visual presentation of the Blazor UI | yes | Instant-improvement UI overhaul; must stay in the existing Blazor frontend |
 
 ## Open Roadmap Questions
 
