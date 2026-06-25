@@ -11,7 +11,10 @@
 @if (isLoading)
 {
 	<section class="game-detail-page">
-		<p>Loading compatibility evidence...</p>
+		<div class="loading-state" role="status">
+			<span class="loading-dot" aria-hidden="true"></span>
+			<p>Loading compatibility evidence...</p>
+		</div>
 	</section>
 }
 else if (game is null)
@@ -32,53 +35,60 @@ else
 		<header class="game-detail-header">
 			<p class="eyebrow">Compatibility evidence</p>
 			<h1>@game.Title</h1>
-			<div class="result-meta">
-				<span class="status-label">@CompatibilityStatusLabels.ToPublicLabel(game.CompatibilityStatus)</span>
-				@if (game.SteamAppId is not null)
-				{
-					<span>Steam App ID @game.SteamAppId</span>
-				}
-			</div>
-			<div class="favorite-panel">
-				@if (favoriteState is null)
-				{
-					<p class="favorite-feedback">Loading favorite state...</p>
-				}
-				else if (!favoriteState.IsAuthenticated)
-				{
-					<a class="btn btn-outline-primary" href="@LoginReturnUrl">Login to save favorite</a>
-				}
-				else
-				{
-					<button class="btn @(favoriteState.IsFavorite ? "btn-outline-secondary" : "btn-primary") favorite-action"
-							type="button"
-							disabled="@isFavoriteActionRunning"
-							@onclick="ToggleFavoriteAsync">
-						@if (isFavoriteActionRunning)
+			<div class="game-detail-header-grid">
+				<div class="game-detail-title-block">
+					<div class="result-meta detail-meta">
+						<span class="@($"status-label {CompatibilityStatusLabels.ToCssClass(game.CompatibilityStatus)}")">@CompatibilityStatusLabels.ToPublicLabel(game.CompatibilityStatus)</span>
+						@if (game.SteamAppId is not null)
 						{
-							<span>Saving...</span>
+							<span>Steam App ID @game.SteamAppId</span>
 						}
-						else if (favoriteState.IsFavorite)
-						{
-							<span>Remove favorite</span>
-						}
-						else
-						{
-							<span>Add favorite</span>
-						}
-					</button>
-					@if (!string.IsNullOrWhiteSpace(favoriteFeedback))
+					</div>
+				</div>
+				<div class="favorite-panel detail-favorite-panel">
+					@if (favoriteState is null)
 					{
-						<p class="favorite-feedback" role="status">@favoriteFeedback</p>
+						<p class="favorite-feedback">Loading favorite state...</p>
 					}
-				}
+					else if (!favoriteState.IsAuthenticated)
+					{
+						<a class="btn btn-outline-primary" href="@LoginReturnUrl">Login to save favorite</a>
+					}
+					else
+					{
+						<button class="btn @(favoriteState.IsFavorite ? "btn-outline-secondary" : "btn-primary") favorite-action"
+								type="button"
+								disabled="@isFavoriteActionRunning"
+								@onclick="ToggleFavoriteAsync">
+							@if (isFavoriteActionRunning)
+							{
+								<span>Saving...</span>
+							}
+							else if (favoriteState.IsFavorite)
+							{
+								<span>Remove favorite</span>
+							}
+							else
+							{
+								<span>Add favorite</span>
+							}
+						</button>
+						@if (!string.IsNullOrWhiteSpace(favoriteFeedback))
+						{
+							<p class="favorite-feedback" role="status">@favoriteFeedback</p>
+						}
+					}
+				</div>
 			</div>
 		</header>
 
 		@if (game.Summary is { } summary && ShouldShowSummary(summary))
 		{
 			<section class="summary-note @(IsOutdated(summary) ? "summary-note--warning" : null)" aria-labelledby="summary-heading">
-				<h2 id="summary-heading">Generated compatibility summary</h2>
+				<div class="summary-heading-row">
+					<p class="empty-state-kicker">Generated synthesis</p>
+					<h2 id="summary-heading">Compatibility summary</h2>
+				</div>
 				@if (!string.IsNullOrWhiteSpace(summary.SummaryText))
 				{
 					<p>@summary.SummaryText</p>
@@ -107,7 +117,10 @@ else
 		}
 
 		<section class="evidence-section" aria-labelledby="evidence-heading">
-			<h2 id="evidence-heading">Source-backed evidence</h2>
+			<div class="section-heading">
+				<p class="empty-state-kicker">Audit trail</p>
+				<h2 id="evidence-heading">Source-backed evidence</h2>
+			</div>
 
 			@if (game.CompatibilityStatus == CompatibilityStatus.Unknown && game.EvidenceClaims.Count == 0)
 			{
@@ -144,9 +157,9 @@ else
 							@foreach (var claim in claims)
 							{
 								<li>
-									<p>@claim.ClaimText</p>
+									<p class="claim-text">@claim.ClaimText</p>
 									<div class="result-meta">
-										<span>@claim.ClaimValue</span>
+										<span class="claim-value">@claim.ClaimValue</span>
 										<span>Observed @claim.ObservedAt.ToString("yyyy-MM-dd")</span>
 										@if (IsPublicWebUrl(claim.SourceReference.Url))
 										{
@@ -170,7 +183,10 @@ else
 		@if (game.SourceReferences.Count > 0)
 		{
 			<section class="source-section" aria-labelledby="sources-heading">
-				<h2 id="sources-heading">Source references</h2>
+				<div class="section-heading">
+					<p class="empty-state-kicker">References</p>
+					<h2 id="sources-heading">Source references</h2>
+				</div>
 				<ul class="source-list">
 					@foreach (var source in game.SourceReferences.OrderBy(source => source.SourceName).ThenBy(source => source.SourceGameId))
 					{

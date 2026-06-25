@@ -15,4 +15,16 @@ public static class CompatibilityStatusLabels
 			_ => status.ToString()
 		};
 	}
+
+	public static string ToCssClass(CompatibilityStatus status)
+	{
+		return status switch
+		{
+			CompatibilityStatus.Playable => "status-label--playable",
+			CompatibilityStatus.PlayableWithCaveats => "status-label--caveats",
+			CompatibilityStatus.Unsupported => "status-label--unsupported",
+			CompatibilityStatus.Unknown => "status-label--unknown",
+			_ => "status-label--unknown"
+		};
+	}
 }

@@ -15,11 +15,15 @@
 	<section class="lookup-results browse-results" aria-live="polite">
 		@if (isLoading)
 		{
-			<p>Loading games...</p>
+			<div class="loading-state" role="status">
+				<span class="loading-dot" aria-hidden="true"></span>
+				<p>Loading games...</p>
+			</div>
 		}
 		else if (games.Count == 0)
 		{
 			<div class="empty-state">
+				<p class="empty-state-kicker">Catalog empty</p>
 				<h2>No public games available yet</h2>
 				<p>Compatibility evidence has not been published for the catalog yet.</p>
 			</div>
@@ -31,10 +35,10 @@
 				@foreach (var game in games)
 				{
 					<li class="result-item">
-						<div>
+						<div class="result-main">
 							<h3>@game.Title</h3>
 							<div class="result-meta">
-								<span class="status-label">@CompatibilityStatusLabels.ToPublicLabel(game.CompatibilityStatus)</span>
+								<span class="@($"status-label {CompatibilityStatusLabels.ToCssClass(game.CompatibilityStatus)}")">@CompatibilityStatusLabels.ToPublicLabel(game.CompatibilityStatus)</span>
 								@if (game.SteamAppId is not null)
 								{
 									<span>Steam App ID @game.SteamAppId</span>

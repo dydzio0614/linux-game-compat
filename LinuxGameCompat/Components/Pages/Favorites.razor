@@ -16,11 +16,15 @@
 	<section class="lookup-results browse-results" aria-live="polite">
 		@if (isLoading)
 		{
-			<p>Loading favorites...</p>
+			<div class="loading-state" role="status">
+				<span class="loading-dot" aria-hidden="true"></span>
+				<p>Loading favorites...</p>
+			</div>
 		}
 		else if (favorites.Count == 0)
 		{
 			<div class="empty-state">
+				<p class="empty-state-kicker">Nothing saved</p>
 				<h2>No favorite games yet</h2>
 				<p>Find a game through lookup or browse, then save it from the detail page.</p>
 				<div class="favorite-empty-actions">
@@ -36,10 +40,10 @@
 				@foreach (var game in favorites)
 				{
 					<li class="result-item favorite-row">
-						<div>
+						<div class="result-main">
 							<h3>@game.Title</h3>
 							<div class="result-meta">
-								<span class="status-label">@CompatibilityStatusLabels.ToPublicLabel(game.CompatibilityStatus)</span>
+								<span class="@($"status-label {CompatibilityStatusLabels.ToCssClass(game.CompatibilityStatus)}")">@CompatibilityStatusLabels.ToPublicLabel(game.CompatibilityStatus)</span>
 								@if (game.SteamAppId is not null)
 								{
 									<span>Steam App ID @game.SteamAppId</span>
@@ -61,7 +65,7 @@
 
 			@if (!string.IsNullOrWhiteSpace(feedback))
 			{
-				<p class="favorite-feedback" role="status">@feedback</p>
+				<p class="favorite-feedback favorite-feedback--surface" role="status">@feedback</p>
 			}
 		}
 	</section>
