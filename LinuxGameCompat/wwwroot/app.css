@@ -275,9 +275,42 @@ h1, h2, h3 {
     padding: 0.2rem 0.65rem;
     border-radius: 999px;
     border: 1px solid rgba(91, 53, 213, 0.22);
-    background: linear-gradient(135deg, var(--app-primary-soft), #e7fbf7);
+    background: var(--app-primary-soft);
     color: #3d259f;
     font-weight: 700;
+}
+
+.status-label::before {
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-right: 0.45rem;
+    border-radius: 999px;
+    background: currentColor;
+    content: "";
+}
+
+.status-label.status-label--playable {
+    border-color: rgba(36, 122, 77, 0.32);
+    background: #eaf8f1;
+    color: #17633d;
+}
+
+.status-label.status-label--caveats {
+    border-color: rgba(161, 92, 0, 0.34);
+    background: #fff5df;
+    color: #7a4700;
+}
+
+.status-label.status-label--unsupported {
+    border-color: rgba(180, 35, 24, 0.32);
+    background: #fff0ee;
+    color: #922018;
+}
+
+.status-label.status-label--unknown {
+    border-color: rgba(91, 100, 118, 0.32);
+    background: #f0f3f8;
+    color: #4c5668;
 }
 
 .loading-state {
@@ -334,6 +367,36 @@ h1, h2, h3 {
     gap: 0.75rem;
     align-items: center;
     margin-top: 1rem;
+}
+
+.game-detail-header {
+    padding: 1.2rem;
+    border: 1px solid rgba(216, 222, 234, 0.9);
+    border-radius: var(--app-radius);
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 255, 0.92)),
+        var(--app-surface);
+    box-shadow: var(--app-shadow-sm);
+}
+
+.game-detail-header h1 {
+    overflow-wrap: anywhere;
+}
+
+.game-detail-header-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: end;
+}
+
+.detail-meta {
+    margin-top: 0.75rem;
+}
+
+.detail-favorite-panel {
+    justify-content: flex-end;
+    margin-top: 0;
 }
 
 .favorite-action {
@@ -415,10 +478,22 @@ h1, h2, h3 {
     background: #fffaf0;
 }
 
+.summary-note {
+    display: grid;
+    gap: 0.85rem;
+    border-left: 4px solid var(--app-primary);
+}
+
+.summary-heading-row h2,
+.section-heading h2 {
+    margin-bottom: 0;
+}
+
 .summary-note .summary-meta {
-    margin-top: 0.75rem;
+    margin-top: 0;
     color: var(--app-muted);
     font-size: 0.9rem;
+    font-weight: 700;
 }
 
 .login-page {
@@ -445,9 +520,10 @@ h1, h2, h3 {
 
 .summary-alert,
 .summary-advisory {
-    margin-top: 0.75rem;
+    margin-top: 0;
     padding: 0.75rem;
     border-radius: 6px;
+    font-weight: 650;
 }
 
 .summary-alert {
@@ -470,9 +546,34 @@ h1, h2, h3 {
     margin-top: 1.5rem;
 }
 
+.section-heading {
+    margin-bottom: 1rem;
+}
+
+.evidence-group h3 {
+    margin-bottom: 0.85rem;
+    font-size: 1.08rem;
+}
+
 .evidence-list > li,
 .source-list > li {
     padding: 1rem;
+}
+
+.evidence-list > li {
+    border-left: 4px solid rgba(0, 168, 143, 0.58);
+}
+
+.claim-text {
+    overflow-wrap: anywhere;
+    color: var(--app-text);
+    font-size: 1rem;
+    line-height: 1.55;
+}
+
+.claim-value {
+    color: var(--app-text);
+    font-weight: 800;
 }
 
 .source-list > li {
@@ -480,6 +581,17 @@ h1, h2, h3 {
     flex-wrap: wrap;
     gap: 0.35rem 0.75rem;
     justify-content: space-between;
+}
+
+.source-list a,
+.source-list span {
+    overflow-wrap: anywhere;
+}
+
+.source-list span:last-child {
+    color: var(--app-muted);
+    font-size: 0.9rem;
+    font-weight: 700;
 }
 
 @media (max-width: 640.98px) {
@@ -491,6 +603,7 @@ h1, h2, h3 {
 
     .lookup-form .input-group,
     .result-item,
+    .game-detail-header-grid,
     .favorite-panel,
     .favorite-row-actions,
     .favorite-empty-actions {
@@ -509,11 +622,20 @@ h1, h2, h3 {
 
     .lookup-form .btn,
     .result-item .btn,
+    .detail-favorite-panel .btn,
     .favorite-panel .btn,
     .favorite-row-actions .btn,
     .favorite-empty-actions .btn,
     .browse-pager .btn {
         width: 100%;
+    }
+
+    .game-detail-header {
+        padding: 1rem;
+    }
+
+    .detail-favorite-panel {
+        justify-content: stretch;
     }
 
     .browse-pager {

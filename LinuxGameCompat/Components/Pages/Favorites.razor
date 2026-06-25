@@ -43,7 +43,7 @@
 						<div class="result-main">
 							<h3>@game.Title</h3>
 							<div class="result-meta">
-								<span class="status-label">@CompatibilityStatusLabels.ToPublicLabel(game.CompatibilityStatus)</span>
+								<span class="@($"status-label {CompatibilityStatusLabels.ToCssClass(game.CompatibilityStatus)}")">@CompatibilityStatusLabels.ToPublicLabel(game.CompatibilityStatus)</span>
 								@if (game.SteamAppId is not null)
 								{
 									<span>Steam App ID @game.SteamAppId</span>

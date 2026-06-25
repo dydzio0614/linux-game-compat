@@ -311,29 +311,29 @@ No database migration is required.
 
 #### Automated
 
-- [x] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
-- [x] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [x] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`. — 6152e5d
+- [x] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`. — 6152e5d
 
 #### Manual
 
-- [x] 2.3 Search page looks polished before search, during search, with no results, and with populated results.
-- [x] 2.4 Browse page loading, empty, populated, and pager states are clear.
-- [x] 2.5 Favorites empty, populated, feedback, and removing states are readable and stable.
-- [x] 2.6 Login normal, sent, failed, and request-failed states are visually consistent.
+- [x] 2.3 Search page looks polished before search, during search, with no results, and with populated results. — 6152e5d
+- [x] 2.4 Browse page loading, empty, populated, and pager states are clear. — 6152e5d
+- [x] 2.5 Favorites empty, populated, feedback, and removing states are readable and stable. — 6152e5d
+- [x] 2.6 Login normal, sent, failed, and request-failed states are visually consistent. — 6152e5d
 
 ### Phase 3: Game Detail Evidence Composition
 
 #### Automated
 
-- [ ] 3.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
-- [ ] 3.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [x] 3.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
+- [x] 3.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
 
 #### Manual
 
-- [ ] 3.3 Detail page loading, not-found, normal, no-evidence, summary, stale summary, disagreement, and AI-fallback states remain understandable.
-- [ ] 3.4 Raw evidence and source links are clearly visible and authoritative.
-- [ ] 3.5 Semantic status badges are readable for every compatibility status.
-- [ ] 3.6 Favorite actions remain usable and stable on desktop and mobile.
+- [x] 3.3 Detail page loading, not-found, normal, no-evidence, summary, stale summary, disagreement, and AI-fallback states remain understandable.
+- [x] 3.4 Raw evidence and source links are clearly visible and authoritative.
+- [x] 3.5 Semantic status badges are readable for every compatibility status.
+- [x] 3.6 Favorite actions remain usable and stable on desktop and mobile.
 
 ### Phase 4: Responsive and Regression Verification
 
