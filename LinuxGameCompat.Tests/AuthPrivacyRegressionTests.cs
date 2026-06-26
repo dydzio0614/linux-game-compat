@@ -2,6 +2,7 @@ using LinuxGameCompat.Data;
 using LinuxGameCompat.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace LinuxGameCompat.Tests;
@@ -187,6 +188,114 @@ public sealed class AuthPrivacyRegressionTests(PostgreSqlFixture fixture) : ICla
 		Assert.Contains(
 			context.Response.Headers.SetCookie,
 			IsMagicLinkDisplayDeleteCookie);
+	}
+
+	[Fact]
+	public async Task MagicLinkRequestEndpoint_DisabledShortcutClearsStaleDisplayCookieWithoutStoringLink()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		Uri generatedLink = new("https://example.test/auth/magic-link/consume?token=disabled-shortcut");
+		FakeMagicLinkService magicLinkService = new(input => new MagicLinkRequestResult(
+			Accepted: true,
+			LoginLink: input.IncludeGeneratedLoginLink ? generatedLink : null));
+		DefaultHttpContext context = CreateHttpsContext(
+			"LinuxGameCompat.MagicLinkDisplay=stale-value",
+			harness.ServiceProvider);
+		IConfiguration configuration = CreateConfiguration(showMagicLinksInFrontend: false);
+
+		IResult result = await MagicLinkRequestEndpoint.HandleAsync(
+			"disabled-shortcut@example.test",
+			"/games/baldurs-gate-3",
+			context,
+			magicLinkService,
+			harness.MagicLinkDisplayHandoff,
+			configuration,
+			isDevelopment: true,
+			CancellationToken.None);
+		await ExecuteResultAsync(result, context);
+
+		Assert.False(magicLinkService.LastInput?.IncludeGeneratedLoginLink);
+		Assert.Equal("/login?sent=1", context.Response.Headers.Location);
+		Assert.Contains(
+			context.Response.Headers.SetCookie,
+			IsMagicLinkDisplayDeleteCookie);
+		Assert.DoesNotContain(
+			context.Response.Headers.SetCookie,
+			header => IsMagicLinkDisplayValueCookie(header));
+	}
+
+	[Fact]
+	public async Task MagicLinkRequestEndpoint_EnabledAcceptedRequestStoresGeneratedDisplayLink()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		Uri generatedLink = new("https://example.test/auth/magic-link/consume?token=enabled-shortcut");
+		FakeMagicLinkService magicLinkService = new(input => new MagicLinkRequestResult(
+			Accepted: true,
+			LoginLink: input.IncludeGeneratedLoginLink ? generatedLink : null));
+		DefaultHttpContext context = CreateHttpsContext(
+			"LinuxGameCompat.MagicLinkDisplay=stale-value",
+			harness.ServiceProvider);
+		IConfiguration configuration = CreateConfiguration(showMagicLinksInFrontend: true);
+
+		IResult result = await MagicLinkRequestEndpoint.HandleAsync(
+			"enabled-shortcut@example.test",
+			"/games/baldurs-gate-3",
+			context,
+			magicLinkService,
+			harness.MagicLinkDisplayHandoff,
+			configuration,
+			isDevelopment: true,
+			CancellationToken.None);
+		await ExecuteResultAsync(result, context);
+		string displayCookie = Assert.Single(
+			context.Response.Headers.SetCookie,
+			header => IsMagicLinkDisplayValueCookie(header))
+			?? throw new InvalidOperationException("Expected a magic-link display cookie.");
+		DefaultHttpContext consumeContext = CreateHttpsContext(displayCookie.Split(';', 2)[0]);
+
+		bool consumed = harness.MagicLinkDisplayHandoff.TryConsume(consumeContext, out Uri? consumedLink);
+
+		Assert.True(magicLinkService.LastInput?.IncludeGeneratedLoginLink);
+		Assert.Equal("/login?sent=1", context.Response.Headers.Location);
+		Assert.True(consumed);
+		Assert.Equal(generatedLink, consumedLink);
+	}
+
+	[Fact]
+	public async Task MagicLinkRequestEndpoint_FailedRequestClearsStaleDisplayCookieWithoutStoringLink()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		Uri generatedLink = new("https://example.test/auth/magic-link/consume?token=failed-shortcut");
+		FakeMagicLinkService magicLinkService = new(_ => new MagicLinkRequestResult(
+			Accepted: false,
+			LoginLink: generatedLink));
+		DefaultHttpContext context = CreateHttpsContext(
+			"LinuxGameCompat.MagicLinkDisplay=stale-value",
+			harness.ServiceProvider);
+		IConfiguration configuration = CreateConfiguration(showMagicLinksInFrontend: true);
+
+		IResult result = await MagicLinkRequestEndpoint.HandleAsync(
+			"failed-shortcut@example.test",
+			"/games/baldurs-gate-3",
+			context,
+			magicLinkService,
+			harness.MagicLinkDisplayHandoff,
+			configuration,
+			isDevelopment: true,
+			CancellationToken.None);
+		await ExecuteResultAsync(result, context);
+
+		Assert.True(magicLinkService.LastInput?.IncludeGeneratedLoginLink);
+		Assert.Equal("/login?requestFailed=1", context.Response.Headers.Location);
+		Assert.Contains(
+			context.Response.Headers.SetCookie,
+			IsMagicLinkDisplayDeleteCookie);
+		Assert.DoesNotContain(
+			context.Response.Headers.SetCookie,
+			header => IsMagicLinkDisplayValueCookie(header));
 	}
 
 	[Fact]
@@ -400,11 +509,16 @@ public sealed class AuthPrivacyRegressionTests(PostgreSqlFixture fixture) : ICla
 		return count;
 	}
 
-	private static DefaultHttpContext CreateHttpsContext(string? cookieHeader = null)
+	private static DefaultHttpContext CreateHttpsContext(string? cookieHeader = null, IServiceProvider? requestServices = null)
 	{
 		var context = new DefaultHttpContext();
 		context.Request.Scheme = "https";
 		context.Request.Host = new HostString("example.test");
+		context.Response.Body = new MemoryStream();
+		if (requestServices is not null)
+		{
+			context.RequestServices = requestServices;
+		}
 		if (!string.IsNullOrWhiteSpace(cookieHeader))
 		{
 			context.Request.Headers.Cookie = cookieHeader;
@@ -413,11 +527,33 @@ public sealed class AuthPrivacyRegressionTests(PostgreSqlFixture fixture) : ICla
 		return context;
 	}
 
+	private static IConfiguration CreateConfiguration(bool showMagicLinksInFrontend)
+	{
+		return new ConfigurationBuilder()
+			.AddInMemoryCollection(new Dictionary<string, string?>
+			{
+				["Auth:ShowMagicLinksInFrontend"] = showMagicLinksInFrontend.ToString()
+			})
+			.Build();
+	}
+
+	private static async Task ExecuteResultAsync(IResult result, HttpContext httpContext)
+	{
+		await result.ExecuteAsync(httpContext);
+	}
+
 	private static bool IsMagicLinkDisplayDeleteCookie(string? header)
 	{
 		return header is not null &&
 			header.StartsWith("LinuxGameCompat.MagicLinkDisplay=", StringComparison.Ordinal) &&
 			header.Contains("expires=", StringComparison.OrdinalIgnoreCase);
+	}
+
+	private static bool IsMagicLinkDisplayValueCookie(string? header)
+	{
+		return header is not null &&
+			header.StartsWith("LinuxGameCompat.MagicLinkDisplay=", StringComparison.Ordinal) &&
+			!header.Contains("expires=", StringComparison.OrdinalIgnoreCase);
 	}
 
 	private sealed class CapturingLoggerProvider : ILoggerProvider
@@ -465,4 +601,25 @@ public sealed class AuthPrivacyRegressionTests(PostgreSqlFixture fixture) : ICla
 	}
 
 	private sealed record LogEntry(string Category, LogLevel Level, string Message, string ExceptionText);
+
+	private sealed class FakeMagicLinkService(Func<MagicLinkRequestInput, MagicLinkRequestResult> requestHandler)
+		: IMagicLinkService
+	{
+		public MagicLinkRequestInput? LastInput { get; private set; }
+
+		public Task<MagicLinkRequestResult> RequestLoginLinkAsync(
+			MagicLinkRequestInput input,
+			CancellationToken cancellationToken = default)
+		{
+			LastInput = input;
+			return Task.FromResult(requestHandler(input));
+		}
+
+		public Task<MagicLinkConsumeResult> ConsumeLoginLinkAsync(
+			string token,
+			CancellationToken cancellationToken = default)
+		{
+			throw new NotSupportedException();
+		}
+	}
 }

@@ -130,31 +130,15 @@ app.MapPost("/auth/magic-link/request", async (
 	IConfiguration configuration,
 	CancellationToken cancellationToken) =>
 {
-	magicLinkDisplayHandoff.Clear(httpContext);
-	var showMagicLinksInFrontend = configuration.GetValue<bool>("Auth:ShowMagicLinksInFrontend");
-	var publicBaseUri = AuthPublicBaseUriResolver.Resolve(
+	return await MagicLinkRequestEndpoint.HandleAsync(
+		email,
+		returnUrl,
+		httpContext,
+		magicLinkService,
+		magicLinkDisplayHandoff,
 		configuration,
-		httpContext.Request,
-		app.Environment.IsDevelopment());
-	var result = await magicLinkService.RequestLoginLinkAsync(
-		new MagicLinkRequestInput(
-			email,
-			returnUrl,
-			publicBaseUri,
-			httpContext.Connection.RemoteIpAddress?.ToString(),
-			httpContext.Request.Headers.UserAgent.ToString(),
-			IncludeGeneratedLoginLink: showMagicLinksInFrontend),
+		app.Environment.IsDevelopment(),
 		cancellationToken);
-	if (result.Accepted && result.LoginLink is not null)
-	{
-		magicLinkDisplayHandoff.Set(httpContext, result.LoginLink);
-	}
-	else
-	{
-		magicLinkDisplayHandoff.Clear(httpContext);
-	}
-
-	return Results.Redirect(result.Accepted ? "/login?sent=1" : "/login?requestFailed=1");
 }).DisableAntiforgery();
 app.MapGet("/auth/magic-link/consume", async (
 	string? token,
