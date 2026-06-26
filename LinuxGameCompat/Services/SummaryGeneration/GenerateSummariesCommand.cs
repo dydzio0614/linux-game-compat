@@ -1,12 +1,10 @@
 namespace LinuxGameCompat.Services.SummaryGeneration;
 
-public sealed record GenerateSummariesCommandOptions(int Limit, string? Slug, bool Force);
-
 public static class GenerateSummariesCommand
 {
 	public static bool IsRequested(string[] args) => args.Length > 0 && args[0] == "generate-summaries";
 
-	public static bool TryParse(string[] args, int defaultLimit, out GenerateSummariesCommandOptions? options, out string? error)
+	public static bool TryParse(string[] args, int defaultLimit, out SummaryGenerationRunOptions? options, out string? error)
 	{
 		options = null; error = null;
 		if (!IsRequested(args)) { error = "Expected generate-summaries command."; return false; }
@@ -22,7 +20,7 @@ public static class GenerateSummariesCommand
 			}
 		}
 
-		options = new GenerateSummariesCommandOptions(limit, slug, force); return true;
+		options = new SummaryGenerationRunOptions(limit, slug, force); return true;
 	}
 
 	public static string FormatResult(SummaryGenerationRunResult result) =>

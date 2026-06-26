@@ -42,7 +42,7 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 		await using var transaction = await dbContext.Database.BeginTransactionAsync();
 		var provider = new FakeSummaryProvider(new(CompatibilityStatus.Unsupported, "Generated evidence summary.", 20, 8));
 		var generator = new CompatibilitySummaryGenerator(dbContext, provider,
-			new EvidencePromptBuilder(new FixedTokenCounter()), new GenerationOptions(), TimeProvider.System);
+			new EvidencePromptBuilder(new FixedTokenCounter()), SummaryGenerationOptionsHelper.FromAppSettings(), TimeProvider.System);
 
 		SummaryGenerationRunResult result = await generator.RunAsync(new SummaryGenerationRunOptions(1, "baldurs-gate-3", true), CancellationToken.None);
 		dbContext.ChangeTracker.Clear();
@@ -74,7 +74,7 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 		await dbContext.SaveChangesAsync();
 		var provider = new FakeSummaryProvider(new(CompatibilityStatus.Playable, "Unused.", 1, 1));
 		var generator = new CompatibilitySummaryGenerator(dbContext, provider,
-			new EvidencePromptBuilder(new FixedTokenCounter()), new GenerationOptions(), TimeProvider.System);
+			new EvidencePromptBuilder(new FixedTokenCounter()), SummaryGenerationOptionsHelper.FromAppSettings(), TimeProvider.System);
 
 		SummaryGenerationRunResult current = await generator.RunAsync(new SummaryGenerationRunOptions(10, "baldurs-gate-3"), CancellationToken.None);
 		SummaryGenerationRunResult hidden = await generator.RunAsync(new SummaryGenerationRunOptions(10, "suppressed-test-record", true), CancellationToken.None);
@@ -266,7 +266,8 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 	}
 
 	private static CompatibilitySummaryGenerator CreateGenerator(CompatibilityDbContext dbContext, ICompatibilitySummaryProvider provider) =>
-		new(dbContext, provider, new EvidencePromptBuilder(new FixedTokenCounter()), new GenerationOptions(), TimeProvider.System);
+		new(dbContext, provider, new EvidencePromptBuilder(new FixedTokenCounter()),
+			SummaryGenerationOptionsHelper.FromAppSettings(), TimeProvider.System);
 
 	[Fact]
 	public async Task Migration_CreatesMemberAuthSchema()

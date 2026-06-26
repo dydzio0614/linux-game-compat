@@ -36,6 +36,7 @@ New people switching to Linux face decision paralysis because compatibility evid
 | S-05 | production-summary-generation-rollout | operator can run and measure bounded compatibility-summary generation on Railway | S-04 | Operational follow-up | planned |
 | S-06 | modernize-visual-presentation | user sees a more polished, modern Blazor UI instead of the current Bootstrap-default-like presentation | S-01, S-03, S-04 | UX quality follow-up | done |
 | S-07 | development-magic-link-shortcut | developer can complete register/login flows locally without a real email provider by seeing magic links instantly in the frontend | F-02 | Developer experience follow-up | planned |
+| S-08 | simplify-summary-generation-code | maintainer can understand and change the S-04 summary-generation path without unnecessary datatypes, records, or test-driven indirection | S-04 | Maintainability follow-up | planned |
 
 ## Streams
 
@@ -47,6 +48,7 @@ Navigation aid - groups items that share a Prerequisites chain. Canonical orderi
 | B | Catalog browsing | `S-03` | Uses `F-01` from Stream A, but stays behind the must-have launch path because browsing is nice-to-have. |
 | C | Visual polish | `S-06` | Modernizes the existing Blazor UI after the core user-facing pages exist, without replacing the frontend stack. |
 | D | Development auth ergonomics | `F-02` -> `S-07` | Keeps passwordless auth testable in local/dev environments before a real email provider is wired into every workflow. |
+| E | Summary generation maintainability | `S-04` -> `S-08` | Simplifies the generated-summary implementation after the feature exists, keeping configuration as the source of truth. |
 
 ## Baseline
 
@@ -181,6 +183,19 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** The bypass must be impossible to expose accidentally in production; the implementation should keep the display path clearly environment/config gated and avoid logging reusable auth links more broadly than needed.
 - **Status:** planned
 
+### S-08: Simplify summary generation code
+
+- **Outcome:** maintainer can understand and change the S-04 summary-generation path without unnecessary datatypes, records, or abstractions that exist mainly for hypothetical future extension or test convenience.
+- **Change ID:** simplify-summary-generation-code
+- **PRD refs:** Maintainability follow-up to generated summary generation
+- **Prerequisites:** S-04
+- **Parallel with:** S-05, S-07
+- **Blockers:** -
+- **Unknowns:**
+  - Which current S-04 types and guard checks are still carrying useful production behavior versus leftover design scaffolding? - Owner: implementer. Block: no.
+- **Risk:** Refactoring should make the feature easier to read and safely operate, not redesign the generation workflow; default-parameter configuration files should stay the source of truth instead of duplicating caps or defaults in hardcoded validation checks.
+- **Status:** planned
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID | Suggested issue title | Ready for `/10x-plan` | Notes |
@@ -194,6 +209,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-05 | production-summary-generation-rollout | Roll out and measure production summary generation on Railway | no | Deferred operational follow-up; depends on S-04 |
 | S-06 | modernize-visual-presentation | Modernize visual presentation of the Blazor UI | yes | Instant-improvement UI overhaul; must stay in the existing Blazor frontend |
 | S-07 | development-magic-link-shortcut | Show passwordless register/login magic links in development UI | yes | Developer-only auth shortcut; depends on F-02 and must be gated away from production |
+| S-08 | simplify-summary-generation-code | Simplify summary-generation code and config ownership | yes | Refactor S-04 for readability; remove speculative type design and hardcoded default/cap duplication where config should be authoritative |
 
 ## Open Roadmap Questions
 

@@ -9,7 +9,7 @@ public sealed class GenerateSummariesCommandTests
 	{
 		bool parsed = GenerateSummariesCommand.TryParse(
 			["generate-summaries", "--limit", "3", "--slug", "baldurs-gate-3", "--force"], 10,
-			out GenerateSummariesCommandOptions? options, out string? error);
+			out SummaryGenerationRunOptions? options, out string? error);
 
 		Assert.True(parsed, error);
 		Assert.Equal(3, options!.Limit);
@@ -27,7 +27,10 @@ public sealed class GenerateSummariesCommandTests
 	[Fact]
 	public void Configuration_RequiresBoundedGenerationContract()
 	{
-		GenerationOptions options = new() { Concurrency = 2, MaximumRetries = 3, Model = "other" };
+		GenerationOptions options = SummaryGenerationOptionsHelper.FromAppSettings();
+		options.Concurrency = 2;
+		options.MaximumRetries = 3;
+		options.Model = "other";
 
 		Assert.Equal(3, options.Validate().Count);
 	}
