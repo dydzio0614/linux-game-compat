@@ -8,13 +8,13 @@ Add an explicitly configurable shortcut that shows generated passwordless magic 
 
 Passwordless auth already exists through `IMagicLinkService`, the `/auth/magic-link/request` endpoint, and the `/login` page. Development currently uses `LoggingAuthEmailSender` to log full magic links, while non-Development uses SMTP. The generated link is built inside `MagicLinkService.RequestLoginLinkAsync`, sent through `IAuthEmailSender`, and then discarded because `MagicLinkRequestResult` only reports whether the request was accepted.
 
-The app has no existing TempData or MVC ViewFeatures usage, so the shortcut needs a small framework-service addition for cookie-backed one-time display state. The test suite already has PostgreSQL-backed auth/privacy tests and an auth harness, but no browser or HTTP-host test infrastructure.
+The app has no existing TempData or MVC ViewFeatures usage, so the shortcut needs a small purpose-built protected-cookie helper for cookie-backed one-time display state. The test suite already has PostgreSQL-backed auth/privacy tests and an auth harness, but no browser or HTTP-host test infrastructure.
 
 ## Desired End State
 
 When `Auth:ShowMagicLinksInFrontend` is false or absent, login request behavior is unchanged: a successful request redirects to `/login?sent=1`, tells the user to check their inbox, and exposes no link in the frontend.
 
-When `Auth:ShowMagicLinksInFrontend` is true, a successful login request redirects to `/login?sent=1` and shows the generated one-use magic link inside the existing success panel with explicit warning copy. Clicking that link signs in through the normal consume endpoint, preserves existing token lifecycle rules, and redirects to the stored local return URL.
+When `Auth:ShowMagicLinksInFrontend` is true, a login request with valid input can complete without SMTP: the app persists the one-use magic-link request, redirects to `/login?sent=1`, and shows the generated link inside the existing success panel with explicit warning copy. Clicking that link signs in through the normal consume endpoint, preserves existing token lifecycle rules, and redirects to the stored local return URL.
 
 ### Key Discoveries:
 
@@ -22,7 +22,8 @@ When `Auth:ShowMagicLinksInFrontend` is true, a successful login request redirec
 - `IMagicLinkService` currently exposes `MagicLinkRequestResult(bool Accepted)`, so the generated URI needs a deliberate result-contract change.
 - `MagicLinkService.RequestLoginLinkAsync` already builds the exact login link before sending it through `IAuthEmailSender`.
 - `Program.cs` registers `LoggingAuthEmailSender` only when `builder.Environment.IsDevelopment()` is true, and that sender intentionally logs full links today.
-- `Login.razor` already has a success panel for `sent=1`, making it the natural UI surface for the shortcut.
+- `SmtpAuthEmailSender` throws when SMTP is not configured, so the enabled frontend shortcut path must not require email delivery to succeed.
+- `Login.razor` already has a success panel for `sent=1`, making it the natural UI surface for the shortcut, but it is an `InteractiveServer` Blazor component rather than a Razor Page with `[TempData]`.
 - `AuthPrivacyRegressionTests` already cover return URL hardening, token persistence, replay/failure behavior, and the Development full-link logging exception.
 
 ## What We're NOT Doing
@@ -38,7 +39,7 @@ When `Auth:ShowMagicLinksInFrontend` is true, a successful login request redirec
 
 ## Implementation Approach
 
-Keep the existing magic-link flow authoritative and add only an opt-in display surface around the generated link. The service contract should expose the generated link only when the caller requests it for the frontend shortcut path, avoiding accidental raw-token propagation in default service use. The endpoint should bridge the POST-to-GET redirect with cookie-backed TempData rather than query strings, so the raw token is not placed in browser history or proxy logs by the redirect itself.
+Keep the existing magic-link flow authoritative and add only an opt-in display surface around the generated link. The service contract should expose the generated link only when the caller requests it for the frontend shortcut path, avoiding accidental raw-token propagation in default service use. In the enabled shortcut path, successful token persistence is enough to show the link even when SMTP delivery is unavailable; the disabled/default path must keep the existing send-failure cleanup and failure redirect behavior. The endpoint should bridge the POST-to-GET redirect with a purpose-built protected-cookie one-time handoff rather than query strings, so the raw token is not placed in browser history or proxy logs by the redirect itself.
 
 ## Critical Implementation Details
 
@@ -68,15 +69,15 @@ Add the configuration switch, expose the generated link through an explicit requ
 
 **Intent**: Preserve existing token generation, persistence, email sending, send-failure cleanup, and consume behavior while returning the generated URI only for the configured display path.
 
-**Contract**: `RequestLoginLinkAsync` continues to build one link, send that same link through `IAuthEmailSender`, and return `Accepted=false` with no link on validation/send failure. On success, it returns the link only when the caller explicitly requested frontend display.
+**Contract**: `RequestLoginLinkAsync` continues to build one link and send that same link through `IAuthEmailSender` when email delivery is part of the selected path. Validation failures always return `Accepted=false` with no link. Send failure behavior depends on the explicit frontend-display opt-in: default callers keep the current cleanup behavior and receive `Accepted=false`, while opted-in callers keep the persisted request and receive `Accepted=true` with the generated link so trusted test deployments can log in without SMTP. The send-failure exception must not log the raw token or full link.
 
-#### 3. Endpoint Configuration And TempData Handoff
+#### 3. Endpoint Configuration And One-Time Handoff
 
 **File**: `LinuxGameCompat/Program.cs`
 
-**Intent**: Make frontend link display controlled by `Auth:ShowMagicLinksInFrontend` and carry the generated link through the existing redirect flow.
+**Intent**: Make frontend link display controlled by `Auth:ShowMagicLinksInFrontend` and carry the generated link through the existing redirect flow with a small helper tailored to minimal APIs and Blazor.
 
-**Contract**: Add the minimal services required for cookie-backed TempData/ViewFeatures. In `/auth/magic-link/request`, read `Auth:ShowMagicLinksInFrontend` as a boolean, pass the opt-in signal to the service, and when the result is accepted with a generated link, store that link under a single constant TempData key before redirecting to `/login?sent=1`. Disabled or failed requests must not write a display link.
+**Contract**: Add a small purpose-specific protected-cookie helper for this single display value, for example under `LinuxGameCompat/Services/Auth/` if the auth service changes reach three related files. The helper must use ASP.NET Core data protection, write one configured cookie name/path for the generated link, read and delete it during the redirected `/login?sent=1` initial request, and expose clear `Set`, `TryConsume`, and `Clear` operations over `HttpContext`. Do not add MVC TempData/ViewFeatures for this shortcut. In `/auth/magic-link/request`, read `Auth:ShowMagicLinksInFrontend` as a boolean, pass the opt-in signal to the service, clear any existing display-link handoff before processing, and when the result is accepted with a generated link, store that link before redirecting to `/login?sent=1`. Disabled or failed requests must clear the display-link key and must not leave stale values available to the next login page load.
 
 ### Success Criteria:
 
@@ -109,7 +110,7 @@ Render the generated link in the existing login success panel when the shortcut 
 
 **Intent**: Show testers the generated magic link immediately after a successful request without changing the normal disabled-state login UX.
 
-**Contract**: Read the TempData display value during the redirected `sent=1` page load. If a link is present, render it inside the current success panel as a clickable link with warning text. If no link is present, keep the current "Check your inbox" copy.
+**Contract**: Read the one-time display value during the redirected `sent=1` page load using the Phase 1 handoff API in a Blazor-compatible way: the value must be available on the initial render and consumed so refresh/back navigation does not redisplay a stale link. If a link is present, render it inside the current success panel as a clickable link with warning text. If no link is present, keep the current "Check your inbox" copy.
 
 #### 2. Login Shortcut Styling
 
@@ -151,9 +152,17 @@ Add focused regression coverage for the shortcut boundaries and document the hos
 
 **Intent**: Cover the raw-link exposure boundary without adding browser tooling.
 
-**Contract**: Add focused tests for the new service result contract and any small endpoint/TempData seam introduced by Phase 1. Assertions must prove disabled/default behavior exposes no generated link, enabled behavior exposes the generated link only after an accepted request, and failed requests do not expose stale or new links.
+**Contract**: Add focused tests for the new service result contract and any small endpoint/handoff seam introduced by Phase 1. Assertions must prove disabled/default behavior exposes no generated link, enabled behavior exposes the generated link only after an accepted request, and failed requests do not expose stale or new links.
 
-#### 2. Auth Test Harness Support
+#### 2. PostgreSQL Auth Compatibility Tests
+
+**File**: `LinuxGameCompat.Tests/PostgreSqlCompatibilityTests.cs`
+
+**Intent**: Keep the existing PostgreSQL-backed auth regression suite aligned with the request/result contract change.
+
+**Contract**: Review the existing `RequestLoginLinkAsync` call sites and `Accepted` assertions, update only the calls affected by the new opt-in/default contract, and preserve the existing token hashing, send failure cleanup, replay, expiry, and local return URL coverage.
+
+#### 3. Auth Test Harness Support
 
 **File**: `LinuxGameCompat.Tests/AuthTestHarness.cs`
 
@@ -161,7 +170,7 @@ Add focused regression coverage for the shortcut boundaries and document the hos
 
 **Contract**: Add only the helper surface needed to request generated-link behavior or inspect the display handoff seam. Do not weaken existing fake sender, time provider, or current-member behavior.
 
-#### 3. Configuration Documentation
+#### 4. Configuration Documentation
 
 **File**: `README.md`
 
@@ -194,12 +203,12 @@ Add focused regression coverage for the shortcut boundaries and document the hos
 
 - Service result defaults: accepted request without opt-in has no generated link.
 - Service opt-in: accepted request returns the same URI passed to the configured sender.
-- Failed requests: invalid email and send failure return no generated link.
-- Display handoff seam: enabled configuration stores the link only after accepted requests; disabled configuration stores nothing.
+- Failed requests: invalid email returns no generated link; send failure keeps cleanup/no-link behavior by default and returns the generated link only for the explicit frontend shortcut opt-in.
+- Display handoff seam: enabled configuration stores the link only after accepted requests; disabled configuration and failed/default requests clear stale display values.
 
 ### Integration Tests:
 
-- Existing PostgreSQL-backed auth/privacy tests remain authoritative for token hashing, deferred member creation, expiry, replay, send-failure cleanup, and local return URL normalization.
+- Existing PostgreSQL-backed auth/privacy tests remain authoritative for token hashing, deferred member creation, expiry, replay, default send-failure cleanup, and local return URL normalization.
 - No new database schema tests are needed because the shortcut does not persist new data.
 
 ### Manual Testing Steps:
@@ -214,11 +223,11 @@ Add focused regression coverage for the shortcut boundaries and document the hos
 
 ## Performance Considerations
 
-The shortcut adds negligible runtime cost. TempData should store only one generated link for one redirected response, not a collection or history of links.
+The shortcut adds negligible runtime cost. The one-time handoff should store only one generated link for one redirected response, not a collection or history of links.
 
 ## Migration Notes
 
-No database migration is required. Hosted test deployments that need the shortcut must set `Auth:ShowMagicLinksInFrontend=true` through normal app configuration. Existing SMTP configuration remains required for production email delivery when the shortcut is disabled.
+No database migration is required. Hosted test deployments that need the shortcut must set `Auth:ShowMagicLinksInFrontend=true` through normal app configuration. Existing SMTP configuration remains required for production email delivery when the shortcut is disabled; when the shortcut is enabled for trusted test/demo deployments, SMTP may be absent and the generated link is shown in the frontend after token persistence.
 
 ## References
 
@@ -229,6 +238,7 @@ No database migration is required. Hosted test deployments that need the shortcu
 - Magic-link service: `LinuxGameCompat/Services/MagicLinkService.cs`.
 - Login page: `LinuxGameCompat/Components/Pages/Login.razor`.
 - Auth regression tests: `LinuxGameCompat.Tests/AuthPrivacyRegressionTests.cs`.
+- PostgreSQL compatibility tests: `LinuxGameCompat.Tests/PostgreSqlCompatibilityTests.cs`.
 
 ## Progress
 
