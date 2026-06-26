@@ -9,7 +9,7 @@ public sealed class GenerateSummariesCommandTests
 	{
 		bool parsed = GenerateSummariesCommand.TryParse(
 			["generate-summaries", "--limit", "3", "--slug", "baldurs-gate-3", "--force"], 10,
-			out GenerateSummariesCommandOptions? options, out string? error);
+			out SummaryGenerationRunOptions? options, out string? error);
 
 		Assert.True(parsed, error);
 		Assert.Equal(3, options!.Limit);

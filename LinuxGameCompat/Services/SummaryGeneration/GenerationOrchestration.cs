@@ -10,17 +10,12 @@ public sealed record SummaryGenerationRunOptions(int Limit, string? Slug = null,
 public sealed record SummaryGenerationRunResult(int Selected, int Succeeded, int Failed, int Skipped,
 	TimeSpan Duration, int InputTokens, int OutputTokens, bool LockContended = false);
 
-public interface ICompatibilitySummaryGenerator
-{
-	Task<SummaryGenerationRunResult> RunAsync(SummaryGenerationRunOptions options, CancellationToken cancellationToken);
-}
-
 public sealed class CompatibilitySummaryGenerator(
 	CompatibilityDbContext dbContext,
 	ICompatibilitySummaryProvider provider,
 	EvidencePromptBuilder promptBuilder,
 	GenerationOptions settings,
-	TimeProvider timeProvider) : ICompatibilitySummaryGenerator
+	TimeProvider timeProvider)
 {
 	private const long AdvisoryLockKey = 0x4C474353554D4D41;
 
@@ -53,7 +48,7 @@ public sealed class CompatibilitySummaryGenerator(
 				}
 				bool shouldGenerate = options.Force || candidate.Summary is null || mismatch || candidate.Summary.IsStale ||
 					candidate.Summary.State is SummaryState.Failed or SummaryState.Stale or SummaryState.NotGenerated;
-				if (shouldGenerate) eligible.Add(candidate with { Evidence = evidence }); else skipped++;
+				if (shouldGenerate) eligible.Add(candidate); else skipped++;
 			}
 			await dbContext.SaveChangesAsync(cancellationToken);
 			eligible = eligible.OrderBy(candidate => candidate.Summary?.LastAttemptedAt.HasValue == true)
@@ -180,8 +175,8 @@ public sealed class CompatibilitySummaryGenerator(
 		return (await query.Include(game => game.CompatibilitySummary)
 			.Include(game => game.SourceReferences).ThenInclude(reference => reference.SourceSystem)
 			.Include(game => game.SourceReferences).ThenInclude(reference => reference.EvidenceClaims)
-			.ToListAsync(cancellationToken)).Select(game => new Candidate(game, game.CompatibilitySummary, MapGameToClaims(game), null)).ToList();
+			.ToListAsync(cancellationToken)).Select(game => new Candidate(game, game.CompatibilitySummary, MapGameToClaims(game))).ToList();
 	}
 	
-	private sealed record Candidate(Game Game, GameCompatibilitySummary? Summary, List<GenerationEvidenceClaim> Claims, CanonicalEvidence? Evidence);
+	private sealed record Candidate(Game Game, GameCompatibilitySummary? Summary, List<GenerationEvidenceClaim> Claims);
 }

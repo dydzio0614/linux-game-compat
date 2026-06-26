@@ -220,13 +220,13 @@ No migration is required.
 
 #### Automated
 
-- [ ] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
-- [ ] 1.2 CLI parser tests cover accepted options, invalid options, result formatting, and exit codes.
-- [ ] 1.3 PostgreSQL generator tests still cover lock contention, failed refresh preservation, evidence-change discard, cancellation, eligibility, ordering, and AI fallback.
+- [x] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
+- [x] 1.2 CLI parser tests cover accepted options, invalid options, result formatting, and exit codes.
+- [x] 1.3 PostgreSQL generator tests still cover lock contention, failed refresh preservation, evidence-change discard, cancellation, eligibility, ordering, and AI fallback.
 
 #### Manual
 
-- [ ] 1.4 Human review can trace generation from `Program.cs` to `CompatibilitySummaryGenerator.RunAsync` without adjacent option/interface indirection.
+- [x] 1.4 Human review can trace generation from `Program.cs` to `CompatibilitySummaryGenerator.RunAsync` without adjacent option/interface indirection.
 
 ### Phase 2: Localize Config Defaults and Validation
 

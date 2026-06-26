@@ -50,7 +50,7 @@ builder.Configuration.GetSection(GenerationOptions.SectionName).Bind(generationS
 builder.Services.AddSingleton(generationSettings);
 builder.Services.AddSingleton<IGenerationTokenCounter, OpenAiTokenCounter>();
 builder.Services.AddSingleton<EvidencePromptBuilder>();
-builder.Services.AddScoped<ICompatibilitySummaryGenerator, CompatibilitySummaryGenerator>();
+builder.Services.AddScoped<CompatibilitySummaryGenerator>();
 builder.Services.AddSingleton<ICompatibilitySummaryProvider>(_ => OpenAiCompatibilitySummaryProvider.Create(
 	Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty,
 	generationSettings));
@@ -73,7 +73,7 @@ var app = builder.Build();
 if (generationCommandRequested)
 {
 	IReadOnlyList<string> configurationErrors = generationSettings.Validate();
-	if (!GenerateSummariesCommand.TryParse(args, generationSettings.MaximumGames, out GenerateSummariesCommandOptions? command, out string? parseError) || configurationErrors.Count > 0)
+	if (!GenerateSummariesCommand.TryParse(args, generationSettings.MaximumGames, out SummaryGenerationRunOptions? command, out string? parseError) || configurationErrors.Count > 0)
 	{
 		Console.Error.WriteLine(parseError ?? string.Join(" ", configurationErrors));
 		return 2;
@@ -90,8 +90,7 @@ if (generationCommandRequested)
 	Console.CancelKeyPress += cancelHandler;
 	try
 	{
-		SummaryGenerationRunResult result = await scope.ServiceProvider.GetRequiredService<ICompatibilitySummaryGenerator>().RunAsync(
-			new SummaryGenerationRunOptions(command!.Limit, command.Slug, command.Force), shutdown.Token);
+		SummaryGenerationRunResult result = await scope.ServiceProvider.GetRequiredService<CompatibilitySummaryGenerator>().RunAsync(command!, shutdown.Token);
 		Console.WriteLine(GenerateSummariesCommand.FormatResult(result));
 		return GenerateSummariesCommand.ExitCodeFor(result);
 	}
