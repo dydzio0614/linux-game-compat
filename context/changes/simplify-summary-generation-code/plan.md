@@ -98,7 +98,7 @@ Make configuration files the source of generation defaults while retaining valid
 
 **Intent**: Remove duplicated default ownership between code property initializers and `appsettings.json`.
 
-**Contract**: The configured `SummaryGeneration` section supplies defaults. Code validation still rejects invalid generation-mode settings before provider calls. Normal web startup remains able to build without `OPENAI_API_KEY`.
+**Contract**: The configured `SummaryGeneration` section supplies defaults. Code validation still rejects invalid generation-mode settings before provider calls. Normal web startup remains able to build without `OPENAI_API_KEY`. Any tests that need valid generation settings should use one shared helper that binds `SummaryGeneration` from `LinuxGameCompat/appsettings.json`, not `new GenerationOptions()` as an implicit default source.
 
 #### 2. Validation Scope
 
@@ -139,7 +139,7 @@ Align tests and docs with the simplified implementation surface without losing p
 
 **Intent**: Stop tests from preserving removed internal design shape.
 
-**Contract**: Tests should cover observable command parsing/results, provider output validation, prompt hashing/selection behavior, native status reduction, and config validation invariants. They should not require a separate command-options-to-run-options handoff or exact duplicated defaults.
+**Contract**: Tests should cover observable command parsing/results, provider output validation, prompt hashing/selection behavior, native status reduction, and config validation invariants. They should not require a separate command-options-to-run-options handoff or exact duplicated defaults. Replace `new GenerationOptions().Validate()` default-shape assertions with explicit invalid-invariant cases plus one config-binding test proving `SummaryGeneration` from `appsettings.json` yields valid options.
 
 #### 2. Integration Test Preservation
 
@@ -147,7 +147,7 @@ Align tests and docs with the simplified implementation surface without losing p
 
 **Intent**: Preserve behavior-bearing safety coverage while adapting construction calls to the simplified generator contract.
 
-**Contract**: Keep coverage for advisory-lock contention, targeted/current/hidden/no-evidence selection, failed refresh preservation, evidence changed during provider call, requested cancellation, missing/stale/failed selection, AI fallback, and oldest-attempt ordering.
+**Contract**: Keep coverage for advisory-lock contention, targeted/current/hidden/no-evidence selection, failed refresh preservation, evidence changed during provider call, requested cancellation, missing/stale/failed selection, AI fallback, and oldest-attempt ordering. Generator tests should construct valid options through the shared config-bound helper after code property initializers are removed.
 
 #### 3. Documentation Accuracy
 
