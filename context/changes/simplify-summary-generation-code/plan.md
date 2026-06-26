@@ -220,26 +220,26 @@ No migration is required.
 
 #### Automated
 
-- [x] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
-- [x] 1.2 CLI parser tests cover accepted options, invalid options, result formatting, and exit codes.
-- [x] 1.3 PostgreSQL generator tests still cover lock contention, failed refresh preservation, evidence-change discard, cancellation, eligibility, ordering, and AI fallback.
+- [x] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`. — 6106ebf
+- [x] 1.2 CLI parser tests cover accepted options, invalid options, result formatting, and exit codes. — 6106ebf
+- [x] 1.3 PostgreSQL generator tests still cover lock contention, failed refresh preservation, evidence-change discard, cancellation, eligibility, ordering, and AI fallback. — 6106ebf
 
 #### Manual
 
-- [x] 1.4 Human review can trace generation from `Program.cs` to `CompatibilitySummaryGenerator.RunAsync` without adjacent option/interface indirection.
+- [x] 1.4 Human review can trace generation from `Program.cs` to `CompatibilitySummaryGenerator.RunAsync` without adjacent option/interface indirection. — 6106ebf
 
 ### Phase 2: Localize Config Defaults and Validation
 
 #### Automated
 
-- [ ] 2.1 Invalid generation config still returns command exit code `2`.
-- [ ] 2.2 Tests assert validation of real invariants without depending on duplicated default property initializers.
-- [ ] 2.3 Normal web startup-related tests remain green without requiring provider credentials.
-- [ ] 2.4 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
+- [x] 2.1 Invalid generation config still returns command exit code `2`.
+- [x] 2.2 Tests assert validation of real invariants without depending on duplicated default property initializers.
+- [x] 2.3 Normal web startup-related tests remain green without requiring provider credentials.
+- [x] 2.4 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
 
 #### Manual
 
-- [ ] 2.5 Human review confirms `appsettings.json` is the obvious place to inspect/change generation defaults.
+- [x] 2.5 Human review confirms `appsettings.json` is the obvious place to inspect/change generation defaults.
 
 ### Phase 3: Behavior-Focused Test and Documentation Cleanup
 

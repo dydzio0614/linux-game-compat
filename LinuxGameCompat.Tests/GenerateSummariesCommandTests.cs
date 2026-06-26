@@ -27,7 +27,10 @@ public sealed class GenerateSummariesCommandTests
 	[Fact]
 	public void Configuration_RequiresBoundedGenerationContract()
 	{
-		GenerationOptions options = new() { Concurrency = 2, MaximumRetries = 3, Model = "other" };
+		GenerationOptions options = SummaryGenerationOptionsHelper.FromAppSettings();
+		options.Concurrency = 2;
+		options.MaximumRetries = 3;
+		options.Model = "other";
 
 		Assert.Equal(3, options.Validate().Count);
 	}

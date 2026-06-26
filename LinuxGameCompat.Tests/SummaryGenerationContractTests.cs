@@ -158,14 +158,40 @@ public sealed class SummaryGenerationContractTests
 	}
 
 	[Fact]
-	public void Configuration_defaults_are_bounded_and_model_is_locked()
+	public void Appsettings_summary_generation_section_is_valid()
 	{
-		GenerationOptions options = new();
+		GenerationOptions options = SummaryGenerationOptionsHelper.FromAppSettings();
+
 		Assert.Empty(options.Validate());
+		Assert.Equal("OpenAI", options.Provider);
+		Assert.Equal("gpt-5.4-mini", options.Model);
+	}
+
+	[Fact]
+	public void Configuration_validation_rejects_generation_invariant_violations()
+	{
+		GenerationOptions options = SummaryGenerationOptionsHelper.FromAppSettings();
+		options.Provider = "Other";
 		options.Model = "gpt-5-mini";
-		Assert.NotEmpty(options.Validate());
-		options = new GenerationOptions { MaximumInputTokens = GenerationOptions.MinimumInputTokens - 1 };
-		Assert.Contains(options.Validate(), error => error.Contains("MaximumInputTokens", StringComparison.Ordinal));
+		options.MaximumGames = 0;
+		options.MaximumClaims = 0;
+		options.MaximumInputTokens = GenerationOptions.MinimumInputTokens - 1;
+		options.MaximumOutputTokens = 0;
+		options.Concurrency = 2;
+		options.RequestTimeoutSeconds = 0;
+		options.MaximumRetries = 3;
+
+		IReadOnlyList<string> errors = options.Validate();
+
+		Assert.Contains(errors, error => error.Contains("Provider", StringComparison.Ordinal));
+		Assert.Contains(errors, error => error.Contains("Model", StringComparison.Ordinal));
+		Assert.Contains(errors, error => error.Contains("MaximumGames", StringComparison.Ordinal));
+		Assert.Contains(errors, error => error.Contains("MaximumClaims", StringComparison.Ordinal));
+		Assert.Contains(errors, error => error.Contains("MaximumInputTokens", StringComparison.Ordinal));
+		Assert.Contains(errors, error => error.Contains("MaximumOutputTokens", StringComparison.Ordinal));
+		Assert.Contains(errors, error => error.Contains("Concurrency", StringComparison.Ordinal));
+		Assert.Contains(errors, error => error.Contains("RequestTimeoutSeconds", StringComparison.Ordinal));
+		Assert.Contains(errors, error => error.Contains("MaximumRetries", StringComparison.Ordinal));
 	}
 
 	private sealed class FixedTokenCounter : IGenerationTokenCounter { public int Count(string text) => 10; }
