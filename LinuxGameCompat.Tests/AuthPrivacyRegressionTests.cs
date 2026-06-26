@@ -1,5 +1,6 @@
 using LinuxGameCompat.Data;
 using LinuxGameCompat.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -82,6 +83,25 @@ public sealed class AuthPrivacyRegressionTests(PostgreSqlFixture fixture) : ICla
 	}
 
 	[Fact]
+	public async Task MagicLinkRequest_InvalidOptInRequestDoesNotReturnLoginLink()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+
+		var result = await harness.Service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"not-an-email",
+			"/",
+			new Uri("https://example.test"),
+			null,
+			null,
+			IncludeGeneratedLoginLink: true));
+
+		Assert.False(result.Accepted);
+		Assert.Null(result.LoginLink);
+		Assert.Equal(0, emailSender.SendCount);
+	}
+
+	[Fact]
 	public async Task MagicLinkRequest_OptInReturnsSameLoginLinkSentByEmailSender()
 	{
 		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
@@ -131,6 +151,42 @@ public sealed class AuthPrivacyRegressionTests(PostgreSqlFixture fixture) : ICla
 		Assert.DoesNotContain(rawToken, renderedWarning, StringComparison.Ordinal);
 		Assert.DoesNotContain("token=", renderedWarning, StringComparison.OrdinalIgnoreCase);
 		Assert.DoesNotContain(emailSender.LastLoginLink.ToString(), renderedWarning, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public async Task MagicLinkDisplayHandoff_SetConsumesOnceAndDeletesCookie()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		var loginLink = new Uri("https://example.test/auth/magic-link/consume?token=frontend-token");
+		var setContext = CreateHttpsContext();
+
+		harness.MagicLinkDisplayHandoff.Set(setContext, loginLink);
+		var cookieHeader = Assert.Single(setContext.Response.Headers.SetCookie)?.ToString()
+			?? throw new InvalidOperationException("Expected a magic-link display cookie.");
+		var consumeContext = CreateHttpsContext(cookieHeader.Split(';', 2)[0]);
+
+		var consumed = harness.MagicLinkDisplayHandoff.TryConsume(consumeContext, out Uri? consumedLink);
+
+		Assert.True(consumed);
+		Assert.Equal(loginLink, consumedLink);
+		Assert.Contains(
+			consumeContext.Response.Headers.SetCookie,
+			IsMagicLinkDisplayDeleteCookie);
+	}
+
+	[Fact]
+	public async Task MagicLinkDisplayHandoff_ClearRemovesStaleDisplayCookie()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+		var context = CreateHttpsContext("LinuxGameCompat.MagicLinkDisplay=stale-value");
+
+		harness.MagicLinkDisplayHandoff.Clear(context);
+
+		Assert.Contains(
+			context.Response.Headers.SetCookie,
+			IsMagicLinkDisplayDeleteCookie);
 	}
 
 	[Fact]
@@ -342,6 +398,26 @@ public sealed class AuthPrivacyRegressionTests(PostgreSqlFixture fixture) : ICla
 		}
 
 		return count;
+	}
+
+	private static DefaultHttpContext CreateHttpsContext(string? cookieHeader = null)
+	{
+		var context = new DefaultHttpContext();
+		context.Request.Scheme = "https";
+		context.Request.Host = new HostString("example.test");
+		if (!string.IsNullOrWhiteSpace(cookieHeader))
+		{
+			context.Request.Headers.Cookie = cookieHeader;
+		}
+
+		return context;
+	}
+
+	private static bool IsMagicLinkDisplayDeleteCookie(string? header)
+	{
+		return header is not null &&
+			header.StartsWith("LinuxGameCompat.MagicLinkDisplay=", StringComparison.Ordinal) &&
+			header.Contains("expires=", StringComparison.OrdinalIgnoreCase);
 	}
 
 	private sealed class CapturingLoggerProvider : ILoggerProvider

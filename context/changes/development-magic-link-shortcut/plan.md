@@ -261,27 +261,27 @@ No database migration is required. Hosted test deployments that need the shortcu
 
 #### Automated
 
-- [x] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [x] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 2.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore` — 3c3f14f
+- [x] 2.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore` — 3c3f14f
 
 #### Manual
 
-- [x] 2.3 With `Auth:ShowMagicLinksInFrontend=true`, submitting `/login` shows the generated link inline in the success panel.
-- [x] 2.4 The success panel includes clear test-only warning copy.
-- [x] 2.5 The generated link wraps cleanly on a narrow/mobile viewport.
-- [x] 2.6 Clicking the shown link signs in through `/auth/magic-link/consume` and redirects to the stored local return URL.
+- [x] 2.3 With `Auth:ShowMagicLinksInFrontend=true`, submitting `/login` shows the generated link inline in the success panel. — 3c3f14f
+- [x] 2.4 The success panel includes clear test-only warning copy. — 3c3f14f
+- [x] 2.5 The generated link wraps cleanly on a narrow/mobile viewport. — 3c3f14f
+- [x] 2.6 Clicking the shown link signs in through `/auth/magic-link/consume` and redirects to the stored local return URL. — 3c3f14f
 
 ### Phase 3: Verification And Handoff
 
 #### Automated
 
-- [ ] 3.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [ ] 3.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
-- [ ] 3.3 New tests prove disabled/default behavior does not surface generated links.
-- [ ] 3.4 New tests prove failed requests do not leave a frontend-display link.
+- [x] 3.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
+- [x] 3.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
+- [x] 3.3 New tests prove disabled/default behavior does not surface generated links.
+- [x] 3.4 New tests prove failed requests do not leave a frontend-display link.
 
 #### Manual
 
-- [ ] 3.5 Hosted or local run with `Auth:ShowMagicLinksInFrontend=true` can complete login without SMTP.
-- [ ] 3.6 Hosted or local run with the flag disabled preserves the normal email-only UX.
-- [ ] 3.7 Existing Development logs still include full magic links as before.
+- [x] 3.5 Hosted or local run with `Auth:ShowMagicLinksInFrontend=true` can complete login without SMTP.
+- [x] 3.6 Hosted or local run with the flag disabled preserves the normal email-only UX.
+- [x] 3.7 Existing Development logs still include full magic links as before.

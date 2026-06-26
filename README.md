@@ -83,6 +83,8 @@ The app reads the database connection from either:
 
 Compatibility summary generation additionally reads `OPENAI_API_KEY`. The key is validated only in generation mode; normal web startup does not require provider credentials. Generation defaults, including the model and request limits, are configured under `SummaryGeneration` in `LinuxGameCompat/appsettings.json`.
 
+Passwordless login normally sends magic links by email. For trusted local, test, or demo deployments that cannot use SMTP, set `Auth:ShowMagicLinksInFrontend=true` to show the generated bearer login link in the `/login` success panel. Keep this disabled for normal public production traffic: anyone who can see or copy that displayed link can sign in as the requested email address until the one-use link expires.
+
 ## Compatibility Summary Generation
 
 Generate a bounded batch without starting the web server:

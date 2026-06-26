@@ -789,6 +789,7 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 			null));
 
 		Assert.False(result.Accepted);
+		Assert.Null(result.LoginLink);
 		Assert.Equal(initialCount, await harness.DbContext.MagicLinkRequests.CountAsync());
 		Assert.Equal(0, emailSender.SendCount);
 	}
@@ -826,6 +827,7 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 			null));
 
 		Assert.False(result.Accepted);
+		Assert.Null(result.LoginLink);
 		Assert.Equal(initialCount, await harness.DbContext.MagicLinkRequests.CountAsync());
 		Assert.False(await harness.DbContext.MagicLinkRequests.AnyAsync(request => request.NormalizedEmail == "SEND-FAILURE@EXAMPLE.TEST"));
 	}
