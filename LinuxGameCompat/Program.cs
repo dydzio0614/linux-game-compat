@@ -37,10 +37,12 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddDataProtection();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IGameCompatibilityReadService, GameCompatibilityReadService>();
 builder.Services.AddScoped<IMemberFavoritesService, MemberFavoritesService>();
 builder.Services.AddScoped<IMagicLinkService, MagicLinkService>();
+builder.Services.AddSingleton<MagicLinkDisplayHandoff>();
 builder.Services.AddScoped<ICurrentMemberAccessor, CurrentMemberAccessor>();
 builder.Services.AddSingleton(TimeProvider.System);
 var generationSettings = new GenerationOptions();
@@ -124,23 +126,19 @@ app.MapPost("/auth/magic-link/request", async (
 	[FromForm] string? returnUrl,
 	HttpContext httpContext,
 	IMagicLinkService magicLinkService,
+	MagicLinkDisplayHandoff magicLinkDisplayHandoff,
 	IConfiguration configuration,
 	CancellationToken cancellationToken) =>
 {
-	var publicBaseUri = AuthPublicBaseUriResolver.Resolve(
+	return await MagicLinkRequestEndpoint.HandleAsync(
+		email,
+		returnUrl,
+		httpContext,
+		magicLinkService,
+		magicLinkDisplayHandoff,
 		configuration,
-		httpContext.Request,
-		app.Environment.IsDevelopment());
-	var result = await magicLinkService.RequestLoginLinkAsync(
-		new MagicLinkRequestInput(
-			email,
-			returnUrl,
-			publicBaseUri,
-			httpContext.Connection.RemoteIpAddress?.ToString(),
-			httpContext.Request.Headers.UserAgent.ToString()),
+		app.Environment.IsDevelopment(),
 		cancellationToken);
-
-	return Results.Redirect(result.Accepted ? "/login?sent=1" : "/login?requestFailed=1");
 }).DisableAntiforgery();
 app.MapGet("/auth/magic-link/consume", async (
 	string? token,

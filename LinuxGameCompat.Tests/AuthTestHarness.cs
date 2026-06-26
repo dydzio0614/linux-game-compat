@@ -27,6 +27,8 @@ public sealed class AuthTestHarness : IAsyncDisposable
 
 	public IMagicLinkService Service => ServiceProvider.GetRequiredService<IMagicLinkService>();
 
+	public MagicLinkDisplayHandoff MagicLinkDisplayHandoff => ServiceProvider.GetRequiredService<MagicLinkDisplayHandoff>();
+
 	public IMemberFavoritesService FavoritesService => ServiceProvider.GetRequiredService<IMemberFavoritesService>();
 
 	public UserManager<ApplicationUser> UserManager => ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -39,6 +41,7 @@ public sealed class AuthTestHarness : IAsyncDisposable
 	{
 		var services = new ServiceCollection();
 		services.AddLogging(configureLogging ?? (builder => builder.AddConsole()));
+		services.AddDataProtection();
 		services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 		services.AddDbContext<CompatibilityDbContext>(options => options.UseNpgsql(fixture.ConnectionString));
 		services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
@@ -50,6 +53,7 @@ public sealed class AuthTestHarness : IAsyncDisposable
 			.AddSignInManager()
 			.AddDefaultTokenProviders();
 		services.AddScoped<IMagicLinkService, MagicLinkService>();
+		services.AddSingleton<MagicLinkDisplayHandoff>();
 		services.AddScoped<IMemberFavoritesService, MemberFavoritesService>();
 		services.AddScoped<ICurrentMemberAccessor, CurrentMemberAccessor>();
 		services.AddSingleton<IAuthEmailSender>(emailSender);

@@ -511,6 +511,28 @@ h1, h2, h3 {
         var(--app-surface);
 }
 
+.login-shortcut-warning {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 0.85rem;
+    padding: 0.85rem;
+    border: 1px solid rgba(180, 35, 24, 0.28);
+    border-radius: var(--app-radius-sm);
+    background: #fff3f1;
+    color: #7f1d16;
+}
+
+.login-shortcut-warning p {
+    font-weight: 750;
+}
+
+.login-shortcut-link {
+    display: block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
 .login-state--warning {
     border-color: rgba(161, 92, 0, 0.28);
     background:

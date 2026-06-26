@@ -1,7 +1,6 @@
 ﻿@page "/login"
 @using LinuxGameCompat.Services
-@rendermode InteractiveServer
-
+@inject MagicLinkDisplayHandoff MagicLinkDisplayHandoff
 <PageTitle>Login</PageTitle>
 
 <section class="login-page">
@@ -16,7 +15,18 @@
 		<div class="empty-state login-state login-state--success" role="status">
 			<p class="empty-state-kicker">Link requested</p>
 			<h2>Check your inbox</h2>
-			<p>If the address can receive member access links, a sign-in email is on its way.</p>
+			@if (GeneratedLoginLink is not null)
+			{
+				<p>This deployment is configured to show test sign-in links in the frontend.</p>
+				<div class="login-shortcut-warning">
+					<p>Test shortcut: anyone with this link can sign in as the requested member.</p>
+					<a class="login-shortcut-link" href="@GeneratedLoginLink.ToString()">@GeneratedLoginLink.ToString()</a>
+				</div>
+			}
+			else
+			{
+				<p>If the address can receive member access links, a sign-in email is on its way.</p>
+			}
 		</div>
 	}
 	else
@@ -67,6 +77,11 @@
 	[SupplyParameterFromQuery(Name = "requestFailed")]
 	private string? RequestFailedValue { get; set; }
 
+	[CascadingParameter]
+	private HttpContext? HttpContext { get; set; }
+
+	private Uri? GeneratedLoginLink { get; set; }
+
 	private bool Sent => SentValue == "1";
 
 	private bool Failed => FailedValue == "1";
@@ -74,4 +89,12 @@
 	private bool RequestFailed => RequestFailedValue == "1";
 
 	private string SafeReturnUrl => LocalReturnUrlNormalizer.Normalize(ReturnUrl);
+
+	protected override void OnInitialized()
+	{
+		if (Sent && HttpContext is not null && MagicLinkDisplayHandoff.TryConsume(HttpContext, out Uri? loginLink))
+		{
+			GeneratedLoginLink = loginLink;
+		}
+	}
 }
