@@ -232,24 +232,24 @@ No migration is required.
 
 #### Automated
 
-- [x] 2.1 Invalid generation config still returns command exit code `2`.
-- [x] 2.2 Tests assert validation of real invariants without depending on duplicated default property initializers.
-- [x] 2.3 Normal web startup-related tests remain green without requiring provider credentials.
-- [x] 2.4 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`.
+- [x] 2.1 Invalid generation config still returns command exit code `2`. — 0a83e53
+- [x] 2.2 Tests assert validation of real invariants without depending on duplicated default property initializers. — 0a83e53
+- [x] 2.3 Normal web startup-related tests remain green without requiring provider credentials. — 0a83e53
+- [x] 2.4 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`. — 0a83e53
 
 #### Manual
 
-- [x] 2.5 Human review confirms `appsettings.json` is the obvious place to inspect/change generation defaults.
+- [x] 2.5 Human review confirms `appsettings.json` is the obvious place to inspect/change generation defaults. — 0a83e53
 
 ### Phase 3: Behavior-Focused Test and Documentation Cleanup
 
 #### Automated
 
-- [ ] 3.1 Full tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
-- [ ] 3.2 Release build passes: `dotnet build LinuxGameCompat.sln --configuration Release --no-restore`.
+- [x] 3.1 Full tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
+- [x] 3.2 Release build passes: `dotnet build LinuxGameCompat.sln --configuration Release --no-restore`.
 
 #### Manual
 
-- [ ] 3.3 Fake-provider generation command exits without starting the web server.
-- [ ] 3.4 Normal web app startup remains unaffected by missing `OPENAI_API_KEY`.
-- [ ] 3.5 Human review confirms summary-generation code is easier to trace and no safety behavior was intentionally removed.
+- [x] 3.3 Fake-provider generation command exits without starting the web server.
+- [x] 3.4 Normal web app startup remains unaffected by missing `OPENAI_API_KEY`.
+- [x] 3.5 Human review confirms summary-generation code is easier to trace and no safety behavior was intentionally removed.
