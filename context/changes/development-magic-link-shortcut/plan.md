@@ -275,13 +275,13 @@ No database migration is required. Hosted test deployments that need the shortcu
 
 #### Automated
 
-- [x] 3.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [x] 3.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore`
-- [x] 3.3 New tests prove disabled/default behavior does not surface generated links.
-- [x] 3.4 New tests prove failed requests do not leave a frontend-display link.
+- [x] 3.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore` — 7956754
+- [x] 3.2 Tests pass: `dotnet test LinuxGameCompat.sln --no-restore` — 7956754
+- [x] 3.3 New tests prove disabled/default behavior does not surface generated links. — 7956754
+- [x] 3.4 New tests prove failed requests do not leave a frontend-display link. — 7956754
 
 #### Manual
 
-- [x] 3.5 Hosted or local run with `Auth:ShowMagicLinksInFrontend=true` can complete login without SMTP.
-- [x] 3.6 Hosted or local run with the flag disabled preserves the normal email-only UX.
-- [x] 3.7 Existing Development logs still include full magic links as before.
+- [x] 3.5 Hosted or local run with `Auth:ShowMagicLinksInFrontend=true` can complete login without SMTP. — 7956754
+- [x] 3.6 Hosted or local run with the flag disabled preserves the normal email-only UX. — 7956754
+- [x] 3.7 Existing Development logs still include full magic links as before. — 7956754
