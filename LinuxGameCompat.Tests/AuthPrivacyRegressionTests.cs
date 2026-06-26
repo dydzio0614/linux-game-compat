@@ -64,6 +64,76 @@ public sealed class AuthPrivacyRegressionTests(PostgreSqlFixture fixture) : ICla
 	}
 
 	[Fact]
+	public async Task MagicLinkRequest_AcceptedRequestDoesNotReturnLoginLinkByDefault()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+
+		var result = await harness.Service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"default-result@example.test",
+			"/",
+			new Uri("https://example.test"),
+			null,
+			null));
+
+		Assert.True(result.Accepted);
+		Assert.Null(result.LoginLink);
+		Assert.NotNull(emailSender.LastLoginLink);
+	}
+
+	[Fact]
+	public async Task MagicLinkRequest_OptInReturnsSameLoginLinkSentByEmailSender()
+	{
+		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();
+		await using var harness = AuthTestHarness.Create(fixture, emailSender);
+
+		var result = await harness.Service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"frontend-shortcut@example.test",
+			"/",
+			new Uri("https://example.test"),
+			null,
+			null,
+			IncludeGeneratedLoginLink: true));
+
+		Assert.True(result.Accepted);
+		Assert.Equal(emailSender.LastLoginLink, result.LoginLink);
+	}
+
+	[Fact]
+	public async Task MagicLinkRequest_OptInSendFailureKeepsSavedRequestAndReturnsLoginLink()
+	{
+		var emailSender = new AuthTestHarness.ThrowingAuthEmailSender();
+		var logProvider = new CapturingLoggerProvider();
+		await using var harness = AuthTestHarness.Create(
+			fixture,
+			emailSender,
+			configureLogging: builder =>
+			{
+				builder.ClearProviders();
+				builder.AddProvider(logProvider);
+			});
+
+		var result = await harness.Service.RequestLoginLinkAsync(new MagicLinkRequestInput(
+			"frontend-send-failure@example.test",
+			"/",
+			new Uri("https://example.test"),
+			null,
+			null,
+			IncludeGeneratedLoginLink: true));
+
+		var rawToken = AuthTestHarness.ExtractToken(emailSender.LastLoginLink);
+		var warning = Assert.Single(logProvider.Entries, entry => entry.Level == LogLevel.Warning);
+		var renderedWarning = $"{warning.Message}\n{warning.ExceptionText}";
+
+		Assert.True(result.Accepted);
+		Assert.Equal(emailSender.LastLoginLink, result.LoginLink);
+		Assert.True(await harness.DbContext.MagicLinkRequests.AnyAsync(request => request.NormalizedEmail == "FRONTEND-SEND-FAILURE@EXAMPLE.TEST"));
+		Assert.DoesNotContain(rawToken, renderedWarning, StringComparison.Ordinal);
+		Assert.DoesNotContain("token=", renderedWarning, StringComparison.OrdinalIgnoreCase);
+		Assert.DoesNotContain(emailSender.LastLoginLink.ToString(), renderedWarning, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public async Task MagicLinkConsumption_InvalidExpiredAndConsumedTokensDoNotCreateOrAdvanceMembers()
 	{
 		var emailSender = new AuthTestHarness.CapturingAuthEmailSender();

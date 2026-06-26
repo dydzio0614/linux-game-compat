@@ -37,10 +37,12 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddDataProtection();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IGameCompatibilityReadService, GameCompatibilityReadService>();
 builder.Services.AddScoped<IMemberFavoritesService, MemberFavoritesService>();
 builder.Services.AddScoped<IMagicLinkService, MagicLinkService>();
+builder.Services.AddSingleton<MagicLinkDisplayHandoff>();
 builder.Services.AddScoped<ICurrentMemberAccessor, CurrentMemberAccessor>();
 builder.Services.AddSingleton(TimeProvider.System);
 var generationSettings = new GenerationOptions();
@@ -124,9 +126,12 @@ app.MapPost("/auth/magic-link/request", async (
 	[FromForm] string? returnUrl,
 	HttpContext httpContext,
 	IMagicLinkService magicLinkService,
+	MagicLinkDisplayHandoff magicLinkDisplayHandoff,
 	IConfiguration configuration,
 	CancellationToken cancellationToken) =>
 {
+	magicLinkDisplayHandoff.Clear(httpContext);
+	var showMagicLinksInFrontend = configuration.GetValue<bool>("Auth:ShowMagicLinksInFrontend");
 	var publicBaseUri = AuthPublicBaseUriResolver.Resolve(
 		configuration,
 		httpContext.Request,
@@ -137,8 +142,17 @@ app.MapPost("/auth/magic-link/request", async (
 			returnUrl,
 			publicBaseUri,
 			httpContext.Connection.RemoteIpAddress?.ToString(),
-			httpContext.Request.Headers.UserAgent.ToString()),
+			httpContext.Request.Headers.UserAgent.ToString(),
+			IncludeGeneratedLoginLink: showMagicLinksInFrontend),
 		cancellationToken);
+	if (result.Accepted && result.LoginLink is not null)
+	{
+		magicLinkDisplayHandoff.Set(httpContext, result.LoginLink);
+	}
+	else
+	{
+		magicLinkDisplayHandoff.Clear(httpContext);
+	}
 
 	return Results.Redirect(result.Accepted ? "/login?sent=1" : "/login?requestFailed=1");
 }).DisableAntiforgery();

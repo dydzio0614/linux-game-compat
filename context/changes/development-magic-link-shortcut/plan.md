@@ -248,14 +248,14 @@ No database migration is required. Hosted test deployments that need the shortcu
 
 #### Automated
 
-- [ ] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
-- [ ] 1.2 Service tests prove accepted requests do not include a generated link by default.
-- [ ] 1.3 Service tests prove opted-in accepted requests include the same generated link sent through `IAuthEmailSender`.
-- [ ] 1.4 Existing auth/privacy tests for token hashing, send failure cleanup, replay, expiry, and return URL normalization still pass.
+- [x] 1.1 Build passes: `dotnet build LinuxGameCompat.sln --no-restore`
+- [x] 1.2 Service tests prove accepted requests do not include a generated link by default.
+- [x] 1.3 Service tests prove opted-in accepted requests include the same generated link sent through `IAuthEmailSender`.
+- [x] 1.4 Existing auth/privacy tests for token hashing, send failure cleanup, replay, expiry, and return URL normalization still pass.
 
 #### Manual
 
-- [ ] 1.5 With `Auth:ShowMagicLinksInFrontend` absent or false, submitting `/login` still shows only the existing inbox success message.
+- [x] 1.5 With `Auth:ShowMagicLinksInFrontend` absent or false, submitting `/login` still shows only the existing inbox success message.
 
 ### Phase 2: Login UI Display And Styling
 

@@ -5,9 +5,10 @@ public sealed record MagicLinkRequestInput(
 	string? ReturnUrl,
 	Uri PublicBaseUri,
 	string? RequestIpAddress,
-	string? UserAgent);
+	string? UserAgent,
+	bool IncludeGeneratedLoginLink = false);
 
-public sealed record MagicLinkRequestResult(bool Accepted);
+public sealed record MagicLinkRequestResult(bool Accepted, Uri? LoginLink = null);
 
 public sealed record MagicLinkConsumeResult(bool Succeeded, string RedirectUrl);
 

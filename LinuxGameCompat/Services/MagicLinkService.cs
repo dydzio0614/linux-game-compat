@@ -67,6 +67,15 @@ public sealed class MagicLinkService(
 		}
 		catch (Exception exception)
 		{
+			if (input.IncludeGeneratedLoginLink)
+			{
+				logger.LogWarning(
+					"Failed to send magic-link email to {NormalizedEmail}. The saved request remains available for configured frontend display. ExceptionType: {ExceptionType}",
+					normalizedEmail,
+					exception.GetType().Name);
+				return new MagicLinkRequestResult(Accepted: true, LoginLink: link);
+			}
+
 			dbContext.MagicLinkRequests.Remove(request);
 			await dbContext.SaveChangesAsync(cancellationToken);
 			logger.LogWarning(
@@ -76,7 +85,9 @@ public sealed class MagicLinkService(
 			return new MagicLinkRequestResult(Accepted: false);
 		}
 
-		return new MagicLinkRequestResult(Accepted: true);
+		return new MagicLinkRequestResult(
+			Accepted: true,
+			LoginLink: input.IncludeGeneratedLoginLink ? link : null);
 	}
 
 	public async Task<MagicLinkConsumeResult> ConsumeLoginLinkAsync(
