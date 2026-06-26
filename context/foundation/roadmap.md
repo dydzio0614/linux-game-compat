@@ -3,7 +3,7 @@ project: "Linux Compatibility Aggregator"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-25
+updated: 2026-06-26
 prd_version: 1
 main_goal: speed
 top_blocker: capacity
@@ -35,6 +35,7 @@ New people switching to Linux face decision paralysis because compatibility evid
 | S-04 | generated-compatibility-synthesis | user can see a generated source-linked compatibility summary when curated evidence exists | F-01, S-01 | US-01, FR-004, NFR generated or available summary | done |
 | S-05 | production-summary-generation-rollout | operator can run and measure bounded compatibility-summary generation on Railway | S-04 | Operational follow-up | planned |
 | S-06 | modernize-visual-presentation | user sees a more polished, modern Blazor UI instead of the current Bootstrap-default-like presentation | S-01, S-03, S-04 | UX quality follow-up | done |
+| S-07 | development-magic-link-shortcut | developer can complete register/login flows locally without a real email provider by seeing magic links instantly in the frontend | F-02 | Developer experience follow-up | planned |
 
 ## Streams
 
@@ -45,6 +46,7 @@ Navigation aid - groups items that share a Prerequisites chain. Canonical orderi
 | A | Lookup, synthesis, and member path | `F-01` -> `S-01`; `S-04` branches from `F-01` and `S-01`; `F-02` -> `S-02` follows `S-01` | Puts the lookup path first, then adds the generated synthesis that F-01 deliberately left for later and the member feature that depends on lookup. |
 | B | Catalog browsing | `S-03` | Uses `F-01` from Stream A, but stays behind the must-have launch path because browsing is nice-to-have. |
 | C | Visual polish | `S-06` | Modernizes the existing Blazor UI after the core user-facing pages exist, without replacing the frontend stack. |
+| D | Development auth ergonomics | `F-02` -> `S-07` | Keeps passwordless auth testable in local/dev environments before a real email provider is wired into every workflow. |
 
 ## Baseline
 
@@ -166,6 +168,19 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Because this is an instant-improvement overhaul rather than a long-term design system effort, scope must stay focused on visible quality gains in the existing Blazor project; creating a separate frontend project or switching frontend technology is out of scope.
 - **Status:** planned
 
+### S-07: Development magic link shortcut
+
+- **Outcome:** developer can complete register/login flows in local and development environments without configuring or depending on a real email provider, because generated magic links are shown immediately in the frontend after a register/login request.
+- **Change ID:** development-magic-link-shortcut
+- **PRD refs:** Developer experience follow-up to Access Control and FR-006
+- **Prerequisites:** F-02
+- **Parallel with:** S-05
+- **Blockers:** -
+- **Unknowns:**
+  - Should the shortcut be limited to `Development` environment only, or also available behind an explicit configuration flag for staging-style review apps? - Owner: user. Block: no.
+- **Risk:** The bypass must be impossible to expose accidentally in production; the implementation should keep the display path clearly environment/config gated and avoid logging reusable auth links more broadly than needed.
+- **Status:** planned
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID | Suggested issue title | Ready for `/10x-plan` | Notes |
@@ -178,6 +193,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-04 | generated-compatibility-synthesis | Add generated source-linked compatibility summaries | no | Blocked on LLM provider/model and cost/failure limits; depends on F-01 and S-01 |
 | S-05 | production-summary-generation-rollout | Roll out and measure production summary generation on Railway | no | Deferred operational follow-up; depends on S-04 |
 | S-06 | modernize-visual-presentation | Modernize visual presentation of the Blazor UI | yes | Instant-improvement UI overhaul; must stay in the existing Blazor frontend |
+| S-07 | development-magic-link-shortcut | Show passwordless register/login magic links in development UI | yes | Developer-only auth shortcut; depends on F-02 and must be gated away from production |
 
 ## Open Roadmap Questions
 
