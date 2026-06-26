@@ -245,11 +245,11 @@ No migration is required.
 
 #### Automated
 
-- [x] 3.1 Full tests pass: `dotnet test LinuxGameCompat.sln --no-restore`.
-- [x] 3.2 Release build passes: `dotnet build LinuxGameCompat.sln --configuration Release --no-restore`.
+- [x] 3.1 Full tests pass: `dotnet test LinuxGameCompat.sln --no-restore`. — def71f1
+- [x] 3.2 Release build passes: `dotnet build LinuxGameCompat.sln --configuration Release --no-restore`. — def71f1
 
 #### Manual
 
-- [x] 3.3 Fake-provider generation command exits without starting the web server.
-- [x] 3.4 Normal web app startup remains unaffected by missing `OPENAI_API_KEY`.
-- [x] 3.5 Human review confirms summary-generation code is easier to trace and no safety behavior was intentionally removed.
+- [x] 3.3 Fake-provider generation command exits without starting the web server. — def71f1
+- [x] 3.4 Normal web app startup remains unaffected by missing `OPENAI_API_KEY`. — def71f1
+- [x] 3.5 Human review confirms summary-generation code is easier to trace and no safety behavior was intentionally removed. — def71f1
