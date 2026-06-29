@@ -37,6 +37,7 @@ New people switching to Linux face decision paralysis because compatibility evid
 | S-06 | modernize-visual-presentation | user sees a more polished, modern Blazor UI instead of the current Bootstrap-default-like presentation | S-01, S-03, S-04 | UX quality follow-up | done |
 | S-07 | development-magic-link-shortcut | developer can complete register/login flows locally without a real email provider by seeing magic links instantly in the frontend | F-02 | Developer experience follow-up | done |
 | S-08 | simplify-summary-generation-code | maintainer can understand and change the S-04 summary-generation path without unnecessary datatypes, records, or test-driven indirection | S-04 | Maintainability follow-up | done |
+| S-09 | generate-evidence-claims-from-source-pages | user can see compatibility summaries backed by evidence claims generated from fetched source-page content, including a normalized source-native status | S-04 | US-01, FR-003, FR-004, Business Logic, NFR source links | ready |
 
 ## Streams
 
@@ -48,7 +49,7 @@ Navigation aid - groups items that share a Prerequisites chain. Canonical orderi
 | B | Catalog browsing | `S-03` | Uses `F-01` from Stream A, but stays behind the must-have launch path because browsing is nice-to-have. |
 | C | Visual polish | `S-06` | Modernizes the existing Blazor UI after the core user-facing pages exist, without replacing the frontend stack. |
 | D | Development auth ergonomics | `F-02` -> `S-07` | Keeps passwordless auth testable in local/dev environments before a real email provider is wired into every workflow. |
-| E | Summary generation maintainability | `S-04` -> `S-08` | Simplifies the generated-summary implementation after the feature exists, keeping configuration as the source of truth. |
+| E | Evidence and summary generation | `S-04` -> `S-08`; `S-09` branches from `S-04` | Keeps the existing summary path maintainable while extending its curated inputs with source-page-derived evidence claims. |
 
 ## Baseline
 
@@ -196,6 +197,20 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Refactoring should make the feature easier to read and safely operate, not redesign the generation workflow; default-parameter configuration files should stay the source of truth instead of duplicating caps or defaults in hardcoded validation checks.
 - **Status:** done
 
+### S-09: Generate evidence claims from source pages
+
+- **Outcome:** user can see compatibility summaries backed by evidence claims generated from fetched evidence-source webpage content, with the source-native status normalized into the app's compatibility vocabulary and claim text generated through the existing OpenAI integration.
+- **Change ID:** generate-evidence-claims-from-source-pages
+- **PRD refs:** US-01, FR-003, FR-004, Business Logic, NFR source links
+- **Prerequisites:** S-04
+- **Parallel with:** S-05, S-08
+- **Blockers:** -
+- **Unknowns:**
+  - Which supported evidence source should define the first webpage extraction contract, and which page content is authoritative enough to persist as claims? - Owner: user. Block: no.
+  - What fetched-content and generated-claim changes should make an existing summary stale and eligible for regeneration? - Owner: implementer. Block: no.
+- **Risk:** Source pages are untrusted and can change shape; generated claim text must remain bounded by fetched content and retain source traceability, while native-status normalization stays deterministic rather than being delegated to the model.
+- **Status:** ready
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID | Suggested issue title | Ready for `/10x-plan` | Notes |
@@ -210,6 +225,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-06 | modernize-visual-presentation | Modernize visual presentation of the Blazor UI | yes | Instant-improvement UI overhaul; must stay in the existing Blazor frontend |
 | S-07 | development-magic-link-shortcut | Show passwordless register/login magic links in development UI | yes | Developer-only auth shortcut; depends on F-02 and must be gated away from production |
 | S-08 | simplify-summary-generation-code | Simplify summary-generation code and config ownership | yes | Refactor S-04 for readability; remove speculative type design and hardcoded default/cap duplication where config should be authoritative |
+| S-09 | generate-evidence-claims-from-source-pages | Generate evidence claims from source webpage content | yes | Extend S-04 with bounded source-page fetching, deterministic native-status normalization, and OpenAI-generated source-linked claim text |
 
 ## Open Roadmap Questions
 
