@@ -36,7 +36,7 @@ New people switching to Linux face decision paralysis because compatibility evid
 | S-05 | production-summary-generation-rollout | operator can run and measure bounded compatibility-summary generation on Railway | S-04 | Operational follow-up | planned |
 | S-06 | modernize-visual-presentation | user sees a more polished, modern Blazor UI instead of the current Bootstrap-default-like presentation | S-01, S-03, S-04 | UX quality follow-up | done |
 | S-07 | development-magic-link-shortcut | developer can complete register/login flows locally without a real email provider by seeing magic links instantly in the frontend | F-02 | Developer experience follow-up | done |
-| S-08 | simplify-summary-generation-code | maintainer can understand and change the S-04 summary-generation path without unnecessary datatypes, records, or test-driven indirection | S-04 | Maintainability follow-up | planned |
+| S-08 | simplify-summary-generation-code | maintainer can understand and change the S-04 summary-generation path without unnecessary datatypes, records, or test-driven indirection | S-04 | Maintainability follow-up | done |
 
 ## Streams
 
@@ -194,7 +194,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Which current S-04 types and guard checks are still carrying useful production behavior versus leftover design scaffolding? - Owner: implementer. Block: no.
 - **Risk:** Refactoring should make the feature easier to read and safely operate, not redesign the generation workflow; default-parameter configuration files should stay the source of truth instead of duplicating caps or defaults in hardcoded validation checks.
-- **Status:** planned
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -231,6 +231,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-01: user can search for a game, choose a result, open details, and see current compatibility status with source-linked reasoning, caveats, and common workarounds.** — Archived 2026-05-31 → `context/archive/2026-05-31-anonymous-compatibility-lookup/`. Lesson: —.
 - **F-02: (foundation) passwordless member identity is available so favorites can belong to a logged-in member.** — Archived 2026-06-02 → `context/archive/2026-05-31-passwordless-member-access/`. Lesson: —.
 - **S-07: developer can complete register/login flows in local and development environments without configuring or depending on a real email provider, because generated magic links are shown immediately in the frontend after a register/login request.** — Archived 2026-06-29 → `context/archive/2026-06-26-development-magic-link-shortcut/`. Lesson: —.
+- **S-08: maintainer can understand and change the S-04 summary-generation path without unnecessary datatypes, records, or abstractions that exist mainly for hypothetical future extension or test convenience.** — Archived 2026-06-29 → `context/archive/2026-06-26-simplify-summary-generation-code/`. Lesson: —.
 - **S-03: user can browse the available game catalog without submitting a search phrase.** — Archived 2026-06-02 → `context/archive/2026-05-31-browse-available-games/`. Lesson: —.
 - **S-02: logged-in member can save games from detail pages and view a personal favorites list with current compatibility status for each saved game.** — Archived 2026-06-14 → `context/archive/2026-06-14-member-favorites-tracking/`. Lesson: —.
 - **S-04: user can see a generated source-linked compatibility summary for a game when curated evidence exists, with status, reasoning, caveats, workarounds, and uncertainty tied back to source claims.** — Archived 2026-06-25 → `context/archive/2026-06-14-generated-compatibility-synthesis/`. Lesson: —.
