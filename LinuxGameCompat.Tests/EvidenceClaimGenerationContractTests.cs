@@ -1,10 +1,18 @@
 using LinuxGameCompat.Data;
 using LinuxGameCompat.Services.EvidenceGeneration;
+using System.Text.Json;
 
 namespace LinuxGameCompat.Tests;
 
 public sealed class EvidenceClaimGenerationContractTests
 {
+	[Fact]
+	public void Structured_output_schema_is_valid_json_with_an_object_root()
+	{
+		using JsonDocument schema = JsonDocument.Parse(EvidenceClaimPromptContract.OutputSchemaJson);
+		Assert.Equal("object", schema.RootElement.GetProperty("type").GetString());
+	}
+
 	[Fact]
 	public void Prompt_counts_exact_facts_and_rejects_over_budget_input()
 	{
@@ -21,17 +29,17 @@ public sealed class EvidenceClaimGenerationContractTests
 	public void Output_validator_accepts_only_bounded_unique_non_status_claims()
 	{
 		IReadOnlyList<GeneratedEvidenceClaim> claims = EvidenceClaimOutputValidator.Parse("""
-			[{"claimType":"Caveat","claimValue":"Anti-cheat","claimText":"Multiplayer is unavailable."}]
+			{"claims":[{"claimType":"Caveat","claimValue":"Anti-cheat","claimText":"Multiplayer is unavailable."}]}
 			""", 8);
 
 		GeneratedEvidenceClaim claim = Assert.Single(claims);
 		Assert.Equal(EvidenceClaimType.Caveat, claim.ClaimType);
 		Assert.Throws<EvidenceClaimProviderException>(() => EvidenceClaimOutputValidator.Parse(
-			"[{\"claimType\":\"Status\",\"claimValue\":\"Gold\",\"claimText\":\"status\"}]", 8));
+			"{\"claims\":[{\"claimType\":\"Status\",\"claimValue\":\"Gold\",\"claimText\":\"status\"}]}", 8));
 		Assert.Throws<EvidenceClaimProviderException>(() => EvidenceClaimOutputValidator.Parse(
-			"[{\"claimType\":\"Note\",\"claimValue\":\"x\",\"claimText\":\"y\",\"extra\":true}]", 8));
+			"{\"claims\":[{\"claimType\":\"Note\",\"claimValue\":\"x\",\"claimText\":\"y\",\"extra\":true}]}", 8));
 		Assert.Throws<EvidenceClaimProviderException>(() => EvidenceClaimOutputValidator.Parse(
-			"[{\"claimType\":\"Note\",\"claimValue\":\"x\",\"claimText\":\"y\"},{\"claimType\":\"Note\",\"claimValue\":\"X\",\"claimText\":\"Y\"}]", 8));
+			"{\"claims\":[{\"claimType\":\"Note\",\"claimValue\":\"x\",\"claimText\":\"y\"},{\"claimType\":\"Note\",\"claimValue\":\"X\",\"claimText\":\"Y\"}]}", 8));
 	}
 
 	[Fact]

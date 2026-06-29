@@ -21,7 +21,7 @@ public sealed class OpenAiCompatibilitySummaryProvider(ResponsesClient client, G
 		{
 			TextFormat = ResponseTextFormat.CreateJsonSchemaFormat("compatibility_summary", OutputSchema, null, true)
 		};
-		textOptions.Patch.Set("verbosity"u8, "low");
+		textOptions.Patch.Set("$.verbosity"u8, "low");
 		CreateResponseOptions options = new()
 		{
 			Model = request.Model,

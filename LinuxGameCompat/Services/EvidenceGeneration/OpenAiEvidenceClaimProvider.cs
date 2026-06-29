@@ -13,7 +13,7 @@ public sealed class OpenAiEvidenceClaimProvider(ResponsesClient client, Evidence
 		if (!string.Equals(request.Model, settings.Model, StringComparison.Ordinal) || request.MaximumOutputTokens is < 1 || request.MaximumOutputTokens > 800)
 			throw new EvidenceClaimProviderException("invalid_request", "The evidence provider request violates contract v1.");
 		ResponseTextOptions text = new() { TextFormat = ResponseTextFormat.CreateJsonSchemaFormat("evidence_claims", OutputSchema, null, true) };
-		text.Patch.Set("verbosity"u8, "low");
+		text.Patch.Set("$.verbosity"u8, "low");
 		CreateResponseOptions options = new()
 		{
 			Model = request.Model, Instructions = EvidenceClaimPromptContract.Instructions,

@@ -290,14 +290,14 @@ The migration is additive: it introduces the import-state table and relationship
 
 #### Automated
 
-- [ ] 3.1 Command parsing, selection, no-op, force, aggregation, exit-code, lock, and cancellation tests pass
-- [ ] 3.2 PostgreSQL end-to-end tests cover changed claims followed by summary success/failure and concurrent evidence rechecks
-- [ ] 3.3 Full solution verification passes
-- [ ] 3.4 Release build succeeds
-- [ ] 3.5 EF model has no uncommitted schema drift
+- [x] 3.1 Command parsing, selection, no-op, force, aggregation, exit-code, lock, and cancellation tests pass
+- [x] 3.2 PostgreSQL end-to-end tests cover changed claims followed by summary success/failure and concurrent evidence rechecks
+- [x] 3.3 Full solution verification passes
+- [x] 3.4 Release build succeeds
+- [x] 3.5 EF model has no uncommitted schema drift
 
 #### Manual
 
-- [ ] 3.6 After all automated checks, reviewed migration applies cleanly
-- [ ] 3.7 A development fake-provider run succeeds, and its immediate unchanged rerun reports no claim or summary provider work
-- [ ] 3.8 A bounded live `--slug` run produces source-linked claims and a current summary, and a subsequent unchanged run makes no OpenAI calls
+- [x] 3.6 After all automated checks, reviewed migration applies cleanly
+- [x] 3.7 A development fake-provider run succeeds, and its immediate unchanged rerun reports no claim or summary provider work
+- [x] 3.8 A bounded live `--slug` run produces source-linked claims and a current summary, and a subsequent unchanged run makes no OpenAI calls
