@@ -23,7 +23,7 @@ public sealed class ProtonDbSourceAdapter(ISourceFetchTransport transport)
 		Uri fetchUri = new($"https://{CitationHost}/api/v1/reports/summaries/{source.SourceGameId}.json");
 		using SourceFetchResult response = await transport.FetchAsync(
 			new SourceFetchRequest(fetchUri, candidate => IsExactFetchUri(candidate, source.SourceGameId)), cancellationToken);
-		return Normalize(source.SourceGameId, response.Document.RootElement);
+		return Normalize(source.SourceGameId, response.Document.RootElement) with { ETag = response.ETag, LastModifiedAt = response.LastModifiedAt };
 	}
 
 	public static void ValidateSource(SourceReferenceInput source)

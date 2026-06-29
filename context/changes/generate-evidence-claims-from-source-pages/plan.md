@@ -264,27 +264,27 @@ The migration is additive: it introduces the import-state table and relationship
 
 #### Automated
 
-- [x] 1.1 Application and tests compile
-- [x] 1.2 Adapter, URL, redirect, content-type, byte-limit, and normalization tests pass
-- [x] 1.3 EF model matches the generated migration
+- [x] 1.1 Application and tests compile — ba88b79
+- [x] 1.2 Adapter, URL, redirect, content-type, byte-limit, and normalization tests pass — ba88b79
+- [x] 1.3 EF model matches the generated migration — ba88b79
 
 #### Manual
 
-- [x] 1.4 Representative live ProtonDB and AWA responses still match the checked-in adapter contracts without importing data
-- [x] 1.5 Generated migration and model snapshot are reviewed together for the one-to-one import-state contract
+- [x] 1.4 Representative live ProtonDB and AWA responses still match the checked-in adapter contracts without importing data — ba88b79
+- [x] 1.5 Generated migration and model snapshot are reviewed together for the one-to-one import-state contract — ba88b79
 
 ### Phase 2: Grounded Claim Generation and Reconciliation
 
 #### Automated
 
-- [ ] 2.1 Prompt budgeting and strict provider-output contract tests pass
-- [ ] 2.2 PostgreSQL import-state, idempotency, ownership, atomicity, and failure-preservation tests pass
-- [ ] 2.3 Existing summary-generation contract tests remain green
+- [x] 2.1 Prompt budgeting and strict provider-output contract tests pass
+- [x] 2.2 PostgreSQL import-state, idempotency, ownership, atomicity, and failure-preservation tests pass
+- [x] 2.3 Existing summary-generation contract tests remain green
 
 #### Manual
 
-- [ ] 2.4 Fixture-driven output demonstrates deterministic status claims and source-grounded non-status claims without unsupported advice
-- [ ] 2.5 Failure records are bounded and contain no raw page bodies, prompts, credentials, or provider response payloads
+- [x] 2.4 Fixture-driven output demonstrates deterministic status claims and source-grounded non-status claims without unsupported advice
+- [x] 2.5 Failure records are bounded and contain no raw page bodies, prompts, credentials, or provider response payloads
 
 ### Phase 3: Unified Compatibility Refresh Command
 

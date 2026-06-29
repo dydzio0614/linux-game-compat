@@ -33,6 +33,8 @@ public sealed class AreWeAntiCheatYetSourceAdapter(
 		["Planned"] = "Planned"
 	};
 	private Task<IReadOnlyDictionary<string, JsonElement>>? _recordsTask;
+	private string? _etag;
+	private DateTimeOffset? _lastModifiedAt;
 
 	public async Task<NormalizedSourceFacts> FetchAsync(SourceReferenceInput source, CancellationToken cancellationToken = default)
 	{
@@ -40,7 +42,7 @@ public sealed class AreWeAntiCheatYetSourceAdapter(
 		IReadOnlyDictionary<string, JsonElement> records = await GetRecordsAsync(cancellationToken);
 		if (!records.TryGetValue(source.SourceGameId, out JsonElement record))
 			throw new EvidenceSourceException("not_found", "The AWA source record was not found.");
-		return Normalize(source.SourceGameId, record, tokenCounter, options.MaximumInputTokens);
+		return Normalize(source.SourceGameId, record, tokenCounter, options.MaximumInputTokens) with { ETag = _etag, LastModifiedAt = _lastModifiedAt };
 	}
 
 	public static void ValidateSource(SourceReferenceInput source)
@@ -95,6 +97,8 @@ public sealed class AreWeAntiCheatYetSourceAdapter(
 		Uri uri = new(DataUrl);
 		using SourceFetchResult response = await transport.FetchAsync(
 			new SourceFetchRequest(uri, candidate => candidate == uri, AllowPlainText: true), cancellationToken);
+		_etag = response.ETag;
+		_lastModifiedAt = response.LastModifiedAt;
 		if (response.Document.RootElement.ValueKind != JsonValueKind.Array)
 			throw new EvidenceSourceException("invalid_payload", "The AWA dataset must be a JSON array.");
 		Dictionary<string, JsonElement> records = new(StringComparer.Ordinal);

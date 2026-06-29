@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using LinuxGameCompat.Data;
 
 namespace LinuxGameCompat.Services.EvidenceGeneration;
 
@@ -11,7 +12,24 @@ public sealed record NormalizedSourceFacts(
 	string NativeStatus,
 	string ContractVersion,
 	string ContentHash,
-	string Json);
+	string Json,
+	string? ETag = null,
+	DateTimeOffset? LastModifiedAt = null);
+
+public interface IEvidenceSourceFactsProvider
+{
+	Task<NormalizedSourceFacts> FetchAsync(SourceSystemType sourceType, SourceReferenceInput source, CancellationToken cancellationToken);
+}
+
+public sealed class EvidenceSourceFactsProvider(ProtonDbSourceAdapter protonDb, AreWeAntiCheatYetSourceAdapter awa) : IEvidenceSourceFactsProvider
+{
+	public Task<NormalizedSourceFacts> FetchAsync(SourceSystemType sourceType, SourceReferenceInput source, CancellationToken cancellationToken) => sourceType switch
+	{
+		SourceSystemType.ProtonDb => protonDb.FetchAsync(source, cancellationToken),
+		SourceSystemType.AreWeAntiCheatYet => awa.FetchAsync(source, cancellationToken),
+		_ => throw new EvidenceSourceException("unsupported_source", "The source type is not supported for evidence generation.")
+	};
+}
 
 public sealed class EvidenceSourceException(string code, string message, Exception? innerException = null)
 	: Exception(message, innerException)
