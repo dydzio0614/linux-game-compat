@@ -3,7 +3,7 @@ project: "Linux Compatibility Aggregator"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-26
+updated: 2026-06-29
 prd_version: 1
 main_goal: speed
 top_blocker: capacity
@@ -35,7 +35,7 @@ New people switching to Linux face decision paralysis because compatibility evid
 | S-04 | generated-compatibility-synthesis | user can see a generated source-linked compatibility summary when curated evidence exists | F-01, S-01 | US-01, FR-004, NFR generated or available summary | done |
 | S-05 | production-summary-generation-rollout | operator can run and measure bounded compatibility-summary generation on Railway | S-04 | Operational follow-up | planned |
 | S-06 | modernize-visual-presentation | user sees a more polished, modern Blazor UI instead of the current Bootstrap-default-like presentation | S-01, S-03, S-04 | UX quality follow-up | done |
-| S-07 | development-magic-link-shortcut | developer can complete register/login flows locally without a real email provider by seeing magic links instantly in the frontend | F-02 | Developer experience follow-up | planned |
+| S-07 | development-magic-link-shortcut | developer can complete register/login flows locally without a real email provider by seeing magic links instantly in the frontend | F-02 | Developer experience follow-up | done |
 | S-08 | simplify-summary-generation-code | maintainer can understand and change the S-04 summary-generation path without unnecessary datatypes, records, or test-driven indirection | S-04 | Maintainability follow-up | planned |
 
 ## Streams
@@ -181,7 +181,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Should the shortcut be limited to `Development` environment only, or also available behind an explicit configuration flag for staging-style review apps? - Owner: user. Block: no.
 - **Risk:** The bypass must be impossible to expose accidentally in production; the implementation should keep the display path clearly environment/config gated and avoid logging reusable auth links more broadly than needed.
-- **Status:** planned
+- **Status:** done
 
 ### S-08: Simplify summary generation code
 
@@ -230,6 +230,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **F-01: (foundation) initial source-backed game catalog and compatibility evidence path exists for the first lookup flow.** — Archived 2026-05-31 → `context/archive/2026-05-27-minimal-evidence-baseline/`. Lesson: —.
 - **S-01: user can search for a game, choose a result, open details, and see current compatibility status with source-linked reasoning, caveats, and common workarounds.** — Archived 2026-05-31 → `context/archive/2026-05-31-anonymous-compatibility-lookup/`. Lesson: —.
 - **F-02: (foundation) passwordless member identity is available so favorites can belong to a logged-in member.** — Archived 2026-06-02 → `context/archive/2026-05-31-passwordless-member-access/`. Lesson: —.
+- **S-07: developer can complete register/login flows in local and development environments without configuring or depending on a real email provider, because generated magic links are shown immediately in the frontend after a register/login request.** — Archived 2026-06-29 → `context/archive/2026-06-26-development-magic-link-shortcut/`. Lesson: —.
 - **S-03: user can browse the available game catalog without submitting a search phrase.** — Archived 2026-06-02 → `context/archive/2026-05-31-browse-available-games/`. Lesson: —.
 - **S-02: logged-in member can save games from detail pages and view a personal favorites list with current compatibility status for each saved game.** — Archived 2026-06-14 → `context/archive/2026-06-14-member-favorites-tracking/`. Lesson: —.
 - **S-04: user can see a generated source-linked compatibility summary for a game when curated evidence exists, with status, reasoning, caveats, workarounds, and uncertainty tied back to source claims.** — Archived 2026-06-25 → `context/archive/2026-06-14-generated-compatibility-synthesis/`. Lesson: —.
