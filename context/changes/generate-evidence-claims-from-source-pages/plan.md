@@ -277,27 +277,27 @@ The migration is additive: it introduces the import-state table and relationship
 
 #### Automated
 
-- [x] 2.1 Prompt budgeting and strict provider-output contract tests pass
-- [x] 2.2 PostgreSQL import-state, idempotency, ownership, atomicity, and failure-preservation tests pass
-- [x] 2.3 Existing summary-generation contract tests remain green
+- [x] 2.1 Prompt budgeting and strict provider-output contract tests pass — bf713c4
+- [x] 2.2 PostgreSQL import-state, idempotency, ownership, atomicity, and failure-preservation tests pass — bf713c4
+- [x] 2.3 Existing summary-generation contract tests remain green — bf713c4
 
 #### Manual
 
-- [x] 2.4 Fixture-driven output demonstrates deterministic status claims and source-grounded non-status claims without unsupported advice
-- [x] 2.5 Failure records are bounded and contain no raw page bodies, prompts, credentials, or provider response payloads
+- [x] 2.4 Fixture-driven output demonstrates deterministic status claims and source-grounded non-status claims without unsupported advice — bf713c4
+- [x] 2.5 Failure records are bounded and contain no raw page bodies, prompts, credentials, or provider response payloads — bf713c4
 
 ### Phase 3: Unified Compatibility Refresh Command
 
 #### Automated
 
-- [x] 3.1 Command parsing, selection, no-op, force, aggregation, exit-code, lock, and cancellation tests pass
-- [x] 3.2 PostgreSQL end-to-end tests cover changed claims followed by summary success/failure and concurrent evidence rechecks
-- [x] 3.3 Full solution verification passes
-- [x] 3.4 Release build succeeds
-- [x] 3.5 EF model has no uncommitted schema drift
+- [x] 3.1 Command parsing, selection, no-op, force, aggregation, exit-code, lock, and cancellation tests pass — 32df07f
+- [x] 3.2 PostgreSQL end-to-end tests cover changed claims followed by summary success/failure and concurrent evidence rechecks — 32df07f
+- [x] 3.3 Full solution verification passes — 32df07f
+- [x] 3.4 Release build succeeds — 32df07f
+- [x] 3.5 EF model has no uncommitted schema drift — 32df07f
 
 #### Manual
 
-- [x] 3.6 After all automated checks, reviewed migration applies cleanly
-- [x] 3.7 A development fake-provider run succeeds, and its immediate unchanged rerun reports no claim or summary provider work
-- [x] 3.8 A bounded live `--slug` run produces source-linked claims and a current summary, and a subsequent unchanged run makes no OpenAI calls
+- [x] 3.6 After all automated checks, reviewed migration applies cleanly — 32df07f
+- [x] 3.7 A development fake-provider run succeeds, and its immediate unchanged rerun reports no claim or summary provider work — 32df07f
+- [x] 3.8 A bounded live `--slug` run produces source-linked claims and a current summary, and a subsequent unchanged run makes no OpenAI calls — 32df07f
