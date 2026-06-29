@@ -76,12 +76,22 @@ public sealed class EvidencePromptBuilder(IGenerationTokenCounter tokenCounter)
 
 	private static string FormatPrompt(IEnumerable<GenerationEvidenceClaim> claims)
 	{
-		StringBuilder text = new("Summarize practical Linux/Proton compatibility using only the evidence below. Return a normalized status and concise plain-text summary. Raw sources remain authoritative.\n");
-		foreach (GenerationEvidenceClaim claim in claims)
-			text.Append("- ").Append(claim.ClaimType).Append(" | ").Append(claim.SourceName).Append(" | ").Append(claim.ClaimValue)
-				.Append(" | ").Append(claim.ClaimText).Append(" | ").Append(claim.ObservedAt.ToUniversalTime().ToString("O"))
-				.Append(" | ").Append(claim.SourceUrl).Append('\n');
-		return text.ToString();
+		return JsonSerializer.Serialize(new
+		{
+			version = CanonicalEvidence.ContractVersion,
+			task = "Summarize practical Linux/Proton compatibility. Return a normalized status and concise plain-text summary. Raw sources remain authoritative.",
+			evidence = claims.Select(claim => new
+			{
+				claimType = claim.ClaimType.ToString(),
+				sourceType = claim.SourceType.ToString(),
+				sourceName = claim.SourceName,
+				sourceGameId = claim.SourceGameId,
+				sourceUrl = claim.SourceUrl,
+				claimValue = claim.ClaimValue,
+				claimText = claim.ClaimText,
+				observedAt = claim.ObservedAt.ToUniversalTime().ToString("O")
+			})
+		});
 	}
 }
 

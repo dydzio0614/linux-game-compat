@@ -1,29 +1,14 @@
 using System.Text.Json;
-using SharpToken;
-
 namespace LinuxGameCompat.Services.EvidenceGeneration;
-
-public interface IEvidenceFactTokenCounter
-{
-	int Count(string text);
-}
-
-public sealed class OpenAiEvidenceFactTokenCounter : IEvidenceFactTokenCounter
-{
-	private readonly GptEncoding _encoding = GptEncoding.GetEncoding("o200k_base");
-
-	public int Count(string text) => _encoding.Encode(text).Count;
-}
 
 public sealed class AreWeAntiCheatYetSourceAdapter(
 	ISourceFetchTransport transport,
-	IEvidenceFactTokenCounter tokenCounter,
+	IEvidenceClaimTokenCounter tokenCounter,
 	EvidenceGenerationOptions options)
 {
 	public const string ContractVersion = "awa-games-v1";
 	public const string DataUrl = "https://raw.githubusercontent.com/AreWeAntiCheatYet/AreWeAntiCheatYet/refs/heads/master/games.json";
 	private const string CitationHost = "areweanticheatyet.com";
-	private const int PromptFramingTokenReserve = 512;
 	private static readonly IReadOnlyDictionary<string, string> Statuses = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 	{
 		["Supported"] = "Supported",
@@ -56,7 +41,7 @@ public sealed class AreWeAntiCheatYetSourceAdapter(
 			throw new EvidenceSourceException("invalid_citation_url", "The AWA citation URL does not match the source game ID.");
 	}
 
-	internal static NormalizedSourceFacts Normalize(string sourceGameId, JsonElement record, IEvidenceFactTokenCounter tokenCounter, int maximumInputTokens)
+	internal static NormalizedSourceFacts Normalize(string sourceGameId, JsonElement record, IEvidenceClaimTokenCounter tokenCounter, int maximumInputTokens)
 	{
 		if (record.ValueKind != JsonValueKind.Object) throw new EvidenceSourceException("invalid_payload", "The AWA game record must be a JSON object.");
 		string statusText = RequiredString(record, "status");
@@ -72,7 +57,7 @@ public sealed class AreWeAntiCheatYetSourceAdapter(
 		{
 			var facts = new { status, dateChanged, antiCheats, notes, updates };
 			NormalizedSourceFacts normalized = SourceFactSerializer.Create(sourceGameId, status, ContractVersion, facts);
-			if (tokenCounter.Count(normalized.Json) + PromptFramingTokenReserve <= maximumInputTokens) return normalized;
+			if (EvidenceClaimPromptBuilder.CountInputTokens(normalized.Json, tokenCounter) <= maximumInputTokens) return normalized;
 			if (updates.Count > 0) { updates.RemoveAt(0); continue; }
 			if (notes.Count > 0) { notes.RemoveAt(notes.Count - 1); continue; }
 			if (antiCheats.Count > 0) { antiCheats.RemoveAt(antiCheats.Count - 1); continue; }

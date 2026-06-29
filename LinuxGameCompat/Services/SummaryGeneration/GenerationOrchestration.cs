@@ -39,11 +39,15 @@ public sealed class CompatibilitySummaryGenerator(
 		if (!shouldGenerate) return new SummaryGenerationResult(SummaryGenerationOutcome.Skipped);
 
 		DateTimeOffset attemptedAt = timeProvider.GetUtcNow();
+		int inputTokens = 0;
+		int outputTokens = 0;
 		try
 		{
 			PromptSelection selection = promptBuilder.Build(candidate.Claims, settings.MaximumClaims, settings.MaximumInputTokens);
 			CompatibilitySummaryProviderResult result = await provider.GenerateAsync(
 				new CompatibilitySummaryProviderRequest(settings.Model, selection.Prompt, settings.MaximumOutputTokens), cancellationToken);
+			inputTokens = result.InputTokens;
+			outputTokens = result.OutputTokens;
 			dbContext.ChangeTracker.Clear();
 			bool evidenceChanged;
 			IDbContextTransaction? transaction = dbContext.Database.CurrentTransaction;
@@ -96,9 +100,9 @@ public sealed class CompatibilitySummaryGenerator(
 			{
 				dbContext.ChangeTracker.Clear();
 				await MarkFailureAsync(gameId, attemptedAt, "evidence_changed", "Evidence changed during generation; output was discarded.", cancellationToken);
-				return new SummaryGenerationResult(SummaryGenerationOutcome.Failed);
+				return new SummaryGenerationResult(SummaryGenerationOutcome.Failed, inputTokens, outputTokens);
 			}
-			return new SummaryGenerationResult(SummaryGenerationOutcome.Generated, result.InputTokens, result.OutputTokens);
+			return new SummaryGenerationResult(SummaryGenerationOutcome.Generated, inputTokens, outputTokens);
 		}
 		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
 		catch (Exception exception)
@@ -107,7 +111,7 @@ public sealed class CompatibilitySummaryGenerator(
 			string errorCode = exception is CompatibilitySummaryProviderException providerException ? $"provider_{providerException.Kind.ToString().ToLowerInvariant()}" : "generation_failed";
 			string text = string.IsNullOrWhiteSpace(exception.Message) ? "Summary generation failed." : exception.Message.Trim();
 			await MarkFailureAsync(gameId, attemptedAt, errorCode, text[..Math.Min(text.Length, 2000)], cancellationToken);
-			return new SummaryGenerationResult(SummaryGenerationOutcome.Failed);
+			return new SummaryGenerationResult(SummaryGenerationOutcome.Failed, inputTokens, outputTokens);
 		}
 	}
 

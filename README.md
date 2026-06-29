@@ -117,9 +117,9 @@ Apply migrations explicitly before deploying or running a new generator image:
 dotnet ef database update --project LinuxGameCompat/LinuxGameCompat.csproj
 ```
 
-For Railway, run the equivalent command against the production `DATABASE_URL` only after reviewing the pending migration and taking the normal database backup/rollback precautions. The summary-attempt migration is additive and nullable; application rollback does not reverse the database migration.
+For Railway, run the equivalent command against the production `DATABASE_URL` only after reviewing the pending migration and taking the normal database backup/rollback precautions. `AddSourceReferenceImportState` is additive, creates nullable import metadata, and does not rewrite existing claims. Before the first live import, back up persistent data: the first successful import takes ownership of supported external references and may replace seeded or existing claims, and an application rollback does not restore claims that were replaced.
 
-On a failed run, inspect the aggregate command output and the operator-only `GameCompatibilitySummaries.ErrorCode` and `ErrorMessage` columns. Provider errors are sanitized and bounded and are never exposed by the public read model. Fix credentials, configuration, connectivity, or source data as indicated, then rerun the same bounded command. Failed refreshes preserve the last successful prose and public status while marking it stale.
+On a failed run, inspect the aggregate command output, `SourceReferenceImportStates.ErrorCode` and `ErrorMessage` for acquisition or claim-generation failures, and `GameCompatibilitySummaries.ErrorCode` and `ErrorMessage` for summary-generation failures. These operator-only errors are sanitized and bounded and are never exposed by the public read model. Fix credentials, configuration, connectivity, or source data as indicated, then rerun the same bounded command. Failed refreshes preserve last-known-good claims, prose, and public status while marking the summary stale.
 
 ## Tests
 

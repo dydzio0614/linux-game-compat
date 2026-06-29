@@ -134,6 +134,8 @@ public sealed class PostgreSqlCompatibilityTests(PostgreSqlFixture fixture) : IC
 			.SingleAsync(item => item.Game.Slug == "baldurs-gate-3");
 
 		Assert.Equal(SummaryGenerationOutcome.Failed, result.Outcome);
+		Assert.Equal(10, result.InputTokens);
+		Assert.Equal(5, result.OutputTokens);
 		Assert.Equal("evidence_changed", summary.ErrorCode);
 		Assert.NotEqual("Stale output.", summary.SummaryText);
 		Assert.True(summary.IsStale);

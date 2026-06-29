@@ -110,6 +110,21 @@ public sealed class SourceFetchTests
 			notFound.FetchAsync(Request("https://source.test/data.json"), CancellationToken.None))).Code);
 	}
 
+	[Fact]
+	public async Task Fetch_timeout_bounds_a_stalled_response_body()
+	{
+		EvidenceGenerationOptions options = EvidenceSourceAdapterTests.ValidOptions();
+		options.FetchTimeoutSeconds = 1;
+		HttpResponseMessage response = new(HttpStatusCode.OK) { Content = new StreamContent(new StallingStream()) };
+		response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+		SourceFetchTransport transport = new(new HttpClient(new SequenceHandler(response)), options);
+
+		EvidenceSourceException exception = await Assert.ThrowsAsync<EvidenceSourceException>(() =>
+			transport.FetchAsync(Request("https://source.test/data.json"), CancellationToken.None));
+
+		Assert.Equal("fetch_timeout", exception.Code);
+	}
+
 	private static SourceFetchTransport CreateTransport(HttpMessageHandler handler) =>
 		new(new HttpClient(handler), EvidenceSourceAdapterTests.ValidOptions());
 
@@ -144,6 +159,25 @@ public sealed class SourceFetchTests
 			CallCount++;
 			RequestUris.Add(request.RequestUri!);
 			return Task.FromResult(_responses.Dequeue());
+		}
+	}
+
+	private sealed class StallingStream : Stream
+	{
+		public override bool CanRead => true;
+		public override bool CanSeek => false;
+		public override bool CanWrite => false;
+		public override long Length => throw new NotSupportedException();
+		public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+		public override void Flush() { }
+		public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+		public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+		public override void SetLength(long value) => throw new NotSupportedException();
+		public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+		public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+		{
+			await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+			return 0;
 		}
 	}
 }

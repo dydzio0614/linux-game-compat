@@ -20,10 +20,13 @@ public sealed class EvidenceClaimPromptBuilder(IEvidenceClaimTokenCounter tokenC
 	public EvidenceClaimPrompt Build(NormalizedSourceFacts facts, int maximumInputTokens)
 	{
 		ArgumentNullException.ThrowIfNull(facts);
-		int inputTokens = tokenCounter.Count(facts.Json) + tokenCounter.Count(EvidenceClaimPromptContract.Instructions) +
-			tokenCounter.Count(EvidenceClaimPromptContract.OutputSchemaJson) + EvidenceClaimPromptContract.ProtocolTokenReserve;
+		int inputTokens = CountInputTokens(facts.Json, tokenCounter);
 		if (inputTokens > maximumInputTokens)
 			throw new EvidenceClaimProviderException("prompt_budget_exceeded", $"The evidence prompt exceeds {maximumInputTokens} input tokens.");
 		return new EvidenceClaimPrompt(facts.Json, inputTokens);
 	}
+
+	internal static int CountInputTokens(string factsJson, IEvidenceClaimTokenCounter counter) =>
+		counter.Count(factsJson) + counter.Count(EvidenceClaimPromptContract.Instructions) +
+		counter.Count(EvidenceClaimPromptContract.OutputSchemaJson) + EvidenceClaimPromptContract.ProtocolTokenReserve;
 }

@@ -1,5 +1,6 @@
 using LinuxGameCompat.Data;
 using LinuxGameCompat.Services.EvidenceGeneration;
+using LinuxGameCompat.Services.SummaryGeneration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -79,6 +80,87 @@ public sealed class PostgreSqlEvidenceGenerationTests(PostgreSqlFixture fixture)
 		await transaction.RollbackAsync();
 	}
 
+	[Fact]
+	public async Task Partial_provider_failure_reports_known_token_usage()
+	{
+		await using CompatibilityDbContext dbContext = fixture.CreateDbContext();
+		await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync();
+		EvidenceRefreshService service = CreateService(dbContext, new FakeFactsProvider(), new FailingSecondClaimProvider());
+
+		EvidenceRefreshResult result = await service.RefreshGameAsync(2, false, CancellationToken.None);
+
+		Assert.False(result.Succeeded);
+		Assert.Equal(7, result.InputTokens);
+		Assert.Equal(4, result.OutputTokens);
+		Assert.Equal("provider_fixture_failure", result.ErrorCode);
+		await transaction.RollbackAsync();
+	}
+
+	[Fact]
+	public async Task Source_identity_change_records_failure_and_preserves_last_known_good_data()
+	{
+		await using CompatibilityDbContext dbContext = fixture.CreateDbContext();
+		await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync();
+		GameCompatibilitySummary existingSummary = await dbContext.GameCompatibilitySummaries.SingleAsync(item => item.GameId == 2);
+		existingSummary.State = SummaryState.Current;
+		existingSummary.IsStale = false;
+		await dbContext.SaveChangesAsync();
+		EvidenceClaim[] before = await dbContext.EvidenceClaims.Where(claim => claim.SourceReference.GameId == 2)
+			.OrderBy(claim => claim.Id).AsNoTracking().ToArrayAsync();
+		EvidenceRefreshService service = CreateService(dbContext, new FakeFactsProvider(), new IdentityChangingClaimProvider(dbContext));
+
+		EvidenceRefreshResult result = await service.RefreshGameAsync(2, false, CancellationToken.None);
+		dbContext.ChangeTracker.Clear();
+		EvidenceClaim[] after = await dbContext.EvidenceClaims.Where(claim => claim.SourceReference.GameId == 2)
+			.OrderBy(claim => claim.Id).AsNoTracking().ToArrayAsync();
+		GameCompatibilitySummary summary = await dbContext.GameCompatibilitySummaries.SingleAsync(item => item.GameId == 2);
+		SourceReferenceImportState[] states = await dbContext.SourceReferenceImportStates
+			.Where(item => item.SourceReference.GameId == 2).ToArrayAsync();
+
+		Assert.False(result.Succeeded);
+		Assert.Equal("source_identity_changed", result.ErrorCode);
+		Assert.Equal(before.Select(claim => (claim.Id, claim.ClaimText)), after.Select(claim => (claim.Id, claim.ClaimText)));
+		Assert.Equal(SummaryState.Stale, summary.State);
+		Assert.True(summary.IsStale);
+		Assert.Equal(2, states.Length);
+		Assert.All(states, state => Assert.Equal("source_identity_changed", state.ErrorCode));
+		await transaction.RollbackAsync();
+	}
+
+	[Fact]
+	public async Task Unchanged_refresh_does_not_restore_whitespace_only_summary()
+	{
+		await using CompatibilityDbContext dbContext = fixture.CreateDbContext();
+		await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync();
+		EvidenceRefreshService service = CreateService(dbContext, new FakeFactsProvider(), new CountingClaimProvider());
+		await service.RefreshGameAsync(1, false, CancellationToken.None);
+		dbContext.ChangeTracker.Clear();
+		Game game = await dbContext.Games.Include(item => item.CompatibilitySummary)
+			.Include(item => item.SourceReferences).ThenInclude(reference => reference.SourceSystem)
+			.Include(item => item.SourceReferences).ThenInclude(reference => reference.EvidenceClaims)
+			.SingleAsync(item => item.Id == 1);
+		CanonicalEvidence evidence = EvidencePromptBuilder.Canonicalize(game.SourceReferences.SelectMany(reference =>
+			reference.EvidenceClaims.Select(claim => new GenerationEvidenceClaim(claim.Id, claim.ClaimType, claim.ClaimValue,
+				claim.ClaimText, claim.ObservedAt, reference.SourceSystem.Type, reference.SourceSystem.Name,
+				reference.SourceGameId, reference.Url))));
+		GameCompatibilitySummary summary = game.CompatibilitySummary!;
+		summary.State = SummaryState.Stale;
+		summary.IsStale = true;
+		summary.SummaryText = " \t ";
+		summary.EvidenceVersion = CanonicalEvidence.ContractVersion;
+		summary.EvidenceHash = evidence.Hash;
+		await dbContext.SaveChangesAsync();
+
+		EvidenceRefreshResult result = await service.RefreshGameAsync(1, false, CancellationToken.None);
+		dbContext.ChangeTracker.Clear();
+		summary = await dbContext.GameCompatibilitySummaries.SingleAsync(item => item.GameId == 1);
+
+		Assert.False(result.SummaryRestored);
+		Assert.Equal(SummaryState.Stale, summary.State);
+		Assert.True(summary.IsStale);
+		await transaction.RollbackAsync();
+	}
+
 	private static EvidenceRefreshService CreateService(CompatibilityDbContext dbContext, IEvidenceSourceFactsProvider facts, IEvidenceClaimProvider provider)
 	{
 		EvidenceGenerationOptions options = EvidenceSourceAdapterTests.ValidOptions();
@@ -95,6 +177,33 @@ public sealed class PostgreSqlEvidenceGenerationTests(PostgreSqlFixture fixture)
 			CallCount++;
 			IReadOnlyList<GeneratedEvidenceClaim> claims = [new(EvidenceClaimType.Note, "Fixture", "Fixture-grounded note.")];
 			return Task.FromResult(new EvidenceClaimProviderResult(claims, 3, 2));
+		}
+	}
+	private sealed class FailingSecondClaimProvider : IEvidenceClaimProvider
+	{
+		private int _callCount;
+		public Task<EvidenceClaimProviderResult> GenerateAsync(EvidenceClaimProviderRequest request, CancellationToken cancellationToken)
+		{
+			_callCount++;
+			if (_callCount == 2) throw new EvidenceClaimProviderException("fixture_failure", "Second fixture provider call failed.");
+			return Task.FromResult(new EvidenceClaimProviderResult(
+				[new GeneratedEvidenceClaim(EvidenceClaimType.Note, "Fixture", "Fixture-grounded note.")], 7, 4));
+		}
+	}
+	private sealed class IdentityChangingClaimProvider(CompatibilityDbContext dbContext) : IEvidenceClaimProvider
+	{
+		private int _callCount;
+		public async Task<EvidenceClaimProviderResult> GenerateAsync(EvidenceClaimProviderRequest request, CancellationToken cancellationToken)
+		{
+			_callCount++;
+			if (_callCount == 2)
+			{
+				await dbContext.Database.ExecuteSqlRawAsync(
+					"UPDATE \"SourceReferences\" SET \"Url\" = {0} WHERE \"Id\" = {1}",
+					["https://www.protondb.com/app/553850/", 2], cancellationToken);
+			}
+			return new EvidenceClaimProviderResult(
+				[new GeneratedEvidenceClaim(EvidenceClaimType.Note, "Fixture", "Fixture-grounded note.")], 3, 2);
 		}
 	}
 	private sealed class FakeFactsProvider : IEvidenceSourceFactsProvider

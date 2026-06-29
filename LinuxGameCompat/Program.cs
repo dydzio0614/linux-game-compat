@@ -58,7 +58,6 @@ builder.Services.AddSingleton<ICompatibilitySummaryProvider>(_ => OpenAiCompatib
 var evidenceSettings = new EvidenceGenerationOptions();
 builder.Configuration.GetSection(EvidenceGenerationOptions.SectionName).Bind(evidenceSettings);
 builder.Services.AddSingleton(evidenceSettings);
-builder.Services.AddSingleton<IEvidenceFactTokenCounter, OpenAiEvidenceFactTokenCounter>();
 builder.Services.AddSingleton<IEvidenceClaimTokenCounter, OpenAiEvidenceClaimTokenCounter>();
 builder.Services.AddSingleton<ISourceFetchTransport>(_ => new SourceFetchTransport(SourceFetchTransport.CreateHttpClient(evidenceSettings), evidenceSettings));
 builder.Services.AddSingleton<ProtonDbSourceAdapter>();

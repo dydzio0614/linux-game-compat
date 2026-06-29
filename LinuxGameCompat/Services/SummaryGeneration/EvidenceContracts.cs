@@ -6,6 +6,6 @@ public sealed record GenerationEvidenceClaim(int ClaimId, EvidenceClaimType Clai
 	DateTimeOffset ObservedAt, SourceSystemType SourceType, string SourceName, string SourceGameId, string SourceUrl);
 public sealed record CanonicalEvidence(string Hash, string Serialized)
 {
-	public const string ContractVersion = "compatibility-summary-v1";
+	public const string ContractVersion = "compatibility-summary-v2";
 }
 public sealed record PromptSelection(CanonicalEvidence Evidence, IReadOnlyList<GenerationEvidenceClaim> Claims, string Prompt, int InputTokens);

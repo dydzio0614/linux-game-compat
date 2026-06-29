@@ -23,6 +23,8 @@ public sealed class EvidenceRefreshService(
 
 		DateTimeOffset attemptedAt = timeProvider.GetUtcNow();
 		List<PreparedReference> prepared = [];
+		int inputTokens = 0;
+		int outputTokens = 0;
 		try
 		{
 			foreach (SourceReference reference in supported)
@@ -34,6 +36,8 @@ public sealed class EvidenceRefreshService(
 					string.Equals(reference.ImportState.ContentHash, facts.ContentHash, StringComparison.Ordinal) &&
 					string.Equals(reference.ImportState.ContractVersion, contractVersion, StringComparison.Ordinal);
 				MaterializedEvidenceClaims? generated = current ? null : await materializer.GenerateAsync(reference.SourceSystem.Name, facts, cancellationToken);
+				inputTokens += generated?.InputTokens ?? 0;
+				outputTokens += generated?.OutputTokens ?? 0;
 				prepared.Add(new PreparedReference(reference.Id, reference.SourceSystem.Type, reference.SourceGameId, reference.Url, facts, generated));
 			}
 		}
@@ -52,14 +56,17 @@ public sealed class EvidenceRefreshService(
 				EvidenceClaimProviderException => Sanitize(exception.Message),
 				_ => "Evidence refresh failed."
 			};
-			await RecordFailureAsync(gameId, supported.Select(reference => reference.Id).ToArray(), attemptedAt, code, message, cancellationToken);
-			return new EvidenceRefreshResult(false, false, false, 0, 0, code);
+			await RecordFailureAsync(gameId, attemptedAt, code, message, cancellationToken);
+			return new EvidenceRefreshResult(false, false, false, inputTokens, outputTokens, code);
 		}
 
 		dbContext.ChangeTracker.Clear();
 		IDbContextTransaction? transaction = dbContext.Database.CurrentTransaction;
 		bool ownsTransaction = transaction is null;
 		transaction ??= await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+		bool identityChanged = false;
+		bool claimsChanged = false;
+		bool restored = false;
 		try
 		{
 			await dbContext.Database.ExecuteSqlRawAsync("LOCK TABLE \"SourceReferences\" IN SHARE MODE", cancellationToken);
@@ -67,78 +74,99 @@ public sealed class EvidenceRefreshService(
 			Game? trackedGame = await LoadGameAsync(gameId, cancellationToken);
 			if (trackedGame is null || !IdentitiesMatch(trackedGame, prepared))
 			{
+				identityChanged = true;
 				if (ownsTransaction) await transaction.RollbackAsync(cancellationToken);
-				return new EvidenceRefreshResult(false, false, false, 0, 0, "source_identity_changed");
 			}
-
-			bool claimsChanged = false;
-			foreach (PreparedReference item in prepared)
+			else
 			{
-				SourceReference reference = trackedGame.SourceReferences.Single(candidate => candidate.Id == item.ReferenceId);
-				if (item.Generated is not null) claimsChanged |= Reconcile(reference, item.Generated.Claims, attemptedAt, dbContext);
-				SourceReferenceImportState state = reference.ImportState ?? new SourceReferenceImportState { SourceReferenceId = reference.Id };
-				if (reference.ImportState is null) dbContext.SourceReferenceImportStates.Add(state);
-				state.ContentHash = item.Facts.ContentHash;
-				state.ContractVersion = EvidenceClaimMaterializer.ContractVersion(item.Facts);
-				state.LastAttemptedAt = attemptedAt;
-				state.LastSucceededAt = attemptedAt;
-				state.ETag = Bound(item.Facts.ETag, 512);
-				state.LastModifiedAt = item.Facts.LastModifiedAt;
-				state.ErrorCode = null;
-				state.ErrorMessage = null;
-			}
-
-			bool restored = false;
-			GameCompatibilitySummary? summary = trackedGame.CompatibilitySummary;
-			if (claimsChanged && summary is not null)
-			{
-				summary.IsStale = true;
-				if (summary.State == SummaryState.Current) summary.State = SummaryState.Stale;
-			}
-			await dbContext.SaveChangesAsync(cancellationToken);
-
-			if (!claimsChanged && summary is { State: SummaryState.Stale, SummaryText.Length: > 0 })
-			{
-				CanonicalEvidence evidence = EvidencePromptBuilder.Canonicalize(MapClaims(trackedGame));
-				if (string.Equals(summary.EvidenceVersion, CanonicalEvidence.ContractVersion, StringComparison.Ordinal) &&
-					string.Equals(summary.EvidenceHash, evidence.Hash, StringComparison.Ordinal))
+				foreach (PreparedReference item in prepared)
 				{
-					summary.State = SummaryState.Current;
-					summary.IsStale = false;
-					summary.ErrorCode = null;
-					summary.ErrorMessage = null;
-					restored = true;
-					await dbContext.SaveChangesAsync(cancellationToken);
+					SourceReference reference = trackedGame.SourceReferences.Single(candidate => candidate.Id == item.ReferenceId);
+					if (item.Generated is not null) claimsChanged |= Reconcile(reference, item.Generated.Claims, attemptedAt, dbContext);
+					SourceReferenceImportState state = reference.ImportState ?? new SourceReferenceImportState { SourceReferenceId = reference.Id };
+					if (reference.ImportState is null) dbContext.SourceReferenceImportStates.Add(state);
+					state.ContentHash = item.Facts.ContentHash;
+					state.ContractVersion = EvidenceClaimMaterializer.ContractVersion(item.Facts);
+					state.LastAttemptedAt = attemptedAt;
+					state.LastSucceededAt = attemptedAt;
+					state.ETag = Bound(item.Facts.ETag, 512);
+					state.LastModifiedAt = item.Facts.LastModifiedAt;
+					state.ErrorCode = null;
+					state.ErrorMessage = null;
 				}
+
+				GameCompatibilitySummary? summary = trackedGame.CompatibilitySummary;
+				if (claimsChanged && summary is not null)
+				{
+					summary.IsStale = true;
+					if (summary.State == SummaryState.Current) summary.State = SummaryState.Stale;
+				}
+				await dbContext.SaveChangesAsync(cancellationToken);
+
+				if (!claimsChanged && summary?.State == SummaryState.Stale && !string.IsNullOrWhiteSpace(summary.SummaryText))
+				{
+					CanonicalEvidence evidence = EvidencePromptBuilder.Canonicalize(MapClaims(trackedGame));
+					if (string.Equals(summary.EvidenceVersion, CanonicalEvidence.ContractVersion, StringComparison.Ordinal) &&
+						string.Equals(summary.EvidenceHash, evidence.Hash, StringComparison.Ordinal))
+					{
+						summary.State = SummaryState.Current;
+						summary.IsStale = false;
+						summary.ErrorCode = null;
+						summary.ErrorMessage = null;
+						restored = true;
+						await dbContext.SaveChangesAsync(cancellationToken);
+					}
+				}
+				if (ownsTransaction) await transaction.CommitAsync(cancellationToken);
 			}
-			if (ownsTransaction) await transaction.CommitAsync(cancellationToken);
-			return new EvidenceRefreshResult(true, claimsChanged, restored,
-				prepared.Sum(item => item.Generated?.InputTokens ?? 0), prepared.Sum(item => item.Generated?.OutputTokens ?? 0));
 		}
 		finally
 		{
 			if (ownsTransaction) await transaction.DisposeAsync();
 		}
+		if (identityChanged)
+		{
+			await RecordFailureAsync(gameId, attemptedAt, "source_identity_changed", "Source identity changed during refresh.", cancellationToken);
+			return new EvidenceRefreshResult(false, false, false, inputTokens, outputTokens, "source_identity_changed");
+		}
+		return new EvidenceRefreshResult(true, claimsChanged, restored, inputTokens, outputTokens);
 	}
 
-	private async Task RecordFailureAsync(int gameId, int[] referenceIds, DateTimeOffset attemptedAt, string code, string message, CancellationToken cancellationToken)
+	private async Task RecordFailureAsync(int gameId, DateTimeOffset attemptedAt, string code, string message, CancellationToken cancellationToken)
 	{
 		dbContext.ChangeTracker.Clear();
-		foreach (int referenceId in referenceIds)
+		IDbContextTransaction? transaction = dbContext.Database.CurrentTransaction;
+		bool ownsTransaction = transaction is null;
+		transaction ??= await dbContext.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+		try
 		{
-			SourceReferenceImportState? state = await dbContext.SourceReferenceImportStates.SingleOrDefaultAsync(item => item.SourceReferenceId == referenceId, cancellationToken);
-			if (state is null) { state = new SourceReferenceImportState { SourceReferenceId = referenceId }; dbContext.SourceReferenceImportStates.Add(state); }
-			state.LastAttemptedAt = attemptedAt;
-			state.ErrorCode = Bound(code, 80);
-			state.ErrorMessage = Bound(message, 2000);
+			await dbContext.Database.ExecuteSqlRawAsync("LOCK TABLE \"SourceReferences\" IN SHARE MODE", cancellationToken);
+			SourceReference[] references = await dbContext.SourceReferences
+				.Include(reference => reference.ImportState)
+				.Where(reference => reference.GameId == gameId &&
+					(reference.SourceSystem.Type == SourceSystemType.ProtonDb || reference.SourceSystem.Type == SourceSystemType.AreWeAntiCheatYet))
+				.ToArrayAsync(cancellationToken);
+			foreach (SourceReference reference in references)
+			{
+				SourceReferenceImportState state = reference.ImportState ?? new SourceReferenceImportState { SourceReferenceId = reference.Id };
+				if (reference.ImportState is null) dbContext.SourceReferenceImportStates.Add(state);
+				state.LastAttemptedAt = attemptedAt;
+				state.ErrorCode = Bound(code, 80);
+				state.ErrorMessage = Bound(message, 2000);
+			}
+			GameCompatibilitySummary? summary = await dbContext.GameCompatibilitySummaries.SingleOrDefaultAsync(item => item.GameId == gameId, cancellationToken);
+			if (summary is not null)
+			{
+				summary.IsStale = true;
+				if (summary.State == SummaryState.Current) summary.State = SummaryState.Stale;
+			}
+			await dbContext.SaveChangesAsync(cancellationToken);
+			if (ownsTransaction) await transaction.CommitAsync(cancellationToken);
 		}
-		GameCompatibilitySummary? summary = await dbContext.GameCompatibilitySummaries.SingleOrDefaultAsync(item => item.GameId == gameId, cancellationToken);
-		if (summary is not null)
+		finally
 		{
-			summary.IsStale = true;
-			if (summary.State == SummaryState.Current) summary.State = SummaryState.Stale;
+			if (ownsTransaction) await transaction.DisposeAsync();
 		}
-		await dbContext.SaveChangesAsync(cancellationToken);
 	}
 
 	private Task<Game?> LoadGameAsync(int gameId, CancellationToken cancellationToken) => dbContext.Games.AsSplitQuery()

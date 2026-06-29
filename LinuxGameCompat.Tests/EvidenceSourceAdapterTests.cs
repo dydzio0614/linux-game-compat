@@ -105,12 +105,14 @@ public sealed class EvidenceSourceAdapterTests
 	public void Awa_budget_reduction_removes_oldest_included_update_first()
 	{
 		using JsonDocument fixture = ReadFixture("awa-games.json");
+		RejectTextTokenCounter counter = new("update-3");
 		NormalizedSourceFacts result = AreWeAntiCheatYetSourceAdapter.Normalize(
-			"fixture-game", fixture.RootElement[0], new RejectTextTokenCounter("update-3"), 2500);
+			"fixture-game", fixture.RootElement[0], counter, 2500);
 
 		using JsonDocument facts = JsonDocument.Parse(result.Json);
 		string? firstUpdate = facts.RootElement.GetProperty("updates")[0].GetProperty("name").GetString();
 		Assert.Equal("update-4", firstUpdate);
+		Assert.True(new EvidenceClaimPromptBuilder(counter).Build(result, 2500).InputTokens <= 2500);
 	}
 
 	[Fact]
@@ -155,12 +157,12 @@ public sealed class EvidenceSourceAdapterTests
 		MaximumResponseBytes = 8 * 1024 * 1024, ProviderTimeoutSeconds = 30, MaximumProviderRetries = 2, Concurrency = 1
 	};
 
-	private sealed class ZeroTokenCounter : IEvidenceFactTokenCounter
+	private sealed class ZeroTokenCounter : IEvidenceClaimTokenCounter
 	{
 		public int Count(string text) => 0;
 	}
 
-	private sealed class RejectTextTokenCounter(string rejectedText) : IEvidenceFactTokenCounter
+	private sealed class RejectTextTokenCounter(string rejectedText) : IEvidenceClaimTokenCounter
 	{
 		public int Count(string text) => text.Contains(rejectedText, StringComparison.Ordinal) ? 2500 : 0;
 	}
