@@ -264,14 +264,14 @@ The migration is additive: it introduces the import-state table and relationship
 
 #### Automated
 
-- [ ] 1.1 Application and tests compile
-- [ ] 1.2 Adapter, URL, redirect, content-type, byte-limit, and normalization tests pass
-- [ ] 1.3 EF model matches the generated migration
+- [x] 1.1 Application and tests compile
+- [x] 1.2 Adapter, URL, redirect, content-type, byte-limit, and normalization tests pass
+- [x] 1.3 EF model matches the generated migration
 
 #### Manual
 
-- [ ] 1.4 Representative live ProtonDB and AWA responses still match the checked-in adapter contracts without importing data
-- [ ] 1.5 Generated migration and model snapshot are reviewed together for the one-to-one import-state contract
+- [x] 1.4 Representative live ProtonDB and AWA responses still match the checked-in adapter contracts without importing data
+- [x] 1.5 Generated migration and model snapshot are reviewed together for the one-to-one import-state contract
 
 ### Phase 2: Grounded Claim Generation and Reconciliation
 

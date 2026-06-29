@@ -1,0 +1,36 @@
+[
+  {
+    "slug": "fixture-game",
+    "status": "Running",
+    "dateChanged": "2026-06-01T12:00:00Z",
+    "anticheats": ["Zulu", "Alpha", "Echo", "Delta", "Charlie", "Bravo", "Hotel", "Golf", "Foxtrot", "India"],
+    "notes": [
+      ["First note", "https://example.com/first"],
+      [" ", "https://example.com/blank"],
+      ["Second note", null],
+      ["Third note", ""],
+      ["Fourth note", "https://example.com/fourth"],
+      ["Fifth note is excluded", "https://example.com/fifth"]
+    ],
+    "updates": [
+      {"name":"update-1","date":"2026-01-01","reference":"https://example.com/1"},
+      {"name":"update-2","date":"2026-01-02","reference":"https://example.com/2"},
+      {"name":"update-3","date":"2026-01-03","reference":"https://example.com/3"},
+      {"name":"update-4","date":"2026-01-04","reference":"https://example.com/4"},
+      {"name":"update-5","date":"2026-01-05","reference":"https://example.com/5"},
+      {"name":"update-6","date":"2026-01-06","reference":"https://example.com/6"},
+      {"name":"update-7","date":"2026-01-07","reference":"https://example.com/7"},
+      {"name":"update-8","date":"2026-01-08","reference":"https://example.com/8"},
+      {"name":"update-9","date":"2026-01-09","reference":"https://example.com/9"},
+      {"name":"update-10","date":"2026-01-10","reference":"https://example.com/10"}
+    ]
+  },
+  {
+    "slug": "second-game",
+    "status": "Supported",
+    "dateChanged": "2026-06-02T12:00:00Z",
+    "anticheats": [],
+    "notes": [],
+    "updates": []
+  }
+]

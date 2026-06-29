@@ -13,6 +13,8 @@ public sealed class CompatibilityDbContext(DbContextOptions<CompatibilityDbConte
 
 	public DbSet<SourceReference> SourceReferences => Set<SourceReference>();
 
+	public DbSet<SourceReferenceImportState> SourceReferenceImportStates => Set<SourceReferenceImportState>();
+
 	public DbSet<EvidenceClaim> EvidenceClaims => Set<EvidenceClaim>();
 
 	public DbSet<GameCompatibilitySummary> GameCompatibilitySummaries => Set<GameCompatibilitySummary>();
@@ -58,6 +60,21 @@ public sealed class CompatibilityDbContext(DbContextOptions<CompatibilityDbConte
 			entity.Property(reference => reference.MetadataJson).HasColumnType("jsonb");
 			entity.HasIndex(reference => new { reference.SourceSystemId, reference.SourceGameId }).IsUnique();
 			entity.HasIndex(reference => reference.Url);
+		});
+
+		modelBuilder.Entity<SourceReferenceImportState>(entity =>
+		{
+			entity.HasKey(state => state.SourceReferenceId);
+			entity.Property(state => state.ContentHash).HasMaxLength(128);
+			entity.Property(state => state.ContractVersion).HasMaxLength(80);
+			entity.Property(state => state.ETag).HasMaxLength(512);
+			entity.Property(state => state.ErrorCode).HasMaxLength(80);
+			entity.Property(state => state.ErrorMessage).HasMaxLength(2000);
+			entity.HasOne(state => state.SourceReference)
+				.WithOne(reference => reference.ImportState)
+				.HasForeignKey<SourceReferenceImportState>(state => state.SourceReferenceId)
+				.OnDelete(DeleteBehavior.Cascade)
+				.IsRequired();
 		});
 
 		modelBuilder.Entity<EvidenceClaim>(entity =>

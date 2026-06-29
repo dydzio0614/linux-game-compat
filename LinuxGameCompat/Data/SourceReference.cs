@@ -39,4 +39,9 @@ public sealed class SourceReference
 	/// Evidence claims supported by this source reference.
 	/// </summary>
 	public ICollection<EvidenceClaim> EvidenceClaims { get; } = [];
+
+	/// <summary>
+	/// Optional lifecycle state for generated evidence imports.
+	/// </summary>
+	public SourceReferenceImportState? ImportState { get; set; }
 }
