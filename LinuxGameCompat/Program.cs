@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using LinuxGameCompat.Services.EvidenceGeneration;
 using LinuxGameCompat.Services.SummaryGeneration;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,6 +55,21 @@ builder.Services.AddScoped<CompatibilitySummaryGenerator>();
 builder.Services.AddSingleton<ICompatibilitySummaryProvider>(_ => OpenAiCompatibilitySummaryProvider.Create(
 	Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty,
 	generationSettings));
+var evidenceSettings = new EvidenceGenerationOptions();
+builder.Configuration.GetSection(EvidenceGenerationOptions.SectionName).Bind(evidenceSettings);
+builder.Services.AddSingleton(evidenceSettings);
+builder.Services.AddSingleton<IEvidenceClaimTokenCounter, OpenAiEvidenceClaimTokenCounter>();
+builder.Services.AddSingleton<ISourceFetchTransport>(_ => new SourceFetchTransport(SourceFetchTransport.CreateHttpClient(evidenceSettings), evidenceSettings));
+builder.Services.AddSingleton<ProtonDbSourceAdapter>();
+builder.Services.AddSingleton<AreWeAntiCheatYetSourceAdapter>();
+builder.Services.AddSingleton<IEvidenceSourceFactsProvider, EvidenceSourceFactsProvider>();
+builder.Services.AddSingleton<EvidenceClaimPromptBuilder>();
+builder.Services.AddSingleton<IEvidenceClaimProvider>(_ => OpenAiEvidenceClaimProvider.Create(
+	Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty,
+	evidenceSettings));
+builder.Services.AddScoped<EvidenceClaimMaterializer>();
+builder.Services.AddScoped<EvidenceRefreshService>();
+builder.Services.AddScoped<CompatibilityRefreshOrchestrator>();
 if (builder.Environment.IsDevelopment())
 {
 	builder.Services.AddScoped<IAuthEmailSender, LoggingAuthEmailSender>();
@@ -63,17 +79,20 @@ else
 	builder.Services.AddScoped<IAuthEmailSender, SmtpAuthEmailSender>();
 }
 
-bool generationCommandRequested = GenerateSummariesCommand.IsRequested(args);
+bool generationCommandRequested = RefreshCompatibilityCommand.IsRequested(args);
 bool fakeProviderRequested = generationCommandRequested && builder.Environment.IsDevelopment() &&
-	string.Equals(Environment.GetEnvironmentVariable("SUMMARY_GENERATION_USE_FAKE_PROVIDER"), "true", StringComparison.OrdinalIgnoreCase);
+	string.Equals(Environment.GetEnvironmentVariable("COMPATIBILITY_REFRESH_USE_FAKE_PROVIDERS"), "true", StringComparison.OrdinalIgnoreCase);
 if (fakeProviderRequested)
+	{
 	builder.Services.AddSingleton<ICompatibilitySummaryProvider, FakeCompatibilitySummaryProvider>();
+	builder.Services.AddSingleton<IEvidenceClaimProvider, FakeEvidenceClaimProvider>();
+	}
 var app = builder.Build();
 
 if (generationCommandRequested)
 {
-	IReadOnlyList<string> configurationErrors = generationSettings.Validate();
-	if (!GenerateSummariesCommand.TryParse(args, generationSettings.MaximumGames, out SummaryGenerationRunOptions? command, out string? parseError) || configurationErrors.Count > 0)
+	IReadOnlyList<string> configurationErrors = generationSettings.Validate().Concat(evidenceSettings.Validate()).ToArray();
+	if (!RefreshCompatibilityCommand.TryParse(args, evidenceSettings.MaximumGames, out CompatibilityRefreshOptions? command, out string? parseError) || configurationErrors.Count > 0)
 	{
 		Console.Error.WriteLine(parseError ?? string.Join(" ", configurationErrors));
 		return 2;
@@ -90,9 +109,9 @@ if (generationCommandRequested)
 	Console.CancelKeyPress += cancelHandler;
 	try
 	{
-		SummaryGenerationRunResult result = await scope.ServiceProvider.GetRequiredService<CompatibilitySummaryGenerator>().RunAsync(command!, shutdown.Token);
-		Console.WriteLine(GenerateSummariesCommand.FormatResult(result));
-		return GenerateSummariesCommand.ExitCodeFor(result);
+		CompatibilityRefreshRunResult result = await scope.ServiceProvider.GetRequiredService<CompatibilityRefreshOrchestrator>().RunAsync(command!, shutdown.Token);
+		Console.WriteLine(RefreshCompatibilityCommand.FormatResult(result));
+		return RefreshCompatibilityCommand.ExitCodeFor(result);
 	}
 	catch (OperationCanceledException)
 	{

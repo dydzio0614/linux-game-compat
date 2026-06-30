@@ -26,4 +26,8 @@
     <ProjectReference Include="..\LinuxGameCompat\LinuxGameCompat.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Fixtures\EvidenceGeneration\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

@@ -81,25 +81,31 @@ The app reads the database connection from either:
 
 `DATABASE_URL` is useful for hosted environments. The app converts it to an Npgsql connection string and enables required SSL mode.
 
-Compatibility summary generation additionally reads `OPENAI_API_KEY`. The key is validated only in generation mode; normal web startup does not require provider credentials. Generation defaults, including the model and request limits, are configured under `SummaryGeneration` in `LinuxGameCompat/appsettings.json`.
+Compatibility refresh additionally reads `OPENAI_API_KEY`. The key is validated only in refresh mode; normal web startup does not require provider credentials. Evidence and summary generation defaults are configured under `EvidenceGeneration` and `SummaryGeneration` in `LinuxGameCompat/appsettings.json`.
 
 Passwordless login normally sends magic links by email. For trusted local, test, or demo deployments that cannot use SMTP, set `Auth:ShowMagicLinksInFrontend=true` to show the generated bearer login link in the `/login` success panel. Keep this disabled for normal public production traffic: anyone who can see or copy that displayed link can sign in as the requested email address until the one-use link expires.
 
-## Compatibility Summary Generation
+## Compatibility Refresh
 
 Generate a bounded batch without starting the web server:
 
 ```bash
-OPENAI_API_KEY="..." dotnet run --project LinuxGameCompat/LinuxGameCompat.csproj -- generate-summaries --limit 10
+OPENAI_API_KEY="..." dotnet run --project LinuxGameCompat/LinuxGameCompat.csproj -- refresh-compatibility --limit 10
 ```
 
 Supported options:
 
 - `--limit <1..10>` limits the selected games (default: 10).
-- `--slug <slug>` targets one game, but skips a current summary.
-- `--force` admits current summaries for regeneration; combine it with `--slug` for a deliberate targeted refresh.
+- `--slug <slug>` targets one game.
+- `--force` bypasses evidence and summary freshness checks; combine it with `--slug` for a deliberate targeted refresh.
 
-The command prints one aggregate line with selected, succeeded, failed, and skipped counts, duration, and input/output token totals. Exit codes are `0` for success, no work, or advisory-lock contention; `1` when one or more attempted games fail; `2` for invalid arguments or generation configuration; and `130` for cancellation. A successful no-work run makes no provider calls, so rerunning unchanged evidence is safe and idempotent.
+The command refreshes supported source evidence before synthesizing summaries and prints aggregate selection, outcome, changed-claim, generated-summary, duration, token, and lock-contention metrics. Exit codes are `0` for success, no work, or advisory-lock contention; `1` for item failures; `2` for invalid arguments or configuration; and `130` for cancellation. An unchanged rerun fetches source facts but performs no provider work or claim mutation.
+
+In Development only, set `COMPATIBILITY_REFRESH_USE_FAKE_PROVIDERS=true` to exercise both generation stages without `OPENAI_API_KEY`:
+
+```bash
+COMPATIBILITY_REFRESH_USE_FAKE_PROVIDERS=true dotnet run --project LinuxGameCompat/LinuxGameCompat.csproj -- refresh-compatibility --slug baldurs-gate-3
+```
 
 Raw, source-linked compatibility evidence remains authoritative. Generated prose is a bounded synthesis; deterministic source status takes precedence, and the detail page labels stale output, AI fallback, or disagreement.
 
@@ -111,9 +117,9 @@ Apply migrations explicitly before deploying or running a new generator image:
 dotnet ef database update --project LinuxGameCompat/LinuxGameCompat.csproj
 ```
 
-For Railway, run the equivalent command against the production `DATABASE_URL` only after reviewing the pending migration and taking the normal database backup/rollback precautions. The summary-attempt migration is additive and nullable; application rollback does not reverse the database migration.
+For Railway, run the equivalent command against the production `DATABASE_URL` only after reviewing the pending migration and taking the normal database backup/rollback precautions. `AddSourceReferenceImportState` is additive, creates nullable import metadata, and does not rewrite existing claims. Before the first live import, back up persistent data: the first successful import takes ownership of supported external references and may replace seeded or existing claims, and an application rollback does not restore claims that were replaced.
 
-On a failed run, inspect the aggregate command output and the operator-only `GameCompatibilitySummaries.ErrorCode` and `ErrorMessage` columns. Provider errors are sanitized and bounded and are never exposed by the public read model. Fix credentials, configuration, connectivity, or source data as indicated, then rerun the same bounded command. Failed refreshes preserve the last successful prose and public status while marking it stale.
+On a failed run, inspect the aggregate command output, `SourceReferenceImportStates.ErrorCode` and `ErrorMessage` for acquisition or claim-generation failures, and `GameCompatibilitySummaries.ErrorCode` and `ErrorMessage` for summary-generation failures. These operator-only errors are sanitized and bounded and are never exposed by the public read model. Fix credentials, configuration, connectivity, or source data as indicated, then rerun the same bounded command. Failed refreshes preserve last-known-good claims, prose, and public status while marking the summary stale.
 
 ## Tests
 
@@ -139,7 +145,7 @@ The container listens on `PORT` when provided, otherwise it defaults to `8080`.
 The artifact is compatible with a future separate Railway generation service built from the same repository and Dockerfile. That follow-up service should share PostgreSQL `DATABASE_URL`, scope `OPENAI_API_KEY` to itself, and use Start Command:
 
 ```text
-dotnet LinuxGameCompat.dll generate-summaries --limit 10
+dotnet LinuxGameCompat.dll refresh-compatibility --limit 10
 ```
 
 Its restart policy should be `Never`. Production service creation, migration, provider spend, and measured rollout are intentionally deferred. Do not attach a cron schedule until a representative manual run and an unchanged-input no-work rerun have been reviewed. Keep the existing web service's start command and credentials unchanged.
