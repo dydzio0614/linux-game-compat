@@ -1,0 +1,43 @@
+name: Production Deploy Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  verify-production-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.301
+
+      - name: Restore
+        run: dotnet restore LinuxGameCompat.sln
+
+      - name: Test
+        run: dotnet test LinuxGameCompat.sln --configuration Release --no-restore
+
+      - name: Publish production application
+        run: >-
+          dotnet publish LinuxGameCompat/LinuxGameCompat.csproj
+          --configuration Release
+          --no-restore
+          --output "${{ runner.temp }}/publish"
+
+      - name: Verify Blazor bootstrap asset contract
+        shell: bash
+        run: |
+          test -f "${{ runner.temp }}/publish/wwwroot/_framework/blazor.web.js"
+          grep -Fq '"Route":"_framework/blazor.web.js"' \
+            "${{ runner.temp }}/publish/LinuxGameCompat.staticwebassets.endpoints.json"
