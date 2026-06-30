@@ -3,7 +3,7 @@ project: "Linux Compatibility Aggregator"
 version: 1
 status: draft
 created: 2026-05-26
-updated: 2026-06-29
+updated: 2026-06-30
 prd_version: 1
 main_goal: speed
 top_blocker: capacity
@@ -37,7 +37,7 @@ New people switching to Linux face decision paralysis because compatibility evid
 | S-06 | modernize-visual-presentation | user sees a more polished, modern Blazor UI instead of the current Bootstrap-default-like presentation | S-01, S-03, S-04 | UX quality follow-up | done |
 | S-07 | development-magic-link-shortcut | developer can complete register/login flows locally without a real email provider by seeing magic links instantly in the frontend | F-02 | Developer experience follow-up | done |
 | S-08 | simplify-summary-generation-code | maintainer can understand and change the S-04 summary-generation path without unnecessary datatypes, records, or test-driven indirection | S-04 | Maintainability follow-up | done |
-| S-09 | generate-evidence-claims-from-source-pages | user can see compatibility summaries backed by evidence claims generated from fetched source-page content, including a normalized source-native status | S-04 | US-01, FR-003, FR-004, Business Logic, NFR source links | ready |
+| S-09 | generate-evidence-claims-from-source-pages | user can see compatibility summaries backed by evidence claims generated from fetched source-page content, including a normalized source-native status | S-04 | US-01, FR-003, FR-004, Business Logic, NFR source links | done |
 
 ## Streams
 
@@ -209,7 +209,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Which supported evidence source should define the first webpage extraction contract, and which page content is authoritative enough to persist as claims? - Owner: user. Block: no.
   - What fetched-content and generated-claim changes should make an existing summary stale and eligible for regeneration? - Owner: implementer. Block: no.
 - **Risk:** Source pages are untrusted and can change shape; generated claim text must remain bounded by fetched content and retain source traceability, while native-status normalization stays deterministic rather than being delegated to the model.
-- **Status:** ready
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -243,6 +243,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 ## Done
 
 <!-- Empty on first generation. `/10x-archive` appends entries here and flips matching roadmap items to `done`. -->
+- **S-09: user can see compatibility summaries backed by evidence claims generated from fetched evidence-source webpage content, with the source-native status normalized into the app's compatibility vocabulary and claim text generated through the existing OpenAI integration.** — Archived 2026-06-30 → `context/archive/2026-06-29-generate-evidence-claims-from-source-pages/`. Lesson: —.
 - **F-01: (foundation) initial source-backed game catalog and compatibility evidence path exists for the first lookup flow.** — Archived 2026-05-31 → `context/archive/2026-05-27-minimal-evidence-baseline/`. Lesson: —.
 - **S-01: user can search for a game, choose a result, open details, and see current compatibility status with source-linked reasoning, caveats, and common workarounds.** — Archived 2026-05-31 → `context/archive/2026-05-31-anonymous-compatibility-lookup/`. Lesson: —.
 - **F-02: (foundation) passwordless member identity is available so favorites can belong to a logged-in member.** — Archived 2026-06-02 → `context/archive/2026-05-31-passwordless-member-access/`. Lesson: —.
