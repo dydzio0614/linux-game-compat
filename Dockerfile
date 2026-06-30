@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.301 AS build
 WORKDIR /src
 
 COPY LinuxGameCompat.sln ./
@@ -9,9 +9,12 @@ COPY . .
 RUN dotnet publish LinuxGameCompat/LinuxGameCompat.csproj \
     --configuration Release \
     --no-restore \
-    --output /app/publish
+    --output /app/publish && \
+    test -f /app/publish/wwwroot/_framework/blazor.web.js && \
+    grep -Fq '"Route":"_framework/blazor.web.js"' \
+        /app/publish/LinuxGameCompat.staticwebassets.endpoints.json
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.9 AS runtime
 WORKDIR /app
 
 ENV ASPNETCORE_ENVIRONMENT=Production

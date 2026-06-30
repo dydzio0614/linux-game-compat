@@ -171,15 +171,15 @@ No database migration is required. Rollback is the previous Railway deployment, 
 
 #### Automated
 
-- [ ] 1.1 Solution tests pass
-- [ ] 1.2 Production image builds
-- [ ] 1.3 Final image contains the bootstrap script and manifest route
-- [ ] 1.4 Running image serves framework and application assets
+- [x] 1.1 Solution tests pass
+- [x] 1.2 Production image builds
+- [x] 1.3 Final image contains the bootstrap script and manifest route
+- [x] 1.4 Running image serves framework and application assets
 
 #### Manual
 
-- [ ] 1.5 Local container search works interactively
-- [ ] 1.6 Local container pagination works interactively
+- [x] 1.5 Local container search works interactively
+- [x] 1.6 Local container pagination works interactively
 
 ### Phase 2: Gate Railway GitHub Autodeploys
 
