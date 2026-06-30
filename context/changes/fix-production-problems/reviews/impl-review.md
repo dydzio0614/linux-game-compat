@@ -4,7 +4,7 @@
 - **Plan**: `context/changes/fix-production-problems/plan.md`
 - **Scope**: Phases 1–2 of 2
 - **Date**: 2026-06-30
-- **Verdict**: NEEDS ATTENTION
+- **Verdict**: APPROVED
 - **Findings**: 0 critical, 1 warning, 0 observations
 
 ## Verdicts
@@ -16,7 +16,7 @@
 | Safety & Quality | PASS |
 | Architecture | PASS |
 | Pattern Consistency | PASS |
-| Success Criteria | FAIL |
+| Success Criteria | PASS |
 
 ## Verification Evidence
 
@@ -37,11 +37,12 @@
 - **Location**: `context/changes/fix-production-problems/plan.md:187`
 - **Detail**: Progress rows 2.1 and 2.2 claimed that the GitHub workflow succeeded and that failed CI skipped a Railway deployment. The implementation was deployed directly from the local working tree with Railway CLI, bypassing GitHub CI. That validated rows 2.3 and 2.4, but not 2.1 or 2.2.
 - **Fix**: Restore rows 2.1 and 2.2 to pending until the branch is pushed, the workflow runs, Railway Wait for CI is enabled, and a failed workflow is confirmed to skip deployment.
-- **Decision**: FIXED — rows 2.1 and 2.2 were restored to pending.
+- **Decision**: FIXED AND VERIFIED — rows 2.1 and 2.2 were restored to pending, then completed after direct evidence was collected.
 
-## Remaining Work
+## Resolution Evidence
 
-1. Push the implementation branch and confirm the production deploy workflow passes.
-2. Enable Railway **Wait for CI** for the service connected to `master`.
-3. Confirm a failed workflow causes Railway to skip its corresponding deployment.
-4. Complete progress rows 2.1 and 2.2 and rerun the implementation review.
+- GitHub push workflow `28460095801` passed for merge commit `445ae84`.
+- Railway scheduled that build only after the GitHub workflow completed, proving **Wait for CI** was active.
+- Controlled-failure workflow `28460518159` failed for commit `5cdad12`.
+- Railway created no deployment for `5cdad12`; the prior deployment remained active.
+- Revert commit `64f9ece` restored the workflow, workflow `28460572293` passed, and Railway promoted deployment `6ff74152-a7bc-442b-b19d-5e3b5ea84ecf` after its healthcheck.
