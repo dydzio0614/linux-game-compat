@@ -185,8 +185,8 @@ No database migration is required. Rollback is the previous Railway deployment, 
 
 #### Automated
 
-- [ ] 2.1 GitHub push workflow succeeds
-- [ ] 2.2 Failed CI causes Railway deployment to be skipped
+- [x] 2.1 GitHub push workflow succeeds — 445ae84
+- [x] 2.2 Failed CI causes Railway deployment to be skipped — 5cdad12
 - [x] 2.3 Railway healthcheck gates deployment activation — 4a7ad77
 - [x] 2.4 Production bootstrap asset returns JavaScript successfully — 4a7ad77
 
